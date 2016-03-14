@@ -1,4 +1,6 @@
 (function (_) {
+    var version = '1.0.0';
+
     _.M.defineConstant({
         BUTTON_TEMPLATE_TYPE: 'DialogButton',
         BUTTON_INFO: 'info',
@@ -83,6 +85,9 @@
 
     DialogButton.prototype = Object.create(_.M.EventEmitter.prototype);
     DialogButton.prototype.constructor = DialogButton;
+    Object.defineProperty(DialogButton, 'version', {
+        value: version
+    });
 
     /**
      * Setup default options

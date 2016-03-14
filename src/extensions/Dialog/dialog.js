@@ -1,4 +1,5 @@
 (function (_) {
+    var version = '1.0.0';
 
     _.M.defineConstant({
         DIALOG_TEMPLATE_TYPE: 'Dialog',
@@ -91,6 +92,9 @@
 
     Dialog.prototype = Object.create(_.M.EventEmitter.prototype);
     Dialog.prototype.constructor = Dialog;
+    Object.defineProperty(Dialog, 'version', {
+        value: version
+    });
 
     /**
      * Setup default options

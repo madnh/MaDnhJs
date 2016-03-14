@@ -1,4 +1,6 @@
 (function (_) {
+    var version = '1.0.0';
+
     var _templates = {
         compilers: {},
         rendered: {},
@@ -53,6 +55,9 @@
 
     Template.prototype = Object.create(_.M.EventEmitter.prototype);
     Template.prototype.constructor = Template;
+    Object.defineProperty(Template, 'version', {
+        value: version
+    });
 
 
     /**

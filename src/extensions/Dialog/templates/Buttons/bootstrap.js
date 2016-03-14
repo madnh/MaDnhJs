@@ -1,4 +1,5 @@
 (function (_) {
+    var version = '1.0.0';
     var default_options = {
         icon_class: 'dialog_button_icon',
         label_class: 'dialog_button_label'
@@ -82,6 +83,10 @@
 
     Bootstrap.prototype = Object.create(_.M.Template.prototype);
     Bootstrap.prototype.constructor = Bootstrap;
+    Object.defineProperty(Bootstrap, 'version', {
+        value: version
+    });
+
     /**
      *
      * @returns {null|*|Object|_.M.EventEmitter|_.M.Dialog}

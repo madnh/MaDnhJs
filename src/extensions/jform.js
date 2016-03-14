@@ -1,6 +1,6 @@
 /***************************************************************************
  *   JFORM - UnderscoreJS extension                                         *
- *   Version: 0.1.0                                                         *
+ *   Version: 1.0.0                                                         *
  *   Author: Do Danh Manh                                                   *
  *   Email: dodanhmanh@gmail.com                                            *
  *                                                                          *
@@ -8,7 +8,12 @@
 
 
 (function (_) {
+    var version = '1.0.0';
     var thisModule = {};
+
+    Object.defineProperty(thisModule, 'version', {
+        value: version
+    });
 
     thisModule.disable = function (selector) {
         $(selector).attr('disabled', 'disabled').prop('disabled', true);

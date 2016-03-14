@@ -1,5 +1,5 @@
 (function (_) {
-
+    var version = '1.0.0';
     var default_options = {
         has_header: true,
         has_footer: true,
@@ -180,6 +180,9 @@
 
     Bootstrap.prototype = Object.create(_.M.Template.prototype);
     Bootstrap.prototype.constructor = Bootstrap;
+    Object.defineProperty(Bootstrap, 'version', {
+        value: version
+    });
 
     /**
      *

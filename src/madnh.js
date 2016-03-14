@@ -1,18 +1,17 @@
 /**
  * MaDnhJS - An UnderscoreJS extension
  * -------
- * @version 2.0.7
+ * @version 1.0.0
  * @author Do Danh Manh
  * @email dodanhmanh@gmail.com
  * @licence MIT
- * @copyright Do Danh Manh 2015
  */
 
 /**
  * @namespace MaDnh
  */
 ;(function (_) {
-    var version = '2.0.5';
+    var version = '1.0.0';
 
     var M = {};
     Object.defineProperty(M, 'VERSION', {

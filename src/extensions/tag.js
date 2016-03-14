@@ -1,14 +1,13 @@
 /***************************************************************************
  *   TAG extension for MaDnhJS                                              *
- *   @version 0.1.4                                                         *
+ *   @version 1.0.0                                                         *
  *   @author Do Danh Manh                                                   *
  *   @email dodanhmanh@gmail.com                                            *
  *   @licence MIT                                                           *
- *   @copyright Do Danh Manh 2015                                           *
  ***************************************************************************/
 
 ;(function (_) {
-    var version = '0.1.4';
+    var version = '1.0.0';
     var thisModule = {};
 
     Object.defineProperty(thisModule, 'VERSION', {
@@ -23,6 +22,10 @@
         this.content = '';
         this.isEmpty = false
     }
+
+    Object.defineProperty(TAG, 'version', {
+        value: version
+    });
 
     /**
      * Clone this tag, remove id in cloned tag
@@ -84,7 +87,7 @@
             tag_arr.push('</' + this.name + '>');
         }
 
-        if(old_class){
+        if (old_class) {
             this._attr['class'] = old_class;
         }
         if (old_style) {
@@ -120,7 +123,7 @@
             element.appendChild(document.createTextNode(tmp_children.toString()));
         });
 
-        if(old_class){
+        if (old_class) {
             this._attr['class'] = old_class;
         }
 
