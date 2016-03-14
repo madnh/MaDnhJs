@@ -3,7 +3,10 @@ module.exports = function (grunt) {
     //Project configuration
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
-        clean: 'build/*',
+        clean: {
+            main: 'build/*',
+            api: 'api/*'
+        },
         concat: {
             madnh_with_underscore: {
                 src: ['src/underscore.js', 'src/madnh.js'],
@@ -44,6 +47,16 @@ module.exports = function (grunt) {
                 src: 'build/extensions/dialog.js',
                 dest: 'build/extensions/dialog.min.js'
             }
+        },
+        jsdoc: {
+            dist: {
+                src: ['src/madnh.js'],
+                options: {
+                    destination: 'api',
+                    template: 'node_modules/ink-docstrap/template',
+                    readme: 'README.md'
+                }
+            }
         }
 
     });
@@ -51,7 +64,9 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-concat');
+    grunt.loadNpmTasks('grunt-jsdoc');
 
-
-    grunt.registerTask('default', ['clean', 'concat', 'uglify']);
+    grunt.registerTask('build', ['clean', 'concat', 'uglify']);
+    grunt.registerTask('docs', ['clean:api', 'jsdoc']);
+    grunt.registerTask('default', ['build', 'docs']);
 };

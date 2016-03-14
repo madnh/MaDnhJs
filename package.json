@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://madnh@bitbucket.org/madnh/madnhjs.git"
+    "url": "https://github.com/madnh/madnhjs.git"
   },
   "keywords": [
     "underscore",
@@ -22,11 +22,14 @@
   ],
   "author": "MaDnh <dodanhmanh@gmail.com>",
   "license": "MIT",
-  "homepage": "https://bitbucket.org/madnh/madnhjs#readme",
+  "homepage": "https://github.com/madnh/madnhjs",
   "devDependencies": {
     "grunt": "^0.4.5",
     "grunt-contrib-clean": "^1.0.0",
     "grunt-contrib-concat": "^0.5.1",
-    "grunt-contrib-uglify": "^0.11.0"
+    "grunt-contrib-uglify": "^0.11.0",
+    "grunt-jsdoc": "^1.1.0",
+    "ink-docstrap": "^1.1.4",
+    "jsdoc": "^3.4.0"
   }
 }

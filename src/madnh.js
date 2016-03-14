@@ -8,7 +8,7 @@
  */
 
 /**
- * @namespace MaDnh
+ * @namespace _.M
  */
 ;(function (_) {
     var version = '1.0.0';
@@ -1585,7 +1585,7 @@
 
     /**
      * Manage contents with priority
-     * @memberOf MaDnh
+     * @memberOf _.M
      * @constructor
      * @property {ContentManager} content_manager Content Manager
      */
@@ -1731,7 +1731,7 @@
     /**
      * Callback listener system
      * @module WAITER
-     * @memberOf MaDnh
+     * @memberOf _.M
      * @type {{}}
      */
     M.WAITER = M.defineObject({
@@ -1852,11 +1852,11 @@
     });
 
     /**
-     * Event management system
-     * @module EventEmitter
+     *
+     * @classdesc Event management system
+     * @memberOf _.M
+     * @class
      * @extend BaseConstructor
-     * @memberOf MaDnh
-     * @interface
      */
     function EventEmitter(limit) {
         BaseConstructor.call(this);
@@ -1909,7 +1909,8 @@
 
     /**
      * Alias of resetEvents
-     * @param event
+     * @alias resetEvents
+     * @methodOf EventEmitter
      */
     EventEmitter.prototype.reset = function (event) {
         return this.resetEvents(event);
@@ -2037,7 +2038,7 @@
     };
 
     /**
-     * Alias of this "addListener" method
+     * @see {@link addListener}
      */
     EventEmitter.prototype.on = function (event, listener, option) {
         return this.addListener.apply(this, arguments);
@@ -2067,7 +2068,7 @@
     };
 
     /**
-     * Alias of 'addOnceListener'
+     * @see {@link addOnceListener}
      */
     EventEmitter.prototype.once = function (event, listener, option) {
         return this.addOnceListener.apply(this, arguments);
@@ -2204,14 +2205,14 @@
     };
 
     /**
-     * Alias of 'removeListener'
+     * @see removeListener
      */
     EventEmitter.prototype.off = function () {
         return this.removeListener.apply(this, arguments);
     };
 
     /**
-     * Attach other event emitter to this
+     * Attach other event emitter to this. Notice async
      * @param {EventEmitter} eventEmitter
      * @param {Array} [only]
      * @param {Array} [excepts]
@@ -2233,12 +2234,18 @@
 
         throw new Error('Invalid EventEmitter instance');
     };
+    /**
+     * Attach other event emitter to this. Notice sync
+     * @param eventEmitter
+     * @param only
+     * @param excepts
+     */
     EventEmitter.prototype.attachHard = function (eventEmitter, only, excepts) {
         this.attach(eventEmitter, only, excepts, false);
     };
 
     /**
-     * Attach this to other event emitter instance
+     * Attach this to other event emitter instance. Notice async
      * @param {EventEmitter} eventEmitter
      * @param {Array} [only]
      * @param {Array} [excepts]
@@ -2265,8 +2272,17 @@
         }
         return true;
     };
+
+    /**
+     * Attach this to other event emitter instance. Notice sync
+     * @param {EventEmitter} eventEmitter
+     * @param {Array} [only]
+     * @param {Array} [excepts]
+     * @param {boolean} [hard=false] Hard attach to other, other notice will call immediate. Default is false
+     * @returns {boolean}
+     */
     EventEmitter.prototype.attachHardTo = function (eventEmitter, only, excepts) {
-        this.attachTo(eventEmitter, only, excepts, true);
+        return this.attachTo(eventEmitter, only, excepts, true);
     };
 
     /**
@@ -2385,7 +2401,6 @@
         return false;
     };
 
-
     /*
      |--------------------------------------------------------------------------
      | CACHE
@@ -2395,12 +2410,28 @@
      |
      */
 
+    /**
+     * @constant {number}
+     */
+    const CACHE_MIN = 10;//10 second
+    const CACHE_TINY = 60;//1 minute
+    const CACHE_SHORT = 5 * 60;//5 minutes
+    const CACHE_MEDIUM = 10 * 60;//10 minutes
+    const CACHE_LONG = 60 * 60;//1 hour
+    const CACHE_FOREVER = true;//forever
+
     M.defineConstant({
+        /** @constant {number} */
         CACHE_MIN: 10,//10 second
+        /** @constant {number} */
         CACHE_TINY: 60,//1 minute
+        /** @constant {number} */
         CACHE_SHORT: 5 * 60,//5 minutes
+        /** @constant {number} */
         CACHE_MEDIUM: 10 * 60,//10 minutes
+        /** @constant {number} */
         CACHE_LONG: 60 * 60,//1 hour
+        /** @constant {number} */
         CACHE_FOREVER: true //forever
     });
 
