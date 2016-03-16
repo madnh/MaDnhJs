@@ -1,0 +1,10 @@
+{
+  "templates": {
+    "systemName": "MaDnhJS",
+    "footer": "",
+    "copyright": "Copyright @ <a href='http://twitter.com/dnh_ma'><b>MaDnh</b></a>",
+    "includeDate": true,
+    "dateFormat": "MM-DD-YYYY HH:mm:ss",
+    "linenums": true
+  }
+}

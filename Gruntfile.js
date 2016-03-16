@@ -4,13 +4,19 @@ module.exports = function (grunt) {
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
         clean: {
-            main: 'build/*',
-            api: 'api/*'
+            main: 'dist/build/*',
+            docs: 'dist/docs/*'
+        },
+        copy: {
+            docs: {
+                src: 'logo.png',
+                dest: 'dist/docs/img/logo.png'
+            }
         },
         concat: {
             madnh_with_underscore: {
                 src: ['src/underscore.js', 'src/madnh.js'],
-                dest: 'build/underscore_madnh.js'
+                dest: 'dist/build/underscore_madnh.js'
             },
             dialog: {
                 src: ['src/extensions/Dialog/dialog.js',
@@ -19,7 +25,7 @@ module.exports = function (grunt) {
                     'src/extensions/Dialog/templates/Dialogs/bootstrap.js',
                     'src/extensions/Dialog/templates/Buttons/bootstrap.js'
                 ],
-                dest: 'build/extensions/dialog.js'
+                dest: 'dist/build/extensions/dialog.js'
             }
         },
         uglify: {
@@ -29,44 +35,47 @@ module.exports = function (grunt) {
             },
             madnh: {
                 src: 'src/madnh.js',
-                dest: 'build/madnh.min.js'
+                dest: 'dist/build/madnh.min.js'
             },
             madnh_with_underscore: {
-                src: 'build/underscore_madnh.js',
-                dest: 'build/underscore_madnh.min.js'
+                src: 'dist/build/underscore_madnh.js',
+                dest: 'dist/build/underscore_madnh.min.js'
             },
             extensions: {
                 files: [{
                     expand: true,
                     cwd: 'src/extensions',
                     src: '*.js',
-                    dest: 'build/extensions'
+                    dest: 'dist/build/extensions'
                 }]
             },
             dialog_concatenated: {
-                src: 'build/extensions/dialog.js',
-                dest: 'build/extensions/dialog.min.js'
+                src: 'dist/build/extensions/dialog.js',
+                dest: 'dist/build/extensions/dialog.min.js'
             }
         },
         jsdoc: {
             dist: {
                 src: ['src/madnh.js'],
                 options: {
-                    destination: 'api',
+                    destination: 'dist/docs',
+                    configure: 'jsdoc_config.json',
                     template: 'node_modules/ink-docstrap/template',
-                    readme: 'README.md'
+                    readme: 'README.md',
+                    tutorials: "tutorials"
                 }
             }
         }
 
     });
 
+    grunt.loadNpmTasks('grunt-contrib-copy');
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-jsdoc');
 
-    grunt.registerTask('build', ['clean', 'concat', 'uglify']);
-    grunt.registerTask('docs', ['clean:api', 'jsdoc']);
+    grunt.registerTask('build', ['clean:main', 'concat', 'uglify']);
+    grunt.registerTask('docs', ['clean:docs', 'jsdoc', 'copy:docs']);
     grunt.registerTask('default', ['build', 'docs']);
 };

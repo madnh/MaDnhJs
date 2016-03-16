@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>Documentation Class: Priority</title>
+	<title>MaDnhJS Global</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -20,7 +20,7 @@
 <div class="navbar navbar-default navbar-fixed-top ">
 <div class="container">
 	<div class="navbar-header">
-		<a class="navbar-brand" href="index.html">Documentation</a>
+		<a class="navbar-brand" href="index.html">MaDnhJS</a>
 		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
 			<span class="icon-bar"></span>
 			<span class="icon-bar"></span>
@@ -40,21 +40,21 @@
 			<li class="dropdown">
 				<a href="modules.list.html" class="dropdown-toggle" data-toggle="dropdown">Modules<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="-_.M.module_WAITER.html">_.M.WAITER</a></li><li><a href="MaDnh.module_CACHE.html">MaDnh.CACHE</a></li>
+					<li><a href="-_.M.module_CACHE.html">_.M.CACHE</a></li><li><a href="-_.M.module_WAITER.html">_.M.WAITER</a></li>
 				</ul>
 			</li>
 			
 			<li class="dropdown">
-				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<a href="tutorials.list.html" class="dropdown-toggle" data-toggle="dropdown">Tutorials<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="-_.M.EventEmitter.html">_.M.EventEmitter</a></li><li><a href="-_.M.Priority.html">_.M.Priority</a></li>
+					<li><a href="tutorial-yahoo.html">Tutorial One</a></li>
 				</ul>
 			</li>
 			
 			<li class="dropdown">
 				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="global.html#flag">flag</a></li><li><a href="global.html#flags">flags</a></li><li><a href="global.html#get">get</a></li><li><a href="global.html#has">has</a></li><li><a href="global.html#isFlagged">isFlagged</a></li><li><a href="global.html#module">module</a></li>
+					<li><a href="global.html#flag">flag</a></li><li><a href="global.html#flags">flags</a></li><li><a href="global.html#get">get</a></li><li><a href="global.html#has">has</a></li><li><a href="global.html#isFlagged">isFlagged</a></li>
 				</ul>
 			</li>
 			
@@ -84,15 +84,13 @@
 		<div id="main">
 			
 
-	<h1 class="page-title">Class: Priority</h1>
+	<h1 class="page-title">Global</h1>
 <section>
 
 <header>
     
         <h2>
-            <span class="ancestors"><a href="-_.M.html">.M</a>.</span>
         
-        Priority
         </h2>
         
     
@@ -103,180 +101,8 @@
     <div class="container-overview">
     
         
-<hr>
-<dt>
-    <h4 class="name" id="Priority"><span class="type-signature"></span>new Priority()</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        Manage contents with priority
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-    <h5 class="subsection-title">Properties:</h5>
-
-    <dl>
-
-<table class="props table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
 
         
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>content_manager</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">ContentManager</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">Content Manager</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-</dl>
-
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dd>
-
-    
-    </div>
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-        <h3 class="subsection-title">Members</h3>
-
-        <dl>
-            
-<hr>
-<dt class="name" id="_content_manager">
-    <h4><span class="type-signature"></span>_content_manager<span class="type-signature"> :ContentManager</span></h4>
-
-    
-</dt>
-<dd>
-    
-    <div class="description">
-        Data holder
-    </div>
-    
-
-    
-        <h5>Type:</h5>
-        <ul>
-            <li>
-                
-<span class="param-type">ContentManager</span>
-
-
-
-            </li>
-        </ul>
-    
-
-    
 <dl class="details">
     
 
@@ -316,10 +142,20 @@
 </dl>
 
 
+        
     
-</dd>
+    </div>
 
-        </dl>
+    
+
+    
+
+    
+
+    
+
+    
+
     
 
     
@@ -329,7 +165,7 @@
             
 <hr>
 <dt>
-    <h4 class="name" id="addContent"><span class="type-signature"></span>addContent(content, <span class="optional">priority</span>, <span class="optional">meta</span>)</h4>
+    <h4 class="name" id="flag"><span class="type-signature"></span>flag(name, is_active, prefix, suffix)</h4>
     
     
 </dt>
@@ -337,7 +173,7 @@
 
     
     <div class="description">
-        Add content
+        Set a flag
     </div>
     
 
@@ -360,11 +196,7 @@
         <th>Type</th>
 
         
-        <th>Argument</th>
-        
 
-        
-        <th>Default</th>
         
 
         <th class="last">Description</th>
@@ -376,13 +208,13 @@
 
         <tr>
             
-                <td class="name"><code>content</code></td>
+                <td class="name"><code>name</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">*</span>
+<span class="param-type">string</span>
 
 
 
@@ -390,19 +222,7 @@
             </td>
 
             
-                <td class="attributes">
-                
 
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                </td>
             
 
             <td class="description last"></td>
@@ -412,13 +232,13 @@
 
         <tr>
             
-                <td class="name"><code>priority</code></td>
+                <td class="name"><code>is_active</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">number</span>
+<span class="param-type">boolean</span>
 
 
 
@@ -426,39 +246,23 @@
             </td>
 
             
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
 
             
-                <td class="default">
-                
-                    M.PRIORITY_DEFAULT
-                
-                </td>
-            
 
-            <td class="description last"></td>
+            <td class="description last">Flag status, default is True</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>meta</code></td>
+                <td class="name"><code>prefix</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">*</span>
+<span class="param-type">string</span>
 
 
 
@@ -466,24 +270,290 @@
             </td>
 
             
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
 
-                
+            
 
+            <td class="description last">Add prefix to flag name</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>suffix</code></td>
+            
+
+            <td class="type">
+            
                 
-                </td>
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
             
 
             
-                <td class="default">
-                
-                </td>
+
+            <td class="description last">Add suffix to flag name</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="flags"><span class="type-signature"></span>flags(detail)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Get flags
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>detail</code></td>
             
 
-            <td class="description last">Content meta info</td>
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">If true then return flags with detail of it, else only return flags name</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="get"><span class="type-signature"></span>get(name)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Get flag by name
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>name</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
         </tr>
 
     
@@ -546,10 +616,6 @@
     <h5>Returns:</h5>
     
             
-<div class="param-desc">
-    content key
-</div>
-
 
 
 <dl>
@@ -558,7 +624,7 @@
     </dt>
     <dd>
         
-<span class="param-type">string</span>
+<span class="param-type">*</span>
 |
 
 <span class="param-type">boolean</span>
@@ -578,7 +644,7 @@
             
 <hr>
 <dt>
-    <h4 class="name" id="getContents"><span class="type-signature"></span>getContents(<span class="optional">content_only</span>)</h4>
+    <h4 class="name" id="has"><span class="type-signature"></span>has(name)</h4>
     
     
 </dt>
@@ -586,175 +652,7 @@
 
     
     <div class="description">
-        Get priority data
-    </div>
-    
-
-    
-
-    
-
-    
-    
-        <h5>Parameters:</h5>
-        
-
-<table class="params table table-striped">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Argument</th>
-        
-
-        
-        <th>Default</th>
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>content_only</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">boolean</span>
-
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    false
-                
-                </td>
-            
-
-            <td class="description last">return priority content only, default get content and meta</td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <h5>Returns:</h5>
-    
-            
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Array</span>
-
-
-
-    </dd>
-</dl>
-
-
-        
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="hasPriority"><span class="type-signature"></span>hasPriority(priority)</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        Check if a priority is exists
+        Check if a flag is exists
     </div>
     
 
@@ -789,10 +687,16 @@
 
         <tr>
             
-                <td class="name"><code>priority</code></td>
+                <td class="name"><code>name</code></td>
             
 
             <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
             
             </td>
 
@@ -860,26 +764,6 @@
     
 
     
-    <h5>Returns:</h5>
-    
-            
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">boolean</span>
-
-
-
-    </dd>
-</dl>
-
-
-        
 
     
 </dd>
@@ -888,7 +772,7 @@
             
 <hr>
 <dt>
-    <h4 class="name" id="removeContent"><span class="type-signature"></span>removeContent(content, priority)</h4>
+    <h4 class="name" id="isFlagged"><span class="type-signature"></span>isFlagged(name, prefix, suffix)</h4>
     
     
 </dt>
@@ -896,7 +780,7 @@
 
     
     <div class="description">
-        Remove content
+        Check if a flag is exists
     </div>
     
 
@@ -931,217 +815,143 @@
 
         <tr>
             
-                <td class="name"><code>content</code></td>
+                <td class="name"><code>name</code></td>
             
 
             <td class="type">
             
                 
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>prefix</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Add prefix to flag name</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>suffix</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Add suffix to flag name</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
 <span class="param-type">*</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>priority</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">number</span>
-
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <h5>Returns:</h5>
-    
-            
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">boolean</span>
-
-
-
-    </dd>
-</dl>
-
-
-        
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt>
-    <h4 class="name" id="status"><span class="type-signature"></span>status()</h4>
-    
-    
-</dt>
-<dd>
-
-    
-    <div class="description">
-        Get status about number of priorities and contents
-    </div>
-    
-
-    
-
-    
-
-    
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <h5>Returns:</h5>
-    
-            
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Object</span>
 
 
 
@@ -1157,6 +967,191 @@
         </dl>
     
 
+    
+        <h3 class="subsection-title">Type Definitions</h3>
+
+        <dl>
+                
+<hr>
+<dt>
+    <h4 class="name" id="loopCallback"><span class="type-signature"></span>loopCallback(value, key, object)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Loop callback. Useful in _.each, _.map, _.omit,...
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>value</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Item value</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>key</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Item name/index</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>object</code></td>
+            
+
+            <td class="type">
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">object of items</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+	<dt class="tag-see method-doc-label method-doc-details-label">See:</dt>
+	<dd class="tag-see">
+		<ul>
+			<li><a href="http://underscorejs.org/#each">http://underscorejs.org/#each</a></li>
+			
+			<li><a href="http://underscorejs.org/#map">http://underscorejs.org/#map</a></li>
+			
+			<li><a href="http://underscorejs.org/#omit">http://underscorejs.org/#omit</a></li>
+			</ul>
+	</dd>
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <h5>Examples</h5>
+        
+        <p class="code-caption">Alerts each number value in turn...</p>
+    
+    <pre class="sunlight-highlight-javascript">_.each([1, 2, 3], alert);_.each({one: 1, two: 2, three: 3}, alert);</pre>
+
+        <p class="code-caption">Log to console each number value in turn...</p>
+    
+    <pre class="sunlight-highlight-javascript">var logger = function(item, key, object){ console.log(key, &#x27;=&gt;&#x27;, item, &#x27;&lt;------ Object&#x27;, object);};_.each([1, 2, 3], logger);_.each({one: 1, two: 2, three: 3}, logger);</pre>
+
+
+    
+</dd>
+
+            </dl>
     
 
     
@@ -1199,10 +1194,14 @@
 <footer>
 
 
+	<span class="copyright">
+	Copyright @ <a href='http://twitter.com/dnh_ma'><b>MaDnh</b></a>
+	</span>
+
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a>
 	
-		on 2016-03-14T17:08:03+07:00
+		on 03-16-2016 18:23:25
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>
@@ -1246,7 +1245,7 @@ $( function () {
 	} );
 
 	Sunlight.highlightAll( {
-		lineNumbers : false,
+		lineNumbers : true,
 		showMenu : true,
 		enableDoclinks : true
 	} );
