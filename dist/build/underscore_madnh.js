@@ -2679,6 +2679,7 @@
      * Create console error callback with description as first arguments
      * @param {string} description
      * @returns {*}
+     * @tutorial yahoo
      * @example
      * var cb = _.M.errorCb('Test 1');
      * cb(1,2,3); // Console error as: 'Test 1' 1 2 3
