@@ -4,7 +4,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width">
-	<title>MaDnhJS Global</title>
+	<title>MaDnhJS Module: FLAG</title>
 
 	<!--[if lt IE 9]>
 	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -91,15 +91,10 @@
 		<div id="main">
 			
 
-	<h1 class="page-title">Global</h1>
+	<h1 class="page-title">Module: FLAG</h1>
 <section>
 
 <header>
-    
-        <h2>
-        
-        </h2>
-        
     
 </header>
 
@@ -164,224 +159,15 @@
     
 
     
-        <h3 class="subsection-title">Members</h3>
+
+    
+        <h3 class="subsection-title">Methods</h3>
 
         <dl>
             
-<hr>
-<dt class="name" id="SORT_NUMBER">
-    <h4><span class="type-signature">&lt;constant> </span>SORT_NUMBER<span class="type-signature"></span></h4>
-
-    
-</dt>
-<dd>
-    
-    <div class="description">
-        Array sort compare function. Sort number
-    </div>
-    
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-        <h5>Example</h5>
-        
-    <pre class="sunlight-highlight-javascript">var scores = [1, 10, 2, 21];scores.sort(); // [1, 10, 2, 21]scores.sort(_.M.SORT_NUMBER); // [1, 2, 10, 21]</pre>
-
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt class="name" id="SORT_NUMBER_DESC">
-    <h4><span class="type-signature">&lt;constant> </span>SORT_NUMBER_DESC<span class="type-signature"></span></h4>
-
-    
-</dt>
-<dd>
-    
-    <div class="description">
-        Array sort compare function. Sort number desc
-    </div>
-    
-
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-        <h5>Example</h5>
-        
-    <pre class="sunlight-highlight-javascript">var scores = [1, 10, 2, 21];scores.sort(_.M.SORT_NUMBER_DESC); // [21, 10, 2, 1]</pre>
-
-
-    
-</dd>
-
-        
-            
-<hr>
-<dt class="name" id="VERSION">
-    <h4><span class="type-signature">&lt;constant> </span>VERSION<span class="type-signature"> :string</span></h4>
-
-    
-</dt>
-<dd>
-    
-    <div class="description">
-        MaDnhJS version
-    </div>
-    
-
-    
-        <h5>Type:</h5>
-        <ul>
-            <li>
-                
-<span class="param-type">string</span>
-
-
-
-            </li>
-        </ul>
-    
-
-    
-<dl class="details">
-    
-
-	
-
-	
-
-	
-
-    
-
-    
-
-    
-
-    
-
-	
-
-	
-
-	
-
-	
-
-	
-
-
-
-	
-
-	
-
-	
-
-	
-</dl>
-
-
-    
-</dd>
-
-        </dl>
-    
-
-    
-
-    
-        <h3 class="subsection-title">Type Definitions</h3>
-
-        <dl>
-                
 <hr>
 <dt>
-    <h4 class="name" id="loopCallback"><span class="type-signature"></span>loopCallback(value, key, object)</h4>
+    <h4 class="name" id="~flag"><span class="type-signature">&lt;inner> </span>flag(name, is_active, prefix, suffix)</h4>
     
     
 </dt>
@@ -389,7 +175,7 @@
 
     
     <div class="description">
-        Loop callback. Useful in _.each, _.map, _.omit,...
+        Set a flag
     </div>
     
 
@@ -424,10 +210,16 @@
 
         <tr>
             
-                <td class="name"><code>value</code></td>
+                <td class="name"><code>name</code></td>
             
 
             <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
             
             </td>
 
@@ -435,17 +227,23 @@
 
             
 
-            <td class="description last">Item value</td>
+            <td class="description last"></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>key</code></td>
+                <td class="name"><code>is_active</code></td>
             
 
             <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
             
             </td>
 
@@ -453,17 +251,23 @@
 
             
 
-            <td class="description last">Item name/index</td>
+            <td class="description last">Flag status, default is True</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>object</code></td>
+                <td class="name"><code>prefix</code></td>
             
 
             <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
             
             </td>
 
@@ -471,7 +275,31 @@
 
             
 
-            <td class="description last">object of items</td>
+            <td class="description last">Add prefix to flag name</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>suffix</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Add suffix to flag name</td>
         </tr>
 
     
@@ -515,16 +343,133 @@
 	
 
 	
-	<dt class="tag-see method-doc-label method-doc-details-label">See:</dt>
-	<dd class="tag-see">
-		<ul>
-			<li><a href="http://underscorejs.org/#each">http://underscorejs.org/#each</a></li>
-			
-			<li><a href="http://underscorejs.org/#map">http://underscorejs.org/#map</a></li>
-			
-			<li><a href="http://underscorejs.org/#omit">http://underscorejs.org/#omit</a></li>
-			</ul>
-	</dd>
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="~flags"><span class="type-signature">&lt;inner> </span>flags(detail)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Get flags
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>detail</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">If true then return flags with detail of it, else only return flags name</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
 	
 
 	
@@ -544,21 +489,486 @@
     
 
     
-        <h5>Examples</h5>
+</dd>
+
         
-        <p class="code-caption">Alerts each number value in turn...</p>
+            
+<hr>
+<dt>
+    <h4 class="name" id="~get"><span class="type-signature">&lt;inner> </span>get(name)</h4>
     
-    <pre class="sunlight-highlight-javascript">_.each([1, 2, 3], alert);_.each({one: 1, two: 2, three: 3}, alert);</pre>
-
-        <p class="code-caption">Log to console each number value in turn...</p>
     
-    <pre class="sunlight-highlight-javascript">var logger = function(item, key, object){ console.log(key, &#x27;=&gt;&#x27;, item, &#x27;&lt;------ Object&#x27;, object);};_.each([1, 2, 3], logger);_.each({one: 1, two: 2, three: 3}, logger);</pre>
+</dt>
+<dd>
 
+    
+    <div class="description">
+        Get flag by name
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>name</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">*</span>
+|
+
+<span class="param-type">boolean</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
 
     
 </dd>
 
-            </dl>
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="~has"><span class="type-signature">&lt;inner> </span>has(name)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Check if a flag is exists
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>name</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt>
+    <h4 class="name" id="~isFlagged"><span class="type-signature">&lt;inner> </span>isFlagged(name, prefix, suffix)</h4>
+    
+    
+</dt>
+<dd>
+
+    
+    <div class="description">
+        Check if a flag is exists
+    </div>
+    
+
+    
+
+    
+
+    
+    
+        <h5>Parameters:</h5>
+        
+
+<table class="params table table-striped">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>name</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>prefix</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Add prefix to flag name</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>suffix</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Add suffix to flag name</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <h5>Returns:</h5>
+    
+            
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">*</span>
+
+
+
+    </dd>
+</dl>
+
+
+        
+
+    
+</dd>
+
+        </dl>
+    
+
     
 
     

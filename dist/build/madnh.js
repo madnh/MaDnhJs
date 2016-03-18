@@ -1,17 +1,8 @@
 /**
- * MaDnhJS - An UnderscoreJS extension
- * -------
- * @version 1.0.0
- * @author Do Danh Manh
- * @email dodanhmanh@gmail.com
- * @licence MIT
- */
-
-/**
+ *
  * @namespace _.M
  */
 ;(function (_) {
-
     /*
      |--------------------------------------------------------------------------
      | Type Definitions
@@ -42,7 +33,7 @@
 
     /*
      |--------------------------------------------------------------------------
-     | Main content
+     | Core
      |--------------------------------------------------------------------------
      */
 
@@ -53,60 +44,6 @@
      */
     var version = '1.0.0';
 
-
-    /**
-     * @module Core
-     * @type {{}}
-     * @method loop
-     * @method removeItem
-     * @method nextID
-     * @method currentID
-     * @method className
-     * @method contentType
-     * @method isInstanceOf
-     * @method isPrimitiveType
-     * @method asArray
-     * @method asObject
-     * @method minMax
-     * @method randomString
-     * @method setup
-     * @method firstNotEmpty
-     * @method repeat
-     * @method span
-     * @method left
-     * @method right
-     * @method padNumber
-     * @method isNumeric
-     * @method isInteger
-     * @method isMultiple
-     * @method isOdd
-     * @method isEven
-     * @method oneOf
-     * @method capitalize
-     * @method isLikeString
-     * @method reverseString
-     * @method isBlank
-     * @method nowSecond
-     * @method escapeURL
-     * @method unescapeURL
-     * @method escapeHTML
-     * @method valueAt
-     * @method chunk
-     * @method chunks
-     * @method toggle
-     * @method defineObject
-     * @method isDefinedConstant
-     * @method defineConstant
-     * @method inherit
-     * @method callFunc
-     * @method async
-     * @method logArgs
-     * @method logCb
-     * @method warnArgs
-     * @method warnCb
-     * @method errorArgs
-     * @method errorCb
-     */
     var M = {};
     Object.defineProperty(M, 'VERSION', {
         value: version
@@ -1179,20 +1116,19 @@
          */
         SORT_NUMBER_DESC: sortNumberDescCallback
     });
-
-
-    /*
-     |--------------------------------------------------------------------------
-     | FLAG
-     |--------------------------------------------------------------------------
-     |
-     | Flag manager
-     |
-     */
-
+})(_);
+/**
+ * @module _.M.FLAG
+ * @memberOf _.M
+ */
+;(function(_){
     var _flags = {};
 
-    M.FLAG = M.defineObject({
+    /**
+     * @lends _.M.FLAG
+     * @type {{}}
+     */
+    _.M.FLAG = _.M.defineObject({
         /**
          * Check if a flag is exists
          * @param {string} name
@@ -1214,13 +1150,13 @@
             } else {
                 is_active = Boolean(is_active);
             }
-            if (!(_.isString(prefix) || M.isNumeric(prefix))) {
+            if (!(_.isString(prefix) || _.M.isNumeric(prefix))) {
                 prefix = '';
             } else {
                 prefix += '';
             }
 
-            if (!(_.isString(suffix) || M.isNumeric(suffix))) {
+            if (!(_.isString(suffix) || _.M.isNumeric(suffix))) {
                 suffix = '';
             } else {
                 suffix += '';
@@ -1265,13 +1201,13 @@
         isFlagged: function (name, prefix, suffix) {
             var result, self = this;
 
-            if (!(_.isString(prefix) || M.isNumeric(prefix))) {
+            if (!(_.isString(prefix) || _.M.isNumeric(prefix))) {
                 prefix = '';
             } else {
                 prefix += '';
             }
 
-            if (!(_.isString(suffix) || M.isNumeric(suffix))) {
+            if (!(_.isString(suffix) || _.M.isNumeric(suffix))) {
                 suffix = '';
             } else {
                 suffix += '';
@@ -1296,13 +1232,13 @@
             var thisFunc = arguments.callee;
             var self = this;
 
-            if (!(_.isString(prefix) || M.isNumeric(prefix))) {
+            if (!(_.isString(prefix) || _.M.isNumeric(prefix))) {
                 prefix = '';
             } else {
                 prefix += '';
             }
 
-            if (!(_.isString(suffix) || M.isNumeric(suffix))) {
+            if (!(_.isString(suffix) || _.M.isNumeric(suffix))) {
                 suffix = '';
             } else {
                 suffix += '';
@@ -1322,11 +1258,15 @@
         }
 
     });
-
-
+})(_);
+/**
+ * @module _.M.BaseClass
+ * @memberOf _.M
+ */
+;(function (_) {
     /**
      * Base class
-     * @class
+     * @class _.M.BaseClass
      * @property {string} type_prefix Prefix of class, use as prefix of instance ID, default is class name
      * @property {string} id Instance ID
      */
@@ -1336,28 +1276,26 @@
         }
 
         if (!this.id) {
-            this.id = M.nextID(this.type_prefix, true);
+            this.id = _.M.nextID(this.type_prefix, true);
         }
     }
 
-    /*
-     |--------------------------------------------------------------------------
-     | CONTENT MANAGER
-     |--------------------------------------------------------------------------
-     | Store data by key and data type. Support add, check exists, get and delete
-     |
-     |
-     */
-
-    M.defineConstant({
+    _.M.BaseClass = BaseClass;
+})(_);
+/**
+ * Store data by key and data type. Support add, check exists, get and delete
+ * @module _.M.ContentManager
+ * @memberOf _.M
+ */
+;(function (_) {
+    
+    _.M.defineConstant({
         /**
-         * @memberOf ContentManager
          * @constant {string}
          * @default
          */
         CONTENT_TYPE_STRING: 'string',
         /**
-         * @memberOf ContentManager
          * @constant {string}
          * @default
          */
@@ -1369,25 +1307,21 @@
          */
         CONTENT_TYPE_BOOLEAN: 'boolean',
         /**
-         * @memberOf ContentManager
          * @constant {string}
          * @default
          */
         CONTENT_TYPE_ARRAY: 'array',
         /**
-         * @memberOf ContentManager
          * @constant {string}
          * @default
          */
         CONTENT_TYPE_FUNCTION: 'function',
         /**
-         * @memberOf ContentManager
          * @constant {string}
          * @default
          */
         CONTENT_TYPE_OBJECT: 'object',
         /**
-         * @memberOf ContentManager
          * @constant {string}
          * @default
          */
@@ -1409,7 +1343,7 @@
     }
 
     /**
-     * @class
+     * @class _.M.ContentManager
      */
     function ContentManager() {
         this._contents = {};
@@ -1444,7 +1378,7 @@
             self = this;
 
         if (!type) {
-            type = M.contentType(content);
+            type = _.M.contentType(content);
         }
         if (this._contents.hasOwnProperty(type)) {
             Object.keys(this._contents[type]).forEach(function (key) {
@@ -1473,7 +1407,7 @@
         if (!types) {
             types = Object.keys(this._contents);
         }
-        types = M.asArray(types);
+        types = _.M.asArray(types);
 
 
         types.forEach(function (type) {
@@ -1550,10 +1484,10 @@
      */
     ContentManager.prototype.add = function (content, meta, type) {
         if (!type) {
-            type = M.contentType(content);
+            type = _.M.contentType(content);
         }
 
-        var key = M.nextID('content_' + type + '_', true);
+        var key = _.M.nextID('content_' + type + '_', true);
 
         if (!this._contents.hasOwnProperty(type)) {
             this._contents[type] = {};
@@ -1575,7 +1509,7 @@
      */
     ContentManager.prototype.addUnique = function (content, meta, type) {
         if (!type) {
-            type = M.contentType(content);
+            type = _.M.contentType(content);
         }
 
         var positions = this.contentPositions(content, type);
@@ -1636,7 +1570,7 @@
     ContentManager.prototype.remove = function (keys) {
         var removes = [], self = this;
 
-        M.asArray(keys).forEach(function (key) {
+        _.M.asArray(keys).forEach(function (key) {
             var type = getContentTypeFromKey(key);
 
             if (false !== type && self._contents.hasOwnProperty(type)) {
@@ -1842,63 +1776,131 @@
         return status;
     };
 
-
-    M.ContentManager = ContentManager;
-
-
-    /*
-     |--------------------------------------------------------------------------
-     | PRIORITY
-     |--------------------------------------------------------------------------
-     |
-     | Priority class
-     |
+    /**
+     *
+     * @type {ContentManager}
      */
+    _.M.ContentManager = ContentManager;
 
-    M.defineConstant({
+})(_);
+/**
+ * Priority
+ * @module _.M.Priority
+ * @memberOf _.M
+ * @requires _.M.ContentManager
+ */
+;(function (_) {
+
+    _.M.defineConstant({
+        /**
+         * @constant {number}
+         * @default
+         */
         PRIORITY_HIGHEST: 100,
+        /**
+         * @constant {number}
+         * @default
+         */
         PRIORITY_HIGH: 250,
+        /**
+         * @constant {number}
+         * @default
+         */
         PRIORITY_DEFAULT: 500,
+        /**
+         * @constant {number}
+         * @default
+         */
         PRIORITY_LOW: 750,
+        /**
+         * @constant {number}
+         * @default
+         */
         PRIORITY_LOWEST: 1000,
+        /**
+         * @constant {number}
+         * @default
+         */
         PRIORITY_LEVEL_1: 100,
+        /**
+         * @constant {number}
+         * @default
+         */
         PRIORITY_LEVEL_2: 200,
+        /**
+         * @constant {number}
+         * @default
+         */
         PRIORITY_LEVEL_3: 300,
+        /**
+         * @constant {number}
+         * @default
+         */
         PRIORITY_LEVEL_4: 400,
+        /**
+         * @constant {number}
+         * @default
+         */
         PRIORITY_LEVEL_5: 500,
+        /**
+         * @constant {number}
+         * @default
+         */
         PRIORITY_LEVEL_6: 600,
+        /**
+         * @constant {number}
+         * @default
+         */
         PRIORITY_LEVEL_7: 700,
+        /**
+         * @constant {number}
+         * @default
+         */
         PRIORITY_LEVEL_8: 800,
+        /**
+         * @constant {number}
+         * @default
+         */
         PRIORITY_LEVEL_9: 900,
+        /**
+         * @constant {number}
+         * @default
+         */
         PRIORITY_LEVEL_10: 1000
     });
 
     /**
      * Manage contents with priority
-     * @class
-     * @property {ContentManager} content_manager Content Manager
+     * @class _.M.Priority
      */
     function Priority() {
         /**
          * Data holder
-         * @type {ContentManager}
+         * @type {_.M.ContentManager}
+         * @private
          */
         this._content_manager = new ContentManager();
-
+        /**
+         *
+         * @type {{}}
+         * @private
+         */
         this._priorities = {};
     }
 
     /**
      * Check if a priority is exists
-     * @function
      * @param priority
      * @returns {boolean}
      */
     Priority.prototype.hasPriority = function (priority) {
         return this._priorities.hasOwnProperty(priority);
     };
-
-
+    /**
+     * Check if a content has exists
+     * @param {*} content
+     * @returns {boolean}
+     */
     Priority.prototype.hasContent = function (content) {
         return this._content_manager.hasContent(content, 'priority')
     };
@@ -1924,13 +1926,13 @@
     /**
      * Add content
      * @param {*} content
-     * @param {number} [priority = M.PRIORITY_DEFAULT]
+     * @param {number} [priority = _.M.PRIORITY_DEFAULT]
      * @param {*} [meta] Content meta info
      * @returns {(string|boolean)} content key
      */
     Priority.prototype.addContent = function (content, priority, meta) {
         if (_.isUndefined(priority)) {
-            priority = M.PRIORITY_DEFAULT;
+            priority = _.M.PRIORITY_DEFAULT;
         }
 
         var key = this._content_manager.add(content, meta, 'priority');
@@ -1964,6 +1966,11 @@
         return this.removeKey(keys);
     };
 
+    /**
+     * Remove content by keys
+     * @param {string} key
+     * @returns {*} Removed content
+     */
     Priority.prototype.removeKey = function (key) {
         var self = this, removed;
 
@@ -1986,7 +1993,7 @@
             self = this,
             raw_contents = this._content_manager.getType('priority');
 
-        priority_keys.sort(M.SORT_NUMBER);
+        priority_keys.sort(_.M.SORT_NUMBER);
 
         _.each(priority_keys, function (priority) {
             var content_picked = _.pick(raw_contents, self._priorities[priority]);
@@ -2007,27 +2014,21 @@
      *
      * @type {Priority}
      */
-    M.Priority = Priority;
-
-
-    /*
-     |--------------------------------------------------------------------------
-     | WAITER
-     |--------------------------------------------------------------------------
-     |
-     | Waiter manager
-     |
-     */
-
-
+    _.M.Priority = Priority;
+})(_);
+/**
+ * Callback listener system
+ * @module _.M.WAITER
+ * @memberOf _.M
+ */
+;(function (_) {
     var _waiters = {};
+
     /**
-     * Callback listener system
-     * @module WAITER
-     * @memberOf _.M
+     * @lends _.M.WAITER
      * @type {{}}
      */
-    M.WAITER = M.defineObject({
+    _.M.WAITER = _.M.defineObject({
         /**
          * Check if a callback is exists
          * @param {string} waiterKey
@@ -2044,7 +2045,7 @@
          * @returns {(string|number)}
          */
         add: function (runner, once, description) {
-            var key = M.nextID('waiter_key_', true);
+            var key = _.M.nextID('waiter_key_', true);
 
             _waiters[key] = {
                 runner: runner,
@@ -2067,7 +2068,7 @@
             var self = this;
 
             window[key] = function () {
-                var args = [key].concat([slice.call(arguments)]);
+                var args = [key].concat([Array.prototype.slice.call(arguments)]);
                 self.run.apply(self, args);
             };
 
@@ -2075,7 +2076,8 @@
         },
 
         /**
-         * Remove keys
+         * Remove keys by arguments
+         * @returns {Array} Removed waiters
          */
         remove: function () {
             var removed = [];
@@ -2105,7 +2107,7 @@
             if (this.has(waiterKey)) {
                 var waiter = _waiters[waiterKey];
 
-                result = waiter.runner.apply(thisArg || null, M.asArray(args));
+                result = waiter.runner.apply(thisArg || null, _.M.asArray(args));
                 if (waiter.once) {
                     this.remove(waiterKey);
                 }
@@ -2130,38 +2132,46 @@
             return Object.keys(_waiters);
         }
     });
-
-
-    /*
-     |--------------------------------------------------------------------------
-     | EVENT EMITTER
-     |--------------------------------------------------------------------------
-     */
-
-    M.defineConstant({
+})(_);
+/**
+ * @module _.M.EventEmitter
+ * @memberOf _.M
+ */
+;(function (_) {
+    _.M.defineConstant({
+        /**
+         * Default limit event't listeners
+         * @constant {number}
+         * @default
+         */
         EVENT_EMITTER_EVENT_LIMIT_LISTENERS: 10,
+        /**
+         * Unlimit event's listeners
+         * @constant {number}
+         * @default
+         */
         EVENT_EMITTER_EVENT_UNLIMITED: -1
 
     });
 
     /**
      * Event management system
-     * @class
-     * @extends BaseClass
+     * @class _.M.EventEmitter
+     * @extends _.M.BaseClass
      */
     function EventEmitter(limit) {
-        BaseClass.call(this);
+        _.M.BaseClass.call(this);
 
         /**
          *
-         * @type {{M.Priority}}
+         * @type {{_.M.Priority}}
          * @private
          */
         this._events = {};
 
         this._event_emitted = {};
 
-        this._limit = (limit || M.EVENT_EMITTER_EVENT_LIMIT_LISTENERS) + 0;
+        this._limit = (limit || _.M.EVENT_EMITTER_EVENT_LIMIT_LISTENERS) + 0;
 
         this._event_followers = {};
 
@@ -2200,8 +2210,7 @@
 
     /**
      * Alias of resetEvents
-     * @alias resetEvents
-     * @methodOf EventEmitter
+     * @see resetEvents
      */
     EventEmitter.prototype.reset = function (event) {
         return this.resetEvents(event);
@@ -2250,7 +2259,7 @@
      * Set unlimited for event listeners
      */
     EventEmitter.prototype.unlimited = function () {
-        this._limit = M.EVENT_EMITTER_EVENT_UNLIMITED;
+        this._limit = _.M.EVENT_EMITTER_EVENT_UNLIMITED;
     };
 
     /**
@@ -2258,7 +2267,7 @@
      * @param {string} event Event name
      * @param {(string|function|Array)} listeners Event listener
      * @param {object} option Option is object with keys:
-     * priority (M.PRIORITY_DEFAULT),
+     * priority (_.M.PRIORITY_DEFAULT),
      * times (-1 - forever) - call times,
      * context (this event emitter instance) - context for callback,
      * key (auto increment of key: event_emitter_key_) - listener key. Useful when remove listener
@@ -2266,26 +2275,26 @@
      */
     EventEmitter.prototype.addListener = function (event, listeners, option) {
         var self = this;
-        if (M.isNumeric(option)) {
+        if (_.M.isNumeric(option)) {
             option = {
                 priority: option
             }
         }
 
         option = _.defaults(option || {}, {
-            priority: M.PRIORITY_DEFAULT,
+            priority: _.M.PRIORITY_DEFAULT,
             times: -1,
             context: null,
             key: null,
             async: false
         });
-        listeners = M.asArray(listeners);
+        listeners = _.M.asArray(listeners);
         if (!this._events.hasOwnProperty(event)) {
             this._events[event] = {
-                priority: new M.Priority(),
+                priority: new _.M.Priority(),
                 key_mapped: {}
             };
-        } else if (this._limit != M.EVENT_EMITTER_EVENT_UNLIMITED) {
+        } else if (this._limit != _.M.EVENT_EMITTER_EVENT_UNLIMITED) {
             var status = this._events[event].priority.status();
 
             if (status.contents + listeners.length > this._limit) {
@@ -2299,10 +2308,10 @@
 
         if (listeners.length) {
             if (option.key === null) {
-                option.key = _.M.nextID('event_emitter_listener_', true);
+                option.key = _._.M.nextID('event_emitter_listener_', true);
             }
             var keys = [];
-            M.loop(listeners, function (listener) {
+            _.M.loop(listeners, function (listener) {
                 if (option.context) {
                     listener = listener.bind(option.context);
                 }
@@ -2329,7 +2338,7 @@
     };
 
     /**
-     * @see {@link addListener}
+     * @see addListener
      */
     EventEmitter.prototype.on = function (event, listener, option) {
         return this.addListener.apply(this, arguments);
@@ -2343,7 +2352,7 @@
      * @returns {string}
      */
     EventEmitter.prototype.addOnceListener = function (event, listener, option) {
-        if (M.isNumeric(option)) {
+        if (_.M.isNumeric(option)) {
             option = {
                 priority: option,
                 times: 1
@@ -2359,20 +2368,24 @@
     };
 
     /**
-     * @see {@link addOnceListener}
+     * @see addOnceListener
      */
     EventEmitter.prototype.once = function (event, listener, option) {
         return this.addOnceListener.apply(this, arguments);
     };
 
+    /**
+     * Add listeners by object
+     * @param {{}} events Object of events: object key is name of event, object value is array of events
+     */
     EventEmitter.prototype.addListeners = function (events) {
         var events_arr = [], self = this;
 
         if (_.isObject(events)) {
             _.each(events, function (event_cbs, event_name) {
-                event_cbs = M.asArray(event_cbs);
+                event_cbs = _.M.asArray(event_cbs);
                 _.each(event_cbs, function (event_cb) {
-                    event_cb = M.asArray(event_cb);
+                    event_cb = _.M.asArray(event_cb);
                     events_arr.push({
                         name: event_name,
                         cb: event_cb[0],
@@ -2397,7 +2410,7 @@
         var self = this,
             emitted = false;
 
-        events = M.asArray(events);
+        events = _.M.asArray(events);
 
         for (var i in events) {
             if (events.hasOwnProperty(i)) {
@@ -2411,9 +2424,9 @@
                         emitted = true;
                         _.each(listeners, function (listener) {
                             if (listener.meta.async) {
-                                M.async(listener.content, data, listener.meta.context || self);
+                                _.M.async(listener.content, data, listener.meta.context || self);
                             } else {
-                                M.callFunc(listener.meta.context || self, listener.content, data);
+                                _.M.callFunc(listener.meta.context || self, listener.content, data);
                             }
                         });
                     }
@@ -2442,9 +2455,9 @@
                         }
 
                         if (eventEmitterAttached.async) {
-                            M.async(cb, [self.id, event, data], self);
+                            _.M.async(cb, [self.id, event, data], self);
                         } else {
-                            M.callFunc(self, cb, [self.id, event, data]);
+                            _.M.callFunc(self, cb, [self.id, event, data]);
                         }
 
                     });
@@ -2455,6 +2468,7 @@
 
     /**
      * Alias of 'emitEvent'
+     * @see emitEvent
      */
     EventEmitter.prototype.emit = function () {
         return this.emitEvent.apply(this, arguments);
@@ -2463,13 +2477,13 @@
     /**
      * Remove listener by key
      * @param {string|Function|Array} key_or_listener Listener key or listener it self
-     * @param {number} [priority=M.PRIORITY_DEFAULT]
+     * @param {number} [priority=_.M.PRIORITY_DEFAULT]
      */
     EventEmitter.prototype.removeListener = function (key_or_listener, priority) {
         var self = this;
-        key_or_listener = M.asArray(key_or_listener);
+        key_or_listener = _.M.asArray(key_or_listener);
         _.each(key_or_listener, function (remover) {
-            if (M.isLikeString(remover)) {
+            if (_.M.isLikeString(remover)) {
                 _.each(Object.keys(self._events), function (event_name) {
                     if (_.has(self._events[event_name].key_mapped, remover)) {
                         self._events[event_name].priority.removeKey(self._events[event_name].key_mapped[remover]);
@@ -2481,7 +2495,7 @@
                     }
                 });
             } else if (_.isFunction(remover)) {
-                priority = priority || M.PRIORITY_DEFAULT;
+                priority = priority || _.M.PRIORITY_DEFAULT;
                 _.each(Object.keys(self._events), function (event_name) {
                     self._events[event_name].priority.removeContent(remover, priority);
 
@@ -2496,6 +2510,7 @@
     };
 
     /**
+     * Alias of `removeListener`
      * @see removeListener
      */
     EventEmitter.prototype.off = function () {
@@ -2511,7 +2526,7 @@
      * @returns {boolean}
      */
     EventEmitter.prototype.attach = function (eventEmitter, only, excepts, async) {
-        if (M.isEventEmitter(eventEmitter)) {
+        if (_.M.isEventEmitter(eventEmitter)) {
             if (!this._event_followers.hasOwnProperty(eventEmitter.id)) {
                 this._event_followers[eventEmitter.id] = {
                     target: eventEmitter,
@@ -2523,7 +2538,7 @@
             return true;
         }
 
-        throw new Error('Invalid EventEmitter instance');
+        throw new Error('Invalid _.M.EventEmitter instance');
     };
     /**
      * Attach other event emitter to this. Notice sync
@@ -2544,15 +2559,15 @@
      * @returns {boolean}
      */
     EventEmitter.prototype.attachTo = function (eventEmitter, only, excepts, hard) {
-        if (!M.isEventEmitter(eventEmitter)) {
-            throw new Error('Invalid EventEmitter instance');
+        if (!_.M.isEventEmitter(eventEmitter)) {
+            throw new Error('Invalid _.M.EventEmitter instance');
         }
         if (!this._event_following.hasOwnProperty(eventEmitter.id)) {
             this._event_following[eventEmitter.id] = {
                 id: eventEmitter.id,
                 type: eventEmitter.constructor.name,
-                only: M.asArray(only || []),
-                excepts: M.asArray(excepts || [])
+                only: _.M.asArray(only || []),
+                excepts: _.M.asArray(excepts || [])
             };
             this.emitEvent('attached', [eventEmitter, only, excepts]);
             if (hard) {
@@ -2565,11 +2580,10 @@
     };
 
     /**
-     * Attach this to other event emitter instance. Notice sync
+     * Hard Attach this to other event emitter instance. Notice sync
      * @param {EventEmitter} eventEmitter
      * @param {Array} [only]
      * @param {Array} [excepts]
-     * @param {boolean} [hard=false] Hard attach to other, other notice will call immediate. Default is false
      * @returns {boolean}
      */
     EventEmitter.prototype.attachHardTo = function (eventEmitter, only, excepts) {
@@ -2623,7 +2637,7 @@
                 ];
 
                 var mimic = null;
-                M.loop([eventName, info.type + '.*', info.type + '.' + eventName], function (mimic_event_name) {
+                _.M.loop([eventName, info.type + '.*', info.type + '.' + eventName], function (mimic_event_name) {
                     if (-1 != self._event_mimics.indexOf(mimic_event_name)) {
                         mimic = mimic_event_name;
                         self.emitEvent(eventName, data);
@@ -2644,7 +2658,7 @@
      * @returns {boolean}
      */
     EventEmitter.prototype.detach = function (eventEmitter) {
-        if (M.isEventEmitter(eventEmitter)) {
+        if (_.M.isEventEmitter(eventEmitter)) {
             if (this._event_followers.hasOwnProperty(eventEmitter.id)) {
                 this.emitEvent('detach', [eventEmitter]);
                 delete this._event_followers[eventEmitter.id];
@@ -2654,7 +2668,7 @@
             return true;
         }
 
-        throw new Error('Invalid EventEmitter instance');
+        throw new Error('Invalid _.M.EventEmitter instance');
     };
 
     /**
@@ -2663,7 +2677,7 @@
      * @returns {boolean}
      */
     EventEmitter.prototype.detachFrom = function (eventEmitter) {
-        if (M.isEventEmitter(eventEmitter)) {
+        if (_.M.isEventEmitter(eventEmitter)) {
             if (this._event_following.hasOwnProperty(eventEmitter.id)) {
                 this.emitEvent('detached', [eventEmitter]);
                 delete this._event_following[eventEmitter.id];
@@ -2673,18 +2687,21 @@
             return true;
         }
 
-        throw new Error('Invalid EventEmitter instance');
+        throw new Error('Invalid _.M.EventEmitter instance');
     };
 
-
-    M.EventEmitter = EventEmitter;
+    /**
+     *
+     * @type {EventEmitter}
+     */
+    _.M.EventEmitter = EventEmitter;
 
     /**
      * Check if object is instance of Event Emitter
      * @param {object} object
      * @returns {boolean}
      */
-    M.isEventEmitter = function (object) {
+    _.M.isEventEmitter = function (object) {
         if (_.isObject(object)) {
             return object instanceof EventEmitter;
         }
@@ -2692,32 +2709,55 @@
         return false;
     };
 
-    /*
-     |--------------------------------------------------------------------------
-     | CACHE
-     |--------------------------------------------------------------------------
-     |
-     | Cache manager
-     |
-     */
+})(_);
 
-    M.defineConstant({
-        /** @constant */
-        CACHE_MIN: 10,//10 second
-        /** @constant*/
-        CACHE_TINY: 60,//1 minute
-        /** @constant*/
-        CACHE_SHORT: 5 * 60,//5 minutes
-        /** @constant*/
-        CACHE_MEDIUM: 10 * 60,//10 minutes
-        /** @constant */
-        CACHE_LONG: 60 * 60,//1 hour
-        /** @constant*/
-        CACHE_FOREVER: true //forever
+/**
+ * Cache management system
+ * @module _.M.CACHE
+ * @memberOf _.M
+ */
+;(function (_) {
+    _.M.defineConstant({
+        /**
+         * 10 seconds
+         * @constant {number}
+         * @default
+         */
+        CACHE_MIN: 10,
+        /**
+         * 1 minute
+         * @constant {number}
+         * @default
+         */
+        CACHE_TINY: 60,
+        /**
+         * 5 minutes
+         * @constant {number}
+         * @default
+         */
+        CACHE_SHORT: 5 * 60,
+        /**
+         * 10 minutes
+         * @constant {number}
+         * @default
+         */
+        CACHE_MEDIUM: 10 * 60,
+        /**
+         * 1 hour
+         * @constant {number}
+         * @default
+         */
+        CACHE_LONG: 60 * 60,
+        /**
+         * Forever
+         * @constant {number}
+         * @default
+         */
+        CACHE_FOREVER: true
     });
 
     var _cache_data = {};
-    var _clean_interval_time = M.CACHE_SHORT;
+    var _clean_interval_time = _.M.CACHE_SHORT;
     var _clean_interval;
 
     /**
@@ -2729,7 +2769,7 @@
     function _has_cache(name) {
         if (_.has(_cache_data, name)) {
             //-1 to ensure this cache is valid when get right after check
-            if (_cache_data[name].expire_time === true || (_cache_data[name].expire_time - 1) > M.nowSecond()) {
+            if (_cache_data[name].expire_time === true || (_cache_data[name].expire_time - 1) > _.M.nowSecond()) {
                 return true;
             }
             _expire_cache(name);
@@ -2745,13 +2785,13 @@
      * @private
      */
     function _set_cache(name, value, live_time) {
-        if (_.isUndefined(live_time) || !M.isNumeric(Number(live_time))) {
-            live_time = M.CACHE_MEDIUM;
+        if (_.isUndefined(live_time) || !_.M.isNumeric(Number(live_time))) {
+            live_time = _.M.CACHE_MEDIUM;
         }
         _cache_data[name] = {
             value: value,
             live_time: live_time,
-            expire_time: live_time === true ? true : M.nowSecond() + live_time
+            expire_time: live_time === true ? true : _.M.nowSecond() + live_time
         }
     }
 
@@ -2774,7 +2814,7 @@
      * @private
      */
     function _cache_collection_change(name, value, addMode) {
-        var live_time = M.CACHE_MEDIUM;
+        var live_time = _.M.CACHE_MEDIUM;
         var new_value = [];
         if (_.isUndefined(addMode)) {
             addMode = true;
@@ -2811,7 +2851,7 @@
      * @private
      */
     function _cache_number_change(name, value, addMode) {
-        if (_.isUndefined(value) || !M.isNumeric(Number(value))) {
+        if (_.isUndefined(value) || !_.M.isNumeric(Number(value))) {
             value = 1;
         }
         if (_.isUndefined(addMode)) {
@@ -2827,7 +2867,7 @@
             var old_detail = _cache_data[name];
             var old_value = Number(old_detail.value);
 
-            if (!M.isNumeric(old_value)) {
+            if (!_.M.isNumeric(old_value)) {
                 old_value = 0;
             }
             old_value += value;
@@ -2842,7 +2882,7 @@
      */
     function _clean_cache() {
         var removes = [];
-        var now_second = M.nowSecond();
+        var now_second = _.M.nowSecond();
         _.each(_cache_data, function (data, name) {
             if (data.expire_time !== true && data.expire_time <= now_second) {
                 removes.push(name);
@@ -2855,16 +2895,15 @@
     _clean_interval = setInterval(_clean_cache, _clean_interval_time * 1000);
 
     /**
-     * Cache management system
-     * @module CACHE
-     * @memberOf _.M
+     * @lends _.M.CACHE
+     * @type {{}}
      */
-    M.CACHE = M.defineObject({
+    _.M.CACHE = _.M.defineObject({
         /**
          * Add cache
          * @param {string} name
          * @param {*} value
-         * @param {number} [live_time = M.CACHE_MEDIUM]
+         * @param {number} [live_time = _.M.CACHE_MEDIUM]
          */
         set: function (name, value, live_time) {
             _set_cache(name, value, live_time);
@@ -2885,7 +2924,7 @@
          */
         get: function (name) {
             if (_.has(_cache_data, name)) {
-                if (_cache_data[name].expire_time === true || _cache_data[name].expire_time > M.nowSecond()) {
+                if (_cache_data[name].expire_time === true || _cache_data[name].expire_time > _.M.nowSecond()) {
                     return _cache_data[name].value;
                 }
                 delete _cache_data[name];
@@ -2899,7 +2938,7 @@
          */
         touch: function (name, live_time) {
             if (this.has(name) && _cache_data[name].expire_time !== true) {
-                if (!M.isNumeric(live_time)) {
+                if (!_.M.isNumeric(live_time)) {
                     live_time = _cache_data[name].live_time;
                 }
                 _cache_data[name].expire_time += live_time;
@@ -2917,7 +2956,7 @@
              * @type {({}|Array)}
              */
             var result;
-            var now_second = M.nowSecond();
+            var now_second = _.M.nowSecond();
 
             /**
              * @type {function}
@@ -2955,7 +2994,7 @@
          * Manual delete expired caches
          */
         expire: function () {
-            _expire_cache(slice.apply(arguments));
+            _expire_cache(Array.prototype.slice.apply(arguments));
         },
 
         /**
@@ -2964,8 +3003,8 @@
          * @returns {number}
          */
         cleanIntervalTime: function (time) {
-            if (M.isNumeric(time)) {
-                _clean_interval_time = M.minMax(parseInt(time), M.CACHE_MIN, M.CACHE_LONG);
+            if (_.M.isNumeric(time)) {
+                _clean_interval_time = _.M.minMax(parseInt(time), _.M.CACHE_MIN, _.M.CACHE_LONG);
                 clearInterval(_clean_interval);
                 _clean_interval = setInterval(_clean_cache, _clean_interval_time * 1000);
             }
@@ -3025,20 +3064,20 @@
         }
     });
 
-
-    /*
-     |--------------------------------------------------------------------------
-     | App
-     |--------------------------------------------------------------------------
-     */
-
+})(_);
+/**
+ * Application
+ * @module _.M.App
+ * @memberOf _.M
+ */
+;(function(_){
     /**
      *
-     * @class
-     * @extends EventEmitter
+     * @class _.M.App
+     * @extends _.M.EventEmitter
      */
     function App() {
-        EventEmitter.call(this);
+        _.M.EventEmitter.call(this);
 
         this._event_privates = ['init'];
 
@@ -3047,7 +3086,7 @@
         this.plugins = {};
     }
 
-    M.inherit(App, EventEmitter);
+    _.M.inherit(App, _.M.EventEmitter);
 
     /**
      * Option this app
@@ -3055,7 +3094,7 @@
      * @param value
      */
     App.prototype.option = function (option, value) {
-        this.options = M.setup.apply(M, [this.options].concat(Array.prototype.slice.apply(arguments)));
+        this.options = _.M.setup.apply(_.M, [this.options].concat(Array.prototype.slice.apply(arguments)));
     };
 
     /**
@@ -3091,7 +3130,7 @@
      */
     App.prototype.addPlugin = function (callback, name) {
         if (!name) {
-            name = M.nextID('plugin_');
+            name = _.M.nextID('plugin_');
         }
 
         this.plugins[name] = callback;
@@ -3137,28 +3176,48 @@
         }
 
         _.each(plugins, function (plugin) {
-            M.async(self.plugins[plugin], [selector_or_dom, _.has(options, plugin) ? options[plugins] : {}], null);
+            _.M.async(self.plugins[plugin], [selector_or_dom, _.has(options, plugin) ? options[plugins] : {}], null);
         });
     };
 
-    M.App = App;
 
+    _.M.App = App;
+
+    /**
+     * 
+     * @type {_.M.App}
+     */
     var app_instance = new App();
+    
     _.module('App', app_instance);
 
-    /*
-     |--------------------------------------------------------------------------
-     | AJAX
-     |--------------------------------------------------------------------------
-     |* Each AJAX instance when request complete will notice App instance "ajax_complete" event, with arguments are:
-     | - jqXHR: jQuery AJAX object
-     | - textStatus: "success", "notmodified", "nocontent", "error", "timeout", "abort", or "parsererror"
-     |
-     */
+})(_);
+/**
+ * AJAX
+ * Each AJAX instance when request complete will notice App instance `ajax_complete` event, with arguments are:
+ * - jqXHR: jQuery AJAX object
+ * - textStatus: `success`, `notmodified`, `nocontent`, `error`, `timeout`, `abort`, or `parsererror`
+ * @module _.M.AJAX
+ * @memberOf _.M
+ * @requires module:_.M.EventEmitter
+ */
+;(function (_) {
 
-    M.defineConstant({
+    _.M.defineConstant({
+        /**
+         * @constant {string}
+         * @default
+         */
         AJAX_INVALID_RESPONSE_ADAPTER_OPTION: 'ajax_invalid_response_adapter_option',
+        /**
+         * @constant {string}
+         * @default
+         */
         AJAX_ERROR_RESPONSE_ADAPTER_NOT_FOUND: 'ajax_response_adapter_not_found',
+        /**
+         * @constant {string}
+         * @default
+         */
         AJAX_ERROR_INVALID_RESPONSE_ADAPTER: 'ajax_invalid_response_adapter'
     });
 
@@ -3166,9 +3225,13 @@
         request_data_adapters = {},
         ajax_global_option = {};
 
+    /**
+     * @name _.M.AJAXResponseAdapter
+     * @class
+     */
     function AJAXResponseAdapter() {
         this.type_prefix = 'ajax_response_adapter';
-        BaseClass.call(this);
+        _.M.BaseClass.call(this);
 
         this.options = {};
         this.is_error = false;
@@ -3228,13 +3291,12 @@
 
     /**
      *
-     * @param options
-     * @class
-     * @extends EventEmitter
-     * @module _.M.AJAX
+     * @param {object} [options]
+     * @class _.M.AJAX
+     * @extends _.M.EventEmitter
      */
     function AJAX(options) {
-        EventEmitter.call(this);
+        _.M.EventEmitter.call(this);
 
         /**
          * Option values
@@ -3262,7 +3324,7 @@
         }
     }
 
-    M.inherit(AJAX, EventEmitter);
+    _.M.inherit(AJAX, _.M.EventEmitter);
 
     /**
      * @method
@@ -3270,7 +3332,7 @@
      * @param value
      */
     AJAX.globalOption = function (option, value) {
-        ajax_global_option = M.setup.apply(M, [ajax_global_option].concat(slice.apply(arguments)));
+        ajax_global_option = _.M.setup.apply(_.M, [ajax_global_option].concat(Array.prototype.slice.apply(arguments)));
     };
 
     /**
@@ -3293,7 +3355,7 @@
     };
 
     AJAX.prototype.option = function (option, value) {
-        this.options = M.setup.apply(M, [this.options].concat(slice.apply(arguments)));
+        this.options = _.M.setup.apply(_.M, [this.options].concat(Array.prototype.slice.apply(arguments)));
 
         return this;
     };
@@ -3349,7 +3411,7 @@
         if (!_.isEmpty(this.options.response_adapters)) {
             var error = null;
 
-            M.loop(this.options.response_adapters, function (adapter_options, adapter_name) {
+            _.M.loop(this.options.response_adapters, function (adapter_options, adapter_name) {
                 if (response_adapters.hasOwnProperty(adapter_name)) {
                     try {
                         var adapter = new response_adapters[adapter_name]();
@@ -3374,13 +3436,13 @@
                         return;
                     } else {
                         error = {
-                            code: M.AJAX_ERROR_INVALID_RESPONSE_ADAPTER,
+                            code: _.M.AJAX_ERROR_INVALID_RESPONSE_ADAPTER,
                             message: 'Invalid AJAX response adapter'
                         };
                     }
                 } else {
                     error = {
-                        code: M.AJAX_ERROR_RESPONSE_ADAPTER_NOT_FOUND,
+                        code: _.M.AJAX_ERROR_RESPONSE_ADAPTER_NOT_FOUND,
                         message: 'AJAX response adapter not found'
                     };
                 }
@@ -3400,7 +3462,7 @@
 
     function _ajax_error_cb(jqXHR, textStatus, errorThrown) {
         var err_result = {
-            code: M.firstNotEmpty(textStatus, jqXHR.statusText, jqXHR.status),
+            code: _.M.firstNotEmpty(textStatus, jqXHR.statusText, jqXHR.status),
             message: 'Ajax error'
         };
 
@@ -3474,21 +3536,21 @@
         if (last_options.hasOwnProperty('success')) {
             this.removeListener('listener_success');
             this.addListener('then', last_options['success'], {
-                priority: M.PRIORITY_HIGHEST,
+                priority: _.M.PRIORITY_HIGHEST,
                 key: 'listener_success'
             })
         }
         if (last_options.hasOwnProperty('error')) {
             this.removeListener('listener_error');
             this.addListener('catch', last_options['error'], {
-                priority: M.PRIORITY_HIGHEST,
+                priority: _.M.PRIORITY_HIGHEST,
                 key: 'listener_error'
             })
         }
         if (last_options.hasOwnProperty('complete')) {
             this.removeListener('listener_complete');
             this.addListener('finally', last_options['complete'], {
-                priority: M.PRIORITY_HIGHEST,
+                priority: _.M.PRIORITY_HIGHEST,
                 key: 'listener_complete'
             })
         }
@@ -3500,7 +3562,7 @@
             var result = true;
 
             if (_.isFunction(this.last_before_send_cb)) {
-                result = M.callFunc(this, this.last_before_send_cb, [jqXHR, settings]);
+                result = _.M.callFunc(this, this.last_before_send_cb, [jqXHR, settings]);
             }
 
             this.abort();
@@ -3569,7 +3631,8 @@
         return this.status() === 4;
     };
 
-    M.AJAXResponseAdapter = AJAXResponseAdapter;
-    M.AJAX = AJAX;
 
+    _.M.AJAXResponseAdapter = AJAXResponseAdapter;
+
+    _.M.AJAX = AJAX;
 })(_);

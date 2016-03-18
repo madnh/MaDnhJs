@@ -22,8 +22,21 @@ module.exports = function (grunt) {
             }
         },
         concat: {
+            madnhjs: {
+                src: ['src/core/core.js',
+                    'src/core/extensions/flag.js',
+                    'src/core/extensions/base_class.js',
+                    'src/core/extensions/content_manager.js',
+                    'src/core/extensions/priority.js',
+                    'src/core/extensions/waiters.js',
+                    'src/core/extensions/event_emitter.js',
+                    'src/core/extensions/cache.js',
+                    'src/core/extensions/app.js',
+                    'src/core/extensions/ajax.js'],
+                dest: 'dist/build/madnh.js'
+            },
             madnh_with_underscore: {
-                src: ['src/underscore.js', 'src/madnh.js'],
+                src: ['src/underscore.js', 'dist/build/madnh.js'],
                 dest: 'dist/build/underscore_madnh.js'
             },
             dialog: {
@@ -42,7 +55,7 @@ module.exports = function (grunt) {
                 ext: '.min.js'
             },
             madnh: {
-                src: 'src/madnh.js',
+                src: 'dist/build/madnh.js',
                 dest: 'dist/build/madnh.min.js'
             },
             madnh_with_underscore: {
@@ -64,7 +77,7 @@ module.exports = function (grunt) {
         },
         jsdoc: {
             dist: {
-                src: ['src/madnh.js'],
+                src: 'dist/build/madnh.js',
                 options: {
                     destination: 'dist/docs',
                     configure: 'jsdoc_config.json',
