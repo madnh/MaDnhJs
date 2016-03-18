@@ -45,61 +45,67 @@
      | Main content
      |--------------------------------------------------------------------------
      */
+
+    /**
+     * MaDnhJS version
+     * @constant {string} VERSION
+     * @default
+     */
     var version = '1.0.0';
 
 
     /**
-     * @lends _.M
+     * @module Core
      * @type {{}}
-     * @property loop
-     * @property removeItem
-     * @property nextID
-     * @property currentID
-     * @property className
-     * @property contentType
-     * @property isInstanceOf
-     * @property isPrimitiveType
-     * @property asArray
-     * @property asObject
-     * @property minMax
-     * @property randomString
-     * @property setup
-     * @property firstNotEmpty
-     * @property repeat
-     * @property span
-     * @property left
-     * @property right
-     * @property padNumber
-     * @property isNumeric
-     * @property isInteger
-     * @property isMultiple
-     * @property isOdd
-     * @property isEven
-     * @property oneOf
-     * @property capitalize
-     * @property isLikeString
-     * @property reverseString
-     * @property isBlank
-     * @property nowSecond
-     * @property escapeURL
-     * @property unescapeURL
-     * @property escapeHTML
-     * @property valueAt
-     * @property chunk
-     * @property chunks
-     * @property toggle
-     * @property defineObject
-     * @property isDefinedConstant
-     * @property defineConstant
-     * @property inherit
-     * @property callFunc
-     * @property async
-     * @property logArgs
-     * @property logCb
-     * @property warnArgs
-     * @property warnCb
-     * @property errorArgs
-     * @property errorCb
+     * @method loop
+     * @method removeItem
+     * @method nextID
+     * @method currentID
+     * @method className
+     * @method contentType
+     * @method isInstanceOf
+     * @method isPrimitiveType
+     * @method asArray
+     * @method asObject
+     * @method minMax
+     * @method randomString
+     * @method setup
+     * @method firstNotEmpty
+     * @method repeat
+     * @method span
+     * @method left
+     * @method right
+     * @method padNumber
+     * @method isNumeric
+     * @method isInteger
+     * @method isMultiple
+     * @method isOdd
+     * @method isEven
+     * @method oneOf
+     * @method capitalize
+     * @method isLikeString
+     * @method reverseString
+     * @method isBlank
+     * @method nowSecond
+     * @method escapeURL
+     * @method unescapeURL
+     * @method escapeHTML
+     * @method valueAt
+     * @method chunk
+     * @method chunks
+     * @method toggle
+     * @method defineObject
+     * @method isDefinedConstant
+     * @method defineConstant
+     * @method inherit
+     * @method callFunc
+     * @method async
+     * @method logArgs
+     * @method logCb
+     * @method warnArgs
+     * @method warnCb
+     * @method errorArgs
+     * @method errorCb
      */
     var M = {};
     Object.defineProperty(M, 'VERSION', {
@@ -1155,7 +1161,22 @@
     }
 
     M.defineConstant({
+        /**
+         * Array sort compare function. Sort number
+         * @constant
+         * @example
+         * var scores = [1, 10, 2, 21];
+         * scores.sort(); // [1, 10, 2, 21]
+         * scores.sort(_.M.SORT_NUMBER); // [1, 2, 10, 21]
+         */
         SORT_NUMBER: sortNumberCallback,
+        /**
+         * Array sort compare function. Sort number desc
+         * @constant
+         * @example
+         * var scores = [1, 10, 2, 21];
+         * scores.sort(_.M.SORT_NUMBER_DESC); // [21, 10, 2, 1]
+         */
         SORT_NUMBER_DESC: sortNumberDescCallback
     });
 
@@ -1170,6 +1191,7 @@
      */
 
     var _flags = {};
+
     M.FLAG = M.defineObject({
         /**
          * Check if a flag is exists
@@ -1328,12 +1350,47 @@
      */
 
     M.defineConstant({
+        /**
+         * @memberOf ContentManager
+         * @constant {string}
+         * @default
+         */
         CONTENT_TYPE_STRING: 'string',
+        /**
+         * @memberOf ContentManager
+         * @constant {string}
+         * @default
+         */
         CONTENT_TYPE_NUMBER: 'number',
+        /**
+         * @memberOf ContentManager
+         * @constant {string}
+         * @default
+         */
         CONTENT_TYPE_BOOLEAN: 'boolean',
+        /**
+         * @memberOf ContentManager
+         * @constant {string}
+         * @default
+         */
         CONTENT_TYPE_ARRAY: 'array',
+        /**
+         * @memberOf ContentManager
+         * @constant {string}
+         * @default
+         */
         CONTENT_TYPE_FUNCTION: 'function',
+        /**
+         * @memberOf ContentManager
+         * @constant {string}
+         * @default
+         */
         CONTENT_TYPE_OBJECT: 'object',
+        /**
+         * @memberOf ContentManager
+         * @constant {string}
+         * @default
+         */
         CONTENT_TYPE_MIXED: 'mixed'
     });
 
@@ -1352,7 +1409,6 @@
     }
 
     /**
-     *
      * @class
      */
     function ContentManager() {
@@ -1947,6 +2003,10 @@
         return contents;
     };
 
+    /**
+     *
+     * @type {Priority}
+     */
     M.Priority = Priority;
 
 
@@ -3081,6 +3141,8 @@
         });
     };
 
+    M.App = App;
+
     var app_instance = new App();
     _.module('App', app_instance);
 
@@ -3169,6 +3231,7 @@
      * @param options
      * @class
      * @extends EventEmitter
+     * @module _.M.AJAX
      */
     function AJAX(options) {
         EventEmitter.call(this);
@@ -3201,12 +3264,17 @@
 
     M.inherit(AJAX, EventEmitter);
 
+    /**
+     * @method
+     * @param option
+     * @param value
+     */
     AJAX.globalOption = function (option, value) {
         ajax_global_option = M.setup.apply(M, [ajax_global_option].concat(slice.apply(arguments)));
     };
 
     /**
-     *
+     * @method
      * @param option
      * @param {*} [default_value = undefined]
      * @returns {*}

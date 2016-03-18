@@ -11,6 +11,14 @@ module.exports = function (grunt) {
             docs: {
                 src: 'logo.png',
                 dest: 'dist/docs/img/logo.png'
+            },
+            docs_build: {
+                files: [{
+                    expand: true,
+                    cwd: 'dist/build/',
+                    src: '**',
+                    dest: 'dist/docs/scripts/madnhjs/'
+                }]
             }
         },
         concat: {
@@ -76,6 +84,6 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-jsdoc');
 
     grunt.registerTask('build', ['clean:main', 'concat', 'uglify']);
-    grunt.registerTask('docs', ['clean:docs', 'jsdoc', 'copy:docs']);
+    grunt.registerTask('docs', ['clean:docs', 'jsdoc', 'copy:docs', 'copy:docs_build']);
     grunt.registerTask('default', ['build', 'docs']);
 };
