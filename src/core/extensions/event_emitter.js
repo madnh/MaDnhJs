@@ -33,13 +33,30 @@
          * @private
          */
         this._events = {};
-
+        /**
+         *
+         * @type {{}}
+         * @private
+         */
         this._event_emitted = {};
 
+        /**
+         * @private
+         */
         this._limit = (limit || _.M.EVENT_EMITTER_EVENT_LIMIT_LISTENERS) + 0;
 
+        /**
+         *
+         * @type {{}}
+         * @private
+         */
         this._event_followers = {};
 
+        /**
+         *
+         * @type {{}}
+         * @private
+         */
         this._event_following = {};
 
         /**

@@ -1,8 +1,7 @@
 /**
  * AJAX
- * Each AJAX instance when request complete will notice App instance `ajax_complete` event, with arguments are:
- * - jqXHR: jQuery AJAX object
- * - textStatus: `success`, `notmodified`, `nocontent`, `error`, `timeout`, `abort`, or `parsererror`
+ * Each AJAX instance when request complete will notice App instance `ajax_complete` event, with argument is AJAX
+ * instance itself
  * @module _.M.AJAX
  * @memberOf _.M
  * @requires module:_.M.EventEmitter
@@ -24,11 +23,63 @@
          * @constant {string}
          * @default
          */
-        AJAX_ERROR_INVALID_RESPONSE_ADAPTER: 'ajax_invalid_response_adapter'
+        AJAX_ERROR_INVALID_RESPONSE_ADAPTER: 'ajax_invalid_response_adapter',
+        /**
+         * @constant {string}
+         * @default
+         */
+        AJAX_ABORTED: 'aborted',
+        /**
+         * @constant {string}
+         * @default
+         */
+        AJAX_TIMEOUT: 'timeout',
+        /**
+         * @constant {string}
+         * @default
+         */
+        AJAX_PARSER_ERROR: 'parser_error',
+        /**
+         * @constant {number}
+         * @default
+         */
+        AJAX_SERVER_ERROR: 500,
+        /**
+         * @constant {number}
+         * @default
+         */
+        AJAX_FORBIDDEN: 403,
+        /**
+         * @constant {number}
+         * @default
+         */
+        AJAX_NOT_FOUND: 404
     });
 
+    var http_response_statuses = {
+        204: 'Server has received the request but there is no information to send back',
+        400: 'The request had bad syntax or was inherently impossible to be satisfied',
+        401: 'The parameter to this message gives a specification of authorization schemes which are acceptable',
+        403: 'The request is for something forbidden',
+        404: 'The server has not found anything matching the URI given',
+        405: 'Method not allowed',
+        406: 'Not acceptable',
+        408: 'Request timeout',
+        413: 'Payload too large',
+        414: 'URI too long',
+        429: 'Too many requests',
+        431: 'Request header fields too large',
+        500: 'The server encountered an unexpected condition which prevented it from fulfilling the request',
+        501: 'The server does not support the facility required'
+    };
+
     var response_adapters = {},
-        request_data_adapters = {},
+        /**
+         * AJAX data adapter. Adapter is a function, with arguments: data, option. Adapter return processed data
+         *
+         * @type {{}}
+         */
+        data_adapters = {},
         ajax_global_option = {};
 
     /**
@@ -50,43 +101,6 @@
         this.response = null;
     }
 
-    /**
-     *
-     * @param {function} constructor AJAXResponseAdapter constructor
-     */
-    AJAXResponseAdapter.registerResponseAdapter = function (constructor) {
-        if (_.isFunction(constructor) && constructor.name) {
-            response_adapters[constructor.name] = constructor;
-
-            return true;
-        }
-
-        return false;
-    };
-    AJAXResponseAdapter.responseAdapters = function () {
-        return Object.keys(response_adapters);
-    };
-
-    /**
-     *
-     * @param name
-     * @param {Function} callback Callback receive arguments: request data, request options, AJAX instance
-     * @returns {boolean}
-     */
-    AJAXResponseAdapter.registerDataAdapter = function (name, callback) {
-        if (_.isFunction(callback)) {
-            request_data_adapters[name] = callback;
-
-            return true;
-        }
-
-        return false;
-    };
-    AJAXResponseAdapter.dataAdapters = function () {
-        return Object.keys(request_data_adapters);
-    };
-
-
     AJAXResponseAdapter.prototype.option = function (options) {
         _.extend(this.options, options);
     };
@@ -106,11 +120,12 @@
 
         /**
          * Option values
-         * @type {{response_adapters: Array, data_adapters: Array}}
+         * @type {{response_adapters: {}, data_adapters: {}, auto_abort: boolean}}
          */
         this.options = {
-            response_adapters: [],
-            data_adapters: []
+            response_adapters: {},
+            data_adapters: {},
+            auto_abort: true
         };
 
         /**
@@ -118,6 +133,16 @@
          * @type {null}
          */
         this.jqXHR = null;
+        
+        /**
+         * requested times
+         * @type {number}
+         */
+        this.requested = 0;
+        this.response = null;
+        this.responses = null;
+
+        this.error = null;
 
         /**
          * Last before send callback
@@ -142,6 +167,7 @@
     };
 
     /**
+     * Get global option
      * @method
      * @param option
      * @param {*} [default_value = undefined]
@@ -158,6 +184,111 @@
         }
 
         return default_value;
+    };
+
+    /**
+     * Register response adapter
+     * @param {function} constructor AJAXResponseAdapter constructor
+     */
+    AJAX.registerResponseAdapter = function (constructor) {
+        if (_.isFunction(constructor) && constructor.name) {
+            response_adapters[constructor.name] = constructor;
+
+            return true;
+        }
+
+        return false;
+    };
+    AJAX.responseAdapters = function () {
+        return Object.keys(response_adapters);
+    };
+
+    /**
+     * Register data adapter
+     * @param {string} name
+     * @param {Function} callback Callback receive arguments: request data, request options, AJAX instance
+     * @returns {boolean}
+     */
+    AJAX.registerDataAdapter = function (name, callback) {
+        if (_.isFunction(callback)) {
+            data_adapters[name] = callback;
+
+            return true;
+        }
+
+        return false;
+    };
+
+    /**
+     * Apply AJAX data adapters
+     * @param {*} data
+     * @param {{}} adapters Object of adapter with key is adapter name, value is adapter option object
+     * @returns {*}
+     */
+    AJAX.applyDataAdapters = function (data, adapters) {
+        if (!_.isObject(data)) {
+            data = {};
+        }
+
+        _.each(adapters, function (adapter_option, name) {
+            if (data_adapters.hasOwnProperty(name)) {
+                if (_.isFunction(data_adapters[name])) {
+                    data = data_adapters[name](data, _.isObject(adapter_option) ? adapter_option : {});
+                } else {
+                    throw new Error('AJAX data adapter must be a function: ' + name);
+                }
+            } else {
+                throw new Error('AJAX Data adapter not found: ' + name);
+            }
+        });
+
+        return data;
+    };
+
+    /**
+     *
+     * @param error_arguments
+     * @returns {{code: string|number, message: string}}
+     */
+    AJAX.beautifyError = function (error_arguments) {
+        var jqXHR = error_arguments[0],
+            textStatus = error_arguments[1],
+            errorThrown = error_arguments[2],
+            err_result = {
+                code: '',
+                message: 'Ajax error'
+            };
+
+        switch (textStatus) {
+            case 'parsererror':
+                err_result.message = 'Parse response failed';
+                err_result.code = _.M.AJAX_PARSER_ERROR;
+                break;
+
+            case 'abort':
+                err_result.message = 'Manual abort request';
+                err_result.code = _.M.AJAX_ABORTED;
+                break;
+
+            default:
+                err_result.code = jqXHR.status;
+
+                if (http_response_statuses.hasOwnProperty(jqXHR.status)) {
+                    err_result.message = http_response_statuses[jqXHR.status];
+                } else {
+                    err_result.message = errorThrown;
+                }
+        }
+
+        return err_result;
+    };
+
+    /**
+     * Get data adapter list
+     * @returns {Array}
+     */
+    AJAX.dataAdapters = function () {
+        return Object.keys(data_adapters);
     };
 
     AJAX.prototype.option = function (option, value) {
@@ -257,79 +388,32 @@
             });
 
             if (error) {
+                this.error = error;
                 this.emitEvent('catch', [error.message, error.code]);
 
                 return;
             }
-        }
 
-        this.emitEvent('then', [response, responses]);
+
+        }
+        this.response = response;
+        this.responses = responses;
+
+        this.emitEvent('then', [_.clone(response), _.clone(responses)]);
     }
 
     function _ajax_error_cb(jqXHR, textStatus, errorThrown) {
-        var err_result = {
-            code: _.M.firstNotEmpty(textStatus, jqXHR.statusText, jqXHR.status),
-            message: 'Ajax error'
-        };
+        var err_result = AJAX.beautifyError(arguments);
 
-        switch (textStatus) {
-            case 'parsererror':
-                err_result.message = 'Parse response failed';
-                break;
-
-            case 'abort':
-                err_result.message = 'Manual abort request';
-                break;
-
-            default:
-                switch (jqXHR.statusText) {
-                    case 'timeout':
-                        err_result.message = 'Request timeout';
-                        break;
-                    case 'error':
-                        switch (jqXHR.status) {
-                            case 403:
-                                err_result.message = 'Invalid request path';
-                                break;
-                            case 404:
-                                err_result.message = 'Request path not found';
-                        }
-                        break;
-                }
-        }
-
+        this.error = err_result;
         this.emitEvent('catch', [err_result.message, err_result.code]);
     }
 
     function _ajax_complete_cb(jqXHR, textStatus) {
         this.emitEvent('finally', [jqXHR, textStatus]);
 
-        app_instance.emitEvent('ajax_complete', [this, jqXHR, textStatus]);
-    }
-
-    function _ajax_get_request_data(options) {
-        if (options.data_adapters) {
-            if (!_.isObject(options.data)) {
-                options.data = {};
-            }
-
-            var adapters = _.clone(options.data_adapters);
-            var adapter_name;
-            var data = _.clone(options.data);
-
-            while (adapter_name = adapters.shift()) {
-                if (request_data_adapters.hasOwnProperty(adapter_name)) {
-                    if (_.isFunction(request_data_adapters[adapter_name])) {
-                        data = request_data_adapters[adapter_name](data, options, this);
-                    } else {
-                        throw new Error('Request data adapter must be a function: ' + adapter_name);
-                    }
-                } else {
-                    throw new Error('Request data adapter name not found: ' + adapter_name);
-                }
-            }
-
-            options.data = _.clone(data);
+        if (_.App) {
+            _.App.emitEvent('ajax_complete', [this]);
         }
     }
 
@@ -370,8 +454,9 @@
             if (_.isFunction(this.last_before_send_cb)) {
                 result = _.M.callFunc(this, this.last_before_send_cb, [jqXHR, settings]);
             }
-
-            this.abort();
+            if (this.option('auto_abort')) {
+                this.abort();
+            }
             if (result) {
                 this.emitEvent('request');
             }
@@ -379,9 +464,16 @@
             return result;
         }.bind(this);
 
+        if (!_.isObject(last_options.data)) {
+            last_options.data = {};
+        }
+        if (last_options.data_adapters) {
+            last_options.data = AJAX.applyDataAdapters(_.clone(last_options.data), last_options.data_adapters);
+        }
 
-        _ajax_get_request_data.call(this, last_options);
-
+        this.response = null;
+        this.responses = null;
+        this.requested++;
         this.jqXHR = $.ajax(last_options);
 
         return this.jqXHR;
