@@ -162,7 +162,7 @@
 
     /**
      * Get error detail
-     * @param {[]} error_arguments jQuery error callback arguments as array
+     * @param {Array} error_arguments jQuery error callback arguments as array
      * @returns {{code: string|number, message: string}}
      */
     AJAX.beautifyError = function (error_arguments) {
@@ -293,7 +293,7 @@
      * Apply AJAX response adapters
      * @param {*} response
      * @param {{}} adapters Object of adapters with key is adapter name, value is adapter option object
-     * @returns {{error: null|{code:number|string, message: string}, response: null|*, responses: {raw}}}
+     * @returns {{error: null|{code, message}, response: null|*, responses: {raw}}}
      */
     AJAX.applyResponseAdapters = function (response, adapters) {
         var result = {

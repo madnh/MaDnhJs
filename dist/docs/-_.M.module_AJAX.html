@@ -47,7 +47,7 @@
 			<li class="dropdown">
 				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
 				<ul class="dropdown-menu ">
-					<li><a href="-_.M.AJAX.html">_.M.AJAX</a></li><li><a href="-_.M.AJAXResponseAdapter.html">_.M.AJAXResponseAdapter</a></li><li><a href="-_.M.App.html">_.M.App</a></li><li><a href="-_.M.BaseClass.html">_.M.BaseClass</a></li><li><a href="-_.M.ContentManager.html">_.M.ContentManager</a></li><li><a href="-_.M.EventEmitter.html">_.M.EventEmitter</a></li><li><a href="-_.M.Priority.html">_.M.Priority</a></li>
+					<li><a href="-_.M.AJAX.html">_.M.AJAX</a></li><li><a href="-_.M.AJAX.ResponseAdapter.html">_.M.AJAX.ResponseAdapter</a></li><li><a href="-_.M.App.html">_.M.App</a></li><li><a href="-_.M.BaseClass.html">_.M.BaseClass</a></li><li><a href="-_.M.ContentManager.html">_.M.ContentManager</a></li><li><a href="-_.M.EventEmitter.html">_.M.EventEmitter</a></li><li><a href="-_.M.Priority.html">_.M.Priority</a></li>
 				</ul>
 			</li>
 			
@@ -103,7 +103,7 @@
     <div class="container-overview">
     
         
-            <div class="description">AJAXEach AJAX instance when request complete will notice App instance `ajax_complete` event, with arguments are:- jqXHR: jQuery AJAX object- textStatus: `success`, `notmodified`, `nocontent`, `error`, `timeout`, `abort`, or `parsererror`</div>
+            <div class="description">AJAXEach AJAX instance when request complete will notice App instance `ajax_complete` event, with argument is AJAXinstance itself</div>
         
 
         
@@ -170,6 +170,80 @@
         <h3 class="subsection-title">Members</h3>
 
         <dl>
+            
+<hr>
+<dt class="name" id="~AJAX_ABORTED">
+    <h4><span class="type-signature">&lt;inner, constant> </span>AJAX_ABORTED<span class="type-signature"> :string</span></h4>
+
+    
+</dt>
+<dd>
+    
+
+    
+        <h5>Type:</h5>
+        <ul>
+            <li>
+                
+<span class="param-type">string</span>
+
+
+
+            </li>
+        </ul>
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+	<dt class="tag-default method-doc-label method-doc-details-label">Default Value:</dt>
+	<dd class="tag-default">
+		<ul class="dummy">
+			<li>aborted</li>
+		</ul>
+	</dd>
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+</dd>
+
+        
             
 <hr>
 <dt class="name" id="~AJAX_ERROR_INVALID_RESPONSE_ADAPTER">
@@ -320,6 +394,80 @@
         
             
 <hr>
+<dt class="name" id="~AJAX_FORBIDDEN">
+    <h4><span class="type-signature">&lt;inner, constant> </span>AJAX_FORBIDDEN<span class="type-signature"> :number</span></h4>
+
+    
+</dt>
+<dd>
+    
+
+    
+        <h5>Type:</h5>
+        <ul>
+            <li>
+                
+<span class="param-type">number</span>
+
+
+
+            </li>
+        </ul>
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+	<dt class="tag-default method-doc-label method-doc-details-label">Default Value:</dt>
+	<dd class="tag-default">
+		<ul class="dummy">
+			<li>403</li>
+		</ul>
+	</dd>
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+</dd>
+
+        
+            
+<hr>
 <dt class="name" id="~AJAX_INVALID_RESPONSE_ADAPTER_OPTION">
     <h4><span class="type-signature">&lt;inner, constant> </span>AJAX_INVALID_RESPONSE_ADAPTER_OPTION<span class="type-signature"> :string</span></h4>
 
@@ -372,6 +520,302 @@
 	<dd class="tag-default">
 		<ul class="dummy">
 			<li>ajax_invalid_response_adapter_option</li>
+		</ul>
+	</dd>
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt class="name" id="~AJAX_NOT_FOUND">
+    <h4><span class="type-signature">&lt;inner, constant> </span>AJAX_NOT_FOUND<span class="type-signature"> :number</span></h4>
+
+    
+</dt>
+<dd>
+    
+
+    
+        <h5>Type:</h5>
+        <ul>
+            <li>
+                
+<span class="param-type">number</span>
+
+
+
+            </li>
+        </ul>
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+	<dt class="tag-default method-doc-label method-doc-details-label">Default Value:</dt>
+	<dd class="tag-default">
+		<ul class="dummy">
+			<li>404</li>
+		</ul>
+	</dd>
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt class="name" id="~AJAX_PARSER_ERROR">
+    <h4><span class="type-signature">&lt;inner, constant> </span>AJAX_PARSER_ERROR<span class="type-signature"> :string</span></h4>
+
+    
+</dt>
+<dd>
+    
+
+    
+        <h5>Type:</h5>
+        <ul>
+            <li>
+                
+<span class="param-type">string</span>
+
+
+
+            </li>
+        </ul>
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+	<dt class="tag-default method-doc-label method-doc-details-label">Default Value:</dt>
+	<dd class="tag-default">
+		<ul class="dummy">
+			<li>parser_error</li>
+		</ul>
+	</dd>
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt class="name" id="~AJAX_SERVER_ERROR">
+    <h4><span class="type-signature">&lt;inner, constant> </span>AJAX_SERVER_ERROR<span class="type-signature"> :number</span></h4>
+
+    
+</dt>
+<dd>
+    
+
+    
+        <h5>Type:</h5>
+        <ul>
+            <li>
+                
+<span class="param-type">number</span>
+
+
+
+            </li>
+        </ul>
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+	<dt class="tag-default method-doc-label method-doc-details-label">Default Value:</dt>
+	<dd class="tag-default">
+		<ul class="dummy">
+			<li>500</li>
+		</ul>
+	</dd>
+	
+
+
+
+	
+
+	
+
+	
+
+	
+</dl>
+
+
+    
+</dd>
+
+        
+            
+<hr>
+<dt class="name" id="~AJAX_TIMEOUT">
+    <h4><span class="type-signature">&lt;inner, constant> </span>AJAX_TIMEOUT<span class="type-signature"> :string</span></h4>
+
+    
+</dt>
+<dd>
+    
+
+    
+        <h5>Type:</h5>
+        <ul>
+            <li>
+                
+<span class="param-type">string</span>
+
+
+
+            </li>
+        </ul>
+    
+
+    
+<dl class="details">
+    
+
+	
+
+	
+
+	
+
+    
+
+    
+
+    
+
+    
+
+	
+
+	
+
+	
+
+	
+
+	
+	<dt class="tag-default method-doc-label method-doc-details-label">Default Value:</dt>
+	<dd class="tag-default">
+		<ul class="dummy">
+			<li>timeout</li>
 		</ul>
 	</dd>
 	
@@ -447,7 +891,7 @@
 <span class="jsdoc-message">
 	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a>
 	
-		on 03-21-2016 18:43:42
+		on 03-25-2016 20:00:12
 	
 	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
 </span>
