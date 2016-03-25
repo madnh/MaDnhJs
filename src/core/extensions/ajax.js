@@ -82,32 +82,6 @@
         data_adapters = {},
         ajax_global_option = {};
 
-    /**
-     * @name _.M.AJAXResponseAdapter
-     * @class
-     */
-    function AJAXResponseAdapter() {
-        this.type_prefix = 'ajax_response_adapter';
-        _.M.BaseClass.call(this);
-
-        this.options = {};
-        this.is_error = false;
-        this.error = {
-            code: 0,
-            message: ''
-        };
-
-        this.is_success = true;
-        this.response = null;
-    }
-
-    AJAXResponseAdapter.prototype.option = function (options) {
-        _.extend(this.options, options);
-    };
-    AJAXResponseAdapter.prototype.process = function (data) {
-        this.response = data;
-    };
-
 
     /**
      *
@@ -133,7 +107,7 @@
          * @type {null}
          */
         this.jqXHR = null;
-        
+
         /**
          * requested times
          * @type {number}
@@ -187,67 +161,8 @@
     };
 
     /**
-     * Register response adapter
-     * @param {function} constructor AJAXResponseAdapter constructor
-     */
-    AJAX.registerResponseAdapter = function (constructor) {
-        if (_.isFunction(constructor) && constructor.name) {
-            response_adapters[constructor.name] = constructor;
-
-            return true;
-        }
-
-        return false;
-    };
-    AJAX.responseAdapters = function () {
-        return Object.keys(response_adapters);
-    };
-
-    /**
-     * Register data adapter
-     * @param {string} name
-     * @param {Function} callback Callback receive arguments: request data, request options, AJAX instance
-     * @returns {boolean}
-     */
-    AJAX.registerDataAdapter = function (name, callback) {
-        if (_.isFunction(callback)) {
-            data_adapters[name] = callback;
-
-            return true;
-        }
-
-        return false;
-    };
-
-    /**
-     * Apply AJAX data adapters
-     * @param {*} data
-     * @param {{}} adapters Object of adapter with key is adapter name, value is adapter option object
-     * @returns {*}
-     */
-    AJAX.applyDataAdapters = function (data, adapters) {
-        if (!_.isObject(data)) {
-            data = {};
-        }
-
-        _.each(adapters, function (adapter_option, name) {
-            if (data_adapters.hasOwnProperty(name)) {
-                if (_.isFunction(data_adapters[name])) {
-                    data = data_adapters[name](data, _.isObject(adapter_option) ? adapter_option : {});
-                } else {
-                    throw new Error('AJAX data adapter must be a function: ' + name);
-                }
-            } else {
-                throw new Error('AJAX Data adapter not found: ' + name);
-            }
-        });
-
-        return data;
-    };
-
-    /**
-     *
-     * @param error_arguments
+     * Get error detail
+     * @param {[]} error_arguments jQuery error callback arguments as array
      * @returns {{code: string|number, message: string}}
      */
     AJAX.beautifyError = function (error_arguments) {
@@ -283,6 +198,205 @@
         return err_result;
     };
 
+    /*
+     |--------------------------------------------------------------------------
+     | Response Adapter
+     |--------------------------------------------------------------------------
+     */
+    /**
+     *
+     * @class _.M.AJAX.ResponseAdapter
+     */
+    AJAX.ResponseAdapter = function () {
+        this.type_prefix = 'ajax_response_adapter';
+        _.M.BaseClass.call(this);
+
+        this.handler = null;
+
+        /**
+         * Processed response
+         * @type {*}
+         */
+        this.response = null;
+
+        /**
+         *
+         * @type {boolean}
+         */
+        this.is_error = false;
+
+        /**
+         *
+         * @type {{code: string|number, message: string}}
+         */
+        this.error = {
+            code: 0,
+            message: ''
+        };
+    };
+
+    /**
+     * Process response
+     * @param {*} response
+     * @param {{}} options
+     */
+    AJAX.ResponseAdapter.prototype.process = function (response, options) {
+        if (!_.isFunction(this.handler)) {
+            this.handler.call(this, response, _.isObject(options) ? option : {}, this);
+        }
+        throw new Error('AJAX response adapter handler must be function');
+    };
+
+    /**
+     * Register response adapter
+     * @param {string} name
+     * @param {callback} handler Adapter callback with arguments: response, options
+     * @returns {boolean}
+     */
+    AJAX.registerResponseAdapter = function (name, handler) {
+        if (_.isFunction(handler)) {
+            response_adapters[name] = handler;
+
+            return true;
+        }
+
+        return false;
+    };
+
+    /**
+     * List of response adapters
+     * @returns {string[]}
+     */
+    AJAX.responseAdapters = function () {
+        return Object.keys(response_adapters);
+    };
+
+    /**
+     * Return response adapter instance by name
+     * @param name
+     * @returns {_.M.AJAX.ResponseAdapter}
+     * @throws AJAX response adapter name not found
+     */
+    AJAX.responseAdapterFactory = function (name) {
+        if (response_adapters.hasOwnProperty(name)) {
+            var adapter = new AJAX.ResponseAdapter();
+
+            adapter.handler = response_adapters[name];
+
+            return adapter;
+        }
+
+        throw new Error('AJAX response adapter name not found');
+    };
+
+    /**
+     * Apply AJAX response adapters
+     * @param {*} response
+     * @param {{}} adapters Object of adapters with key is adapter name, value is adapter option object
+     * @returns {{error: null|{code:number|string, message: string}, response: null|*, responses: {raw}}}
+     */
+    AJAX.applyResponseAdapters = function (response, adapters) {
+        var result = {
+            error: null,
+            response: null,
+            responses: {
+                raw: _.clone(response)
+            }
+        }, adapter;
+
+        _.M.loop(adapters, function (adapter_options, adapter_name) {
+            if (response_adapters.hasOwnProperty(adapter_name)) {
+                try {
+                    adapter = AJAX.responseAdapterFactory(adapter_name);
+                } catch (e) {
+                    result.error = {
+                        code: null,
+                        message: e.message
+                    };
+
+                    return 'break';
+                }
+
+                adapter.process(response, adapter_options);
+
+                if (adapter.is_error) {
+                    result.error = adapter.error;
+
+                    return 'break';
+                }
+
+                response = adapter.response;
+                result.responses[adapter_name] = _.clone(adapter.response);
+
+                return;
+            } else {
+                result.error = {
+                    code: _.M.AJAX_ERROR_RESPONSE_ADAPTER_NOT_FOUND,
+                    message: 'AJAX response adapter not found'
+                };
+            }
+
+            return 'break';
+        });
+
+
+        if (!result.error) {
+            result.response = response;
+        }
+
+        return result;
+    };
+
+    /*
+     |--------------------------------------------------------------------------
+     | Data Adapter
+     |--------------------------------------------------------------------------
+     */
+
+    /**
+     * Register data adapter
+     * @param {string} name
+     * @param {callback} callback Callback receive arguments: request data, adapter options
+     * @returns {boolean}
+     */
+    AJAX.registerDataAdapter = function (name, callback) {
+        if (_.isFunction(callback)) {
+            data_adapters[name] = callback;
+
+            return true;
+        }
+
+        return false;
+    };
+
+    /**
+     * Apply AJAX data adapters
+     * @param {*} data
+     * @param {{}} adapters Object of adapters with key is adapter name, value is adapter option object
+     * @returns {*}
+     * @throws AJAX data adapter x must be a function
+     * @throws AJAX data adapter x not found
+     */
+    AJAX.applyDataAdapters = function (data, adapters) {
+        if (!_.isObject(data)) {
+            data = {};
+        }
+
+        _.each(adapters, function (adapter_option, name) {
+            if (data_adapters.hasOwnProperty(name)) {
+                if (_.isFunction(data_adapters[name])) {
+                    data = data_adapters[name](data, _.isObject(adapter_option) ? adapter_option : {});
+                } else {
+                    throw new Error('AJAX data adapter must be a function: ' + name);
+                }
+            } else {
+                throw new Error('AJAX data adapter not found: ' + name);
+            }
+        });
+
+        return data;
+    };
+
     /**
      * Get data adapter list
      * @returns {Array}
@@ -290,6 +404,12 @@
     AJAX.dataAdapters = function () {
         return Object.keys(data_adapters);
     };
+
+    /*
+     |--------------------------------------------------------------------------
+     | AJAX prototypes
+     |--------------------------------------------------------------------------
+     */
 
     AJAX.prototype.option = function (option, value) {
         this.options = _.M.setup.apply(_.M, [this.options].concat(Array.prototype.slice.apply(arguments)));
@@ -340,66 +460,67 @@
         return this;
     };
 
-    function _ajax_success_cb(response) {
-        var responses = {
-            raw: _.clone(response)
-        };
-
-        if (!_.isEmpty(this.options.response_adapters)) {
-            var error = null;
-
-            _.M.loop(this.options.response_adapters, function (adapter_options, adapter_name) {
-                if (response_adapters.hasOwnProperty(adapter_name)) {
-                    try {
-                        var adapter = new response_adapters[adapter_name]();
-                    } catch (e) {
-                    }
-
-                    if (adapter instanceof AJAXResponseAdapter) {
-                        if (_.isObject(adapter_options) && !_.isEmpty(adapter_options)) {
-                            adapter.option(adapter_options);
-                        }
-
-                        adapter.process(response);
-
-                        if (adapter.is_error) {
-                            error = adapter.error;
-                            return 'break';
-                        }
-
-                        response = adapter.response;
-                        responses[adapter_name] = _.clone(response);
-
-                        return;
-                    } else {
-                        error = {
-                            code: _.M.AJAX_ERROR_INVALID_RESPONSE_ADAPTER,
-                            message: 'Invalid AJAX response adapter'
-                        };
-                    }
-                } else {
-                    error = {
-                        code: _.M.AJAX_ERROR_RESPONSE_ADAPTER_NOT_FOUND,
-                        message: 'AJAX response adapter not found'
-                    };
-                }
-
-                return 'break';
-            });
-
-            if (error) {
-                this.error = error;
-                this.emitEvent('catch', [error.message, error.code]);
-
-                return;
-            }
-
-
+    /**
+     * Get status of ajax
+     * @returns {(boolean|number)}
+     */
+    AJAX.prototype.status = function () {
+        if (_.isObject(this.jqXHR) && this.jqXHR.hasOwnProperty('readyState')) {
+            return this.jqXHR.readyState;
         }
-        this.response = response;
-        this.responses = responses;
 
-        this.emitEvent('then', [_.clone(response), _.clone(responses)]);
+        return false;
+    };
+
+    /**
+     * Check if instance is requesting
+     * @returns {boolean}
+     */
+    AJAX.prototype.isRequesting = function () {
+        var status = this.status();
+
+        return status !== false && status >= 1 && status <= 3;
+    };
+    /**
+     * Check if instance is ready for request
+     * @returns {boolean}
+     */
+    AJAX.prototype.isReady = function () {
+        var status = this.status();
+
+        return status !== false && status === 0;
+    };
+
+    /**
+     * Check if instance is done
+     * @returns {boolean}
+     */
+    AJAX.prototype.isDone = function () {
+        return this.status() === 4;
+    };
+
+    /**
+     * Check if current request is aborted
+     * @returns {boolean}
+     */
+    AJAX.prototype.isAborted = function () {
+        return this.error && (this.error.code === _.M.AJAX_ABORTED);
+    };
+
+    function _ajax_success_cb(response) {
+        var result = AJAX.applyResponseAdapters(response, this.options.response_adapters);
+
+        if (result.error) {
+            this.error = result.error;
+            this.emitEvent('catch', [result.error.message, result.error.code]);
+
+            return;
+        }
+
+        this.response = result.response;
+        this.responses = result.responses;
+
+        this.emitEvent('then', [_.clone(result.response)]);
     }
 
     function _ajax_error_cb(jqXHR, textStatus, errorThrown) {
@@ -457,7 +578,12 @@
             if (this.option('auto_abort')) {
                 this.abort();
             }
-            if (result) {
+            if (false !== result) {
+                this.requested++;
+                this.error = null;
+                this.response = null;
+                this.responses = null;
+
                 this.emitEvent('request');
             }
 
@@ -471,9 +597,6 @@
             last_options.data = AJAX.applyDataAdapters(_.clone(last_options.data), last_options.data_adapters);
         }
 
-        this.response = null;
-        this.responses = null;
-        this.requested++;
         this.jqXHR = $.ajax(last_options);
 
         return this.jqXHR;
@@ -485,52 +608,11 @@
      * - abort: before call real abort on jqXHR
      */
     AJAX.prototype.abort = function () {
-        if (_.isObject(this.jqXHR) && this.jqXHR.abort) {
+        if (this.isRequesting() && this.jqXHR.abort) {
             this.emitEvent('abort');
             this.jqXHR.abort();
         }
     };
-    /**
-     * Get status of ajax
-     * @returns {(boolean|number)}
-     */
-    AJAX.prototype.status = function () {
-        if (_.isObject(this.jqXHR) && this.jqXHR.hasOwnProperty('readyState')) {
-            return this.jqXHR.readyState;
-        }
-
-        return false;
-    };
-
-    /**
-     * Check if instance is requesting
-     * @returns {boolean}
-     */
-    AJAX.prototype.isRequesting = function () {
-        var status = this.status();
-
-        return status !== false && status >= 1 && status <= 3;
-    };
-    /**
-     * Check if instance is ready for request
-     * @returns {boolean}
-     */
-    AJAX.prototype.isReady = function () {
-        var status = this.status();
-
-        return status !== false && status === 0;
-    };
-
-    /**
-     * Check if instance is done
-     * @returns {boolean}
-     */
-    AJAX.prototype.isDone = function () {
-        return this.status() === 4;
-    };
-
-
-    _.M.AJAXResponseAdapter = AJAXResponseAdapter;
 
     _.M.AJAX = AJAX;
 })(_);
