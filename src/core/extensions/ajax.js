@@ -113,9 +113,22 @@
          * @type {number}
          */
         this.requested = 0;
+        /**
+         *
+         * @type {*}
+         */
         this.response = null;
+
+        /**
+         *
+         * @type {{}}
+         */
         this.responses = null;
 
+        /**
+         *
+         * @type {{code: number|string, message: string}}
+         */
         this.error = null;
 
         /**
