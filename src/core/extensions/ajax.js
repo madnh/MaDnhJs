@@ -75,7 +75,8 @@
 
     var response_adapters = {},
         /**
-         * AJAX data adapter. Adapter is a function, with arguments: data, option. Adapter return processed data
+         * AJAX data adapter. Adapter is a function, with arguments: data, options, request options. Adapter return
+         * processed data
          *
          * @type {{}}
          */
@@ -251,11 +252,17 @@
     /**
      * Process response
      * @param {*} response
-     * @param {{}} options
+     * @param {{}} options Adapter options
+     * @param {{}} [request_options] Request options
      */
-    AJAX.ResponseAdapter.prototype.process = function (response, options) {
+    AJAX.ResponseAdapter.prototype.process = function (response, options, request_options) {
         if (!_.isFunction(this.handler)) {
-            this.handler.call(this, response, _.isObject(options) ? option : {}, this);
+            this.handler.apply(this, [
+                response,
+                _.isObject(options) ? option : {},
+                _.isObject(request_options) ? _.clone(request_options) : {},
+                this
+            ]);
         }
         throw new Error('AJAX response adapter handler must be function');
     };
@@ -263,7 +270,7 @@
     /**
      * Register response adapter
      * @param {string} name
-     * @param {callback} handler Adapter callback with arguments: response, options
+     * @param {callback} handler Adapter callback with arguments: response, options, request options
      * @returns {boolean}
      */
     AJAX.registerResponseAdapter = function (name, handler) {
@@ -306,9 +313,10 @@
      * Apply AJAX response adapters
      * @param {*} response
      * @param {{}} adapters Object of adapters with key is adapter name, value is adapter option object
+     * @param {{}} [request_options] Request option
      * @returns {{error: null|{code, message}, response: null|*, responses: {raw}}}
      */
-    AJAX.applyResponseAdapters = function (response, adapters) {
+    AJAX.applyResponseAdapters = function (response, adapters, request_options) {
         var result = {
             error: null,
             response: null,
@@ -316,6 +324,10 @@
                 raw: _.clone(response)
             }
         }, adapter;
+
+        if (!_.isObject(request_options)) {
+            request_options = {};
+        }
 
         _.M.loop(adapters, function (adapter_options, adapter_name) {
             if (response_adapters.hasOwnProperty(adapter_name)) {
@@ -330,7 +342,7 @@
                     return 'break';
                 }
 
-                adapter.process(response, adapter_options);
+                adapter.process(response, adapter_options, request_options);
 
                 if (adapter.is_error) {
                     result.error = adapter.error;
@@ -369,7 +381,8 @@
     /**
      * Register data adapter
      * @param {string} name
-     * @param {callback} callback Callback receive arguments: request data, adapter options
+     * @param {callback} callback Callback receive arguments: request data, adapter options, request options - excluded
+     *     request data
      * @returns {boolean}
      */
     AJAX.registerDataAdapter = function (name, callback) {
@@ -386,19 +399,22 @@
      * Apply AJAX data adapters
      * @param {*} data
      * @param {{}} adapters Object of adapters with key is adapter name, value is adapter option object
+     * @param {{}} [request_options] Request options, exclude request data
      * @returns {*}
      * @throws AJAX data adapter x must be a function
      * @throws AJAX data adapter x not found
      */
-    AJAX.applyDataAdapters = function (data, adapters) {
+    AJAX.applyDataAdapters = function (data, adapters, request_options) {
         if (!_.isObject(data)) {
             data = {};
         }
-
+        if (!_.isObject(request_options)) {
+            request_options = {};
+        }
         _.each(adapters, function (adapter_option, name) {
             if (data_adapters.hasOwnProperty(name)) {
                 if (_.isFunction(data_adapters[name])) {
-                    data = data_adapters[name](data, _.isObject(adapter_option) ? adapter_option : {});
+                    data = data_adapters[name](data, _.isObject(adapter_option) ? adapter_option : {}, request_options);
                 } else {
                     throw new Error('AJAX data adapter must be a function: ' + name);
                 }
@@ -625,6 +641,66 @@
             this.emitEvent('abort');
             this.jqXHR.abort();
         }
+    };
+
+    function _load_apply_content(response, target, apply_type) {
+        target = $(target);
+        switch (apply_type) {
+            case 'append':
+                target.append(response);
+                break;
+            case 'prepend':
+                target.prepend(response);
+                break;
+
+            default:
+                target.html(response);
+        }
+    }
+
+    /**
+     * Load content to element
+     * @param {string} url
+     * @param {string|*} target Selector string or jQuery DOM
+     * @param {{}} options Options:
+     * - error_content: null - default error content: "Load content failed: <error message>. Error code: <error code>".
+     * It may be string or function with arguments as: error message, error code
+     * - apply_type: Way to apply response to target: replace, append or prepend. Default is replace
+     */
+    AJAX.load = function (url, target, options) {
+        var ajax = new AJAX();
+
+        if (!_.isObject(options)) {
+            options = {};
+        }
+
+        options = _.extend({
+            error_content: null,
+            apply_type: 'replace'
+        }, options, {
+            url: url
+        });
+
+        ajax.option(options);
+        ajax.then(function (response) {
+            _load_apply_content(response, target, options.apply_type);
+        }).catch(function (error_message, error_code) {
+            var response = '';
+
+            if (_.isNull(options.error_content)) {
+                response = ['Load content failed: ', error_message, '. Error code: ', error_code].join('');
+            } else {
+                if (_.isFunction(options.error_content)) {
+                    response = options.error_content(error_message, error_code);
+                } else {
+                    response = options.error_content + '';
+                }
+            }
+
+            _load_apply_content(response, target, options.apply_type);
+        });
+
+
     };
 
     _.M.AJAX = AJAX;
