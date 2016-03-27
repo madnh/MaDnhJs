@@ -3,7 +3,7 @@
  * @module _.M.App
  * @memberOf _.M
  */
-;(function(_){
+;(function (_) {
     /**
      *
      * @class _.M.App
@@ -31,11 +31,21 @@
     };
 
     /**
-     * Get cloned version of this options
-     * @returns {{}}
+     * Get option
+     * @param {string} option
+     * @param {*} [default_value] Default value if option not found
+     * @returns {*}
+     * @throws option not found and don't special default value
      */
-    App.prototype.getOptions = function () {
-        return _.clone(this.options);
+    App.prototype.getOption = function (option, default_value) {
+        if (this.options.hasOwnProperty(option)) {
+            return _.clone(this.options[option]);
+        }
+        if (arguments.length >= 2) {
+            return default_value;
+        }
+
+        throw new Error('Option not found');
     };
 
     /**
@@ -55,21 +65,26 @@
         this.resetEvents('init');
     };
 
+    App.prototype.hasPlugin = function (name) {
+        return this.plugins.hasOwnProperty(name);
+    };
+
     /**
      * Add jQuery Plugin callback
+     * @param {string} name plugin name, default is unique id
      * @param {function} callback Callback, call arguments are: dom, options
-     * @param {string} [name] plugin name, default is unique id
-     * @returns {string} Name of plugin
+     * @returns {boolean} True if plugin with name is not existed, otherwise
      */
-    App.prototype.addPlugin = function (callback, name) {
-        if (!name) {
-            name = _.M.nextID('plugin_');
+    App.prototype.addPlugin = function (name, callback) {
+        if (!this.hasPlugin(name)) {
+            this.plugins[name] = callback;
+
+            return true;
         }
 
-        this.plugins[name] = callback;
-
-        return name;
+        return false;
     };
+
 
     /**
      * Remove plugin
@@ -98,10 +113,22 @@
             selector_or_dom = $('body');
         } else if (_.isString(selector_or_dom)) {
             selector_or_dom = $(selector_or_dom);
+        } else {
+            try {
+                selector_or_dom = $(selector_or_dom);
+            } catch (e) {
+                throw new Error('Invalid selector/DOM');
+            }
         }
 
         if (!plugins) {
             plugins = Object.keys(this.plugins);
+        } else {
+            var not_found = _.difference(plugins, Object.keys(this.plugins));
+
+            if (!_.isEmpty(not_found)) {
+                throw new Error(['Apply not found plugin: ', not_found.join(', ')].join(''));
+            }
         }
 
         if (!_.isObject(options)) {
@@ -109,7 +136,7 @@
         }
 
         _.each(plugins, function (plugin) {
-            _.M.async(self.plugins[plugin], [selector_or_dom, _.has(options, plugin) ? options[plugins] : {}], null);
+            self.plugins[plugin](selector_or_dom, _.has(options, plugin) ? options[plugin] : {});
         });
     };
 
@@ -117,11 +144,11 @@
     _.M.App = App;
 
     /**
-     * 
+     *
      * @type {_.M.App}
      */
     var app_instance = new App();
-    
+
     _.module('App', app_instance);
 
 })(_);

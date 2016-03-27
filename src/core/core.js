@@ -719,7 +719,7 @@
      * _.M.escapeHTML('<b>Yahoo</b>'); //&lt;b&gt;Yahoo&lt;&#x2f;b&gt;"
      */
     M.escapeHTML = function (content) {
-        return content.replace(/&/g, '&amp;')
+        return (content + '').replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
