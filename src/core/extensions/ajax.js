@@ -333,6 +333,7 @@
             if (response_adapters.hasOwnProperty(adapter_name)) {
                 try {
                     adapter = AJAX.responseAdapterFactory(adapter_name);
+                    adapter.process(response, adapter_options, request_options);
                 } catch (e) {
                     result.error = {
                         code: null,
@@ -342,7 +343,6 @@
                     return 'break';
                 }
 
-                adapter.process(response, adapter_options, request_options);
 
                 if (adapter.is_error) {
                     result.error = adapter.error;

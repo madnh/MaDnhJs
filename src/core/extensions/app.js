@@ -2,6 +2,8 @@
  * Application
  * @module _.M.App
  * @memberOf _.M
+ * @requires _.M.EventEmitter
+ * @requires  _.M.mError
  */
 ;(function (_) {
     /**
@@ -17,6 +19,8 @@
         this.options = {};
 
         this.plugins = {};
+
+        this.error_handlers = [];
     }
 
     _.M.inherit(App, _.M.EventEmitter);
@@ -140,6 +144,31 @@
         });
     };
 
+    App.prototype.addErrorHandler = function (callback) {
+        this.error_handlers.push(callback);
+    };
+
+    App.prototype.error = function (message, code, data) {
+        var err;
+
+        if (message instanceof Error) {
+            err = message;
+        } else {
+            err = new _.M.mError(message, code, data);
+        }
+
+        _.each(this.error_handlers, function (handler) {
+            handler(err);
+        });
+
+        return err;
+    };
+
+    App.prototype.throwError = function () {
+        var error = this.error.apply(this, _.toArray(arguments));
+
+        throw error;
+    };
 
     _.M.App = App;
 
