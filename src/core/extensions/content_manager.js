@@ -493,8 +493,8 @@
     };
 
     /**
-     *
-     * @type {ContentManager}
+     * 
+     * @type {_.M.ContentManager}
      */
     _.M.ContentManager = ContentManager;
 

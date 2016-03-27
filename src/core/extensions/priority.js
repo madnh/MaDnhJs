@@ -8,76 +8,99 @@
 
     _.M.defineConstant({
         /**
+         * @name _.M.PRIORITY_HIGHEST
          * @constant {number}
          * @default
          */
         PRIORITY_HIGHEST: 100,
         /**
+         * @name _.M.PRIORITY_HIGH
          * @constant {number}
          * @default
          */
         PRIORITY_HIGH: 250,
         /**
+         * @name _.M.PRIORITY_DEFAULT
          * @constant {number}
          * @default
          */
         PRIORITY_DEFAULT: 500,
         /**
+         * @name _.M.PRIORITY_LOW
          * @constant {number}
          * @default
          */
         PRIORITY_LOW: 750,
         /**
+         * @name _.M.PRIORITY_LOWEST
          * @constant {number}
          * @default
          */
         PRIORITY_LOWEST: 1000,
+
         /**
+         * @name _.M.PRIORITY_LEVEL_1
          * @constant {number}
          * @default
          */
         PRIORITY_LEVEL_1: 100,
+
         /**
+         * @name _.M.PRIORITY_LEVEL_2
          * @constant {number}
          * @default
          */
         PRIORITY_LEVEL_2: 200,
+
         /**
+         * @name _.M.PRIORITY_LEVEL_3
          * @constant {number}
          * @default
          */
         PRIORITY_LEVEL_3: 300,
+
         /**
+         * @name _.M.PRIORITY_LEVEL_4
          * @constant {number}
          * @default
          */
         PRIORITY_LEVEL_4: 400,
+
         /**
+         * @name _.M.PRIORITY_LEVEL_5
          * @constant {number}
          * @default
          */
         PRIORITY_LEVEL_5: 500,
+
         /**
+         * @name _.M.PRIORITY_LEVEL_6
          * @constant {number}
          * @default
          */
         PRIORITY_LEVEL_6: 600,
+
         /**
+         * @name _.M.PRIORITY_LEVEL_7
          * @constant {number}
          * @default
          */
         PRIORITY_LEVEL_7: 700,
         /**
+         * @name _.M.PRIORITY_LEVEL_8
          * @constant {number}
          * @default
          */
         PRIORITY_LEVEL_8: 800,
+
         /**
+         * @name _.M.PRIORITY_LEVEL_9
          * @constant {number}
          * @default
          */
         PRIORITY_LEVEL_9: 900,
         /**
+         * @name _.M.PRIORITY_LEVEL_10
          * @constant {number}
          * @default
          */
@@ -94,7 +117,7 @@
          * @type {_.M.ContentManager}
          * @private
          */
-        this._content_manager = new ContentManager();
+        this._content_manager = new _.M.ContentManager();
         /**
          *
          * @type {{}}
@@ -227,7 +250,7 @@
 
     /**
      *
-     * @type {Priority}
+     * @type {_.M.Priority}
      */
     _.M.Priority = Priority;
 })(_);

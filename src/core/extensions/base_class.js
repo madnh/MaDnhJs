@@ -19,5 +19,9 @@
         }
     }
 
+    /**
+     * 
+     * @type {_.M.BaseClass}
+     */
     _.M.BaseClass = BaseClass;
 })(_);

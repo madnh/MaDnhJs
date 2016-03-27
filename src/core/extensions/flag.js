@@ -22,33 +22,21 @@
          * Set a flag
          * @param {string} name
          * @param {boolean} is_active Flag status, default is True
-         * @param {string} prefix Add prefix to flag name
-         * @param {string} suffix Add suffix to flag name
          */
-        flag: function (name, is_active, prefix, suffix) {
+        flag: function (name, is_active) {
             if (_.isUndefined(is_active)) {
                 is_active = true;
             } else {
                 is_active = Boolean(is_active);
             }
-            if (!(_.isString(prefix) || _.M.isNumeric(prefix))) {
-                prefix = '';
-            } else {
-                prefix += '';
-            }
 
-            if (!(_.isString(suffix) || _.M.isNumeric(suffix))) {
-                suffix = '';
-            } else {
-                suffix += '';
-            }
 
             if (_.isArray(name)) {
                 _.each(name, function (tmp_name) {
-                    _flags[prefix + tmp_name + suffix] = is_active;
-                })
+                    _flags[tmp_name] = is_active;
+                });
             } else {
-                _flags[prefix + name + suffix] = is_active;
+                _flags[name] = is_active;
             }
         },
 
@@ -75,65 +63,41 @@
         /**
          * Check if a flag is exists
          * @param {string} name
-         * @param {string} prefix Add prefix to flag name
-         * @param {string} suffix Add suffix to flag name
          * @returns {*}
          */
-        isFlagged: function (name, prefix, suffix) {
+        isFlagged: function (name) {
             var result, self = this;
 
-            if (!(_.isString(prefix) || _.M.isNumeric(prefix))) {
-                prefix = '';
-            } else {
-                prefix += '';
-            }
 
-            if (!(_.isString(suffix) || _.M.isNumeric(suffix))) {
-                suffix = '';
-            } else {
-                suffix += '';
-            }
 
             if (_.isArray(name)) {
                 result = [];
                 _.each(name, function (tmp_name) {
-                    if (self.get(prefix + tmp_name + suffix)) {
+                    if (self.get(tmp_name)) {
                         result.push(tmp_name);
                     }
                 })
             } else {
-                result = this.get(prefix + name + suffix);
+                result = this.get(name);
             }
 
             return result;
         },
 
 
-        toggle: function (name, prefix, suffix, status) {
+        toggle: function (name, status) {
             var thisFunc = arguments.callee;
             var self = this;
-
-            if (!(_.isString(prefix) || _.M.isNumeric(prefix))) {
-                prefix = '';
-            } else {
-                prefix += '';
-            }
-
-            if (!(_.isString(suffix) || _.M.isNumeric(suffix))) {
-                suffix = '';
-            } else {
-                suffix += '';
-            }
-
+            
             if (_.isArray(name)) {
                 _.each(name, function (tmp_name) {
-                    thisFunc.apply(self, [tmp_name, prefix, suffix, status]);
+                    thisFunc.apply(self, [tmp_name, status]);
                 })
             } else {
                 if (!_.isUndefined(status)) {
-                    this.flag(name, Boolean(status), prefix, suffix);
+                    this.flag(name, Boolean(status));
                 } else {
-                    this.flag(name, !this.isFlagged(name, prefix, suffix), prefix, suffix);
+                    this.flag(name, !this.isFlagged(name));
                 }
             }
         }

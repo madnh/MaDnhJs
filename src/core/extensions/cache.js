@@ -7,36 +7,42 @@
     _.M.defineConstant({
         /**
          * 10 seconds
+         * @name _.M.CACHE_MIN
          * @constant {number}
          * @default
          */
         CACHE_MIN: 10,
         /**
          * 1 minute
+         * @name _.M.CACHE_TINY
          * @constant {number}
          * @default
          */
         CACHE_TINY: 60,
         /**
          * 5 minutes
+         * @name _.M.CACHE_SHORT
          * @constant {number}
          * @default
          */
-        CACHE_SHORT: 5 * 60,
+        CACHE_SHORT: 300,
         /**
          * 10 minutes
+         * @name _.M.CACHE_MEDIUM
          * @constant {number}
          * @default
          */
-        CACHE_MEDIUM: 10 * 60,
+        CACHE_MEDIUM: 600,
         /**
          * 1 hour
+         * @name _.M.CACHE_LONG
          * @constant {number}
          * @default
          */
-        CACHE_LONG: 60 * 60,
+        CACHE_LONG: 3600,
         /**
          * Forever
+         * @name _.M.CACHE_FOREVER
          * @constant {number}
          * @default
          */
@@ -186,12 +192,7 @@
      * @type {{}}
      */
     _.M.CACHE = _.M.defineObject({
-        /**
-         * Add cache
-         * @param {string} name
-         * @param {*} value
-         * @param {number} [live_time = _.M.CACHE_MEDIUM]
-         */
+        
         set: function (name, value, live_time) {
             _set_cache(name, value, live_time);
         },

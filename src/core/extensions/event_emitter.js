@@ -1,17 +1,21 @@
 /**
  * @module _.M.EventEmitter
  * @memberOf _.M
+ * @requires _.M.Priority
  */
 ;(function (_) {
     _.M.defineConstant({
         /**
          * Default limit event't listeners
+         * @name _.M.EVENT_EMITTER_EVENT_LIMIT_LISTENERS
          * @constant {number}
          * @default
          */
         EVENT_EMITTER_EVENT_LIMIT_LISTENERS: 10,
+
         /**
-         * Unlimit event's listeners
+         * Unlimited event's listeners
+         * @name _.M.EVENT_EMITTER_EVENT_UNLIMITED
          * @constant {number}
          * @default
          */
@@ -76,7 +80,7 @@
 
     /**
      * Reset events
-     * @param {string} [event = undefined] Special event to reset
+     * @param {string} [event] Special event to reset, if not, reset all events
      */
     EventEmitter.prototype.resetEvents = function (event) {
         if (event) {
@@ -149,7 +153,7 @@
      * @param {string} event Event name
      * @param {(string|function|Array)} listeners Event listener
      * @param {object} option Option is object with keys:
-     * priority (_.M.PRIORITY_DEFAULT),
+     * priority {@see _.M.PRIORITY_DEFAULT},
      * times (-1 - forever) - call times,
      * context (this event emitter instance) - context for callback,
      * key (auto increment of key: event_emitter_key_) - listener key. Useful when remove listener

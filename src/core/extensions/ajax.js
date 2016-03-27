@@ -4,7 +4,7 @@
  * instance itself
  * @module _.M.AJAX
  * @memberOf _.M
- * @requires module:_.M.EventEmitter
+ * @requires _.M.EventEmitter
  */
 ;(function (_) {
 
@@ -703,5 +703,9 @@
 
     };
 
+    /**
+     *
+     * @type {_.M.AJAX}
+     */
     _.M.AJAX = AJAX;
 })(_);
