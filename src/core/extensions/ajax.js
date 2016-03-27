@@ -80,8 +80,7 @@
          *
          * @type {{}}
          */
-        data_adapters = {},
-        ajax_global_option = {};
+        data_adapters = {};
 
 
     /**
@@ -101,7 +100,8 @@
          * - retry: retry times when error
          * - is_continue: check if continue to retry request. Boolean or function which bind to AJAX instance, return
          * boolean value,
-         * @type {{response_adapters: {}, data_adapters: {}, auto_abort: boolean}}
+         * @type {{response_adapters: {}, data_adapters: {}, auto_abort: boolean, retry: number, is_continue:
+         *     boolean|function}}
          */
         this.options = {
             response_adapters: {},
@@ -157,35 +157,6 @@
     }
 
     _.M.inherit(AJAX, _.M.EventEmitter);
-
-    /**
-     * @method
-     * @param option
-     * @param value
-     */
-    AJAX.globalOption = function (option, value) {
-        ajax_global_option = _.M.setup.apply(_.M, [ajax_global_option].concat(Array.prototype.slice.apply(arguments)));
-    };
-
-    /**
-     * Get global option
-     * @method
-     * @param option
-     * @param {*} [default_value = undefined]
-     * @returns {*}
-     */
-    AJAX.getGlobalOption = function (option, default_value) {
-        if (arguments.length == 0) {
-            return _.clone(ajax_global_option);
-        }
-        option += '';
-
-        if (ajax_global_option.hasOwnProperty(option)) {
-            return _.clone(ajax_global_option[option]);
-        }
-
-        return default_value;
-    };
 
     /**
      * Get error detail
@@ -269,13 +240,15 @@
      * @param {{}} [request_options] Request options
      */
     AJAX.ResponseAdapter.prototype.process = function (response, options, request_options) {
-        if (!_.isFunction(this.handler)) {
+        if (_.isFunction(this.handler)) {
             this.handler.apply(this, [
                 response,
-                _.isObject(options) ? option : {},
+                _.isObject(options) ? options : {},
                 _.isObject(request_options) ? _.clone(request_options) : {},
                 this
             ]);
+
+            return;
         }
         throw new Error('AJAX response adapter handler must be function');
     };
@@ -344,18 +317,8 @@
 
         _.M.loop(adapters, function (adapter_options, adapter_name) {
             if (response_adapters.hasOwnProperty(adapter_name)) {
-                try {
-                    adapter = AJAX.responseAdapterFactory(adapter_name);
-                    adapter.process(response, adapter_options, request_options);
-                } catch (e) {
-                    result.error = {
-                        code: null,
-                        message: e.message
-                    };
-
-                    return 'break';
-                }
-
+                adapter = AJAX.responseAdapterFactory(adapter_name);
+                adapter.process(response, _.isObject(adapter_options) ? adapter_options : {}, request_options);
 
                 if (adapter.is_error) {
                     result.error = adapter.error;
@@ -554,7 +517,7 @@
     };
 
     AJAX.prototype.isLastRetry = function () {
-        return this.isRetrying() && parseInt(this.retried) === parseInt(this.options.retry);
+        return this.isRetrying() && parseInt(this.retried) >= parseInt(this.options.retry);
     };
 
     AJAX.prototype.isContinue = function () {
@@ -607,7 +570,7 @@
             this.emitEvent('retry_time_complete', [jqXHR, textStatus]);
 
             if (_.App) {
-                _.App.emitEvent('retry_time_complete', [this]);
+                _.App.emitEvent('ajax_retry_time_complete', [this]);
             }
 
             this.retried++;
@@ -616,6 +579,7 @@
             return;
         }
 
+        this.retry_request_options = null;
         this.emitEvent('finally', [jqXHR, textStatus]);
 
         if (_.App) {
@@ -629,7 +593,7 @@
      * @return {{}}
      */
     AJAX.prototype.getRequestOptions = function (custom_options) {
-        var last_options = _.extend({}, ajax_global_option, this.options, _.isObject(custom_options) ? custom_options : {});
+        var last_options = _.extend({}, this.options, _.isObject(custom_options) ? custom_options : {});
 
         if (last_options.hasOwnProperty('beforeSend')) {
             this.last_before_send_cb = last_options.beforeSend;
@@ -662,7 +626,7 @@
         last_options['beforeSend'] = function (jqXHR, settings) {
             var result = true;
 
-            if (_.isFunction(this.last_before_send_cb)) {
+            if (_.isFunction(this.last_before_send_cb) && !this.isRetrying()) {
                 result = _.M.callFunc(this, this.last_before_send_cb, [jqXHR, settings]);
             }
             if (this.option('auto_abort') && this.isRequesting()) {
@@ -674,7 +638,11 @@
                 this.response = null;
                 this.responses = null;
 
-                this.emitEvent('request');
+                if (this.isRetrying()) {
+                    this.emitEvent('retry');
+                } else {
+                    this.emitEvent('request');
+                }
             }
 
             return result;

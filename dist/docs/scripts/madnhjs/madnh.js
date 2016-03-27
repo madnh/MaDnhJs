@@ -719,7 +719,7 @@
      * _.M.escapeHTML('<b>Yahoo</b>'); //&lt;b&gt;Yahoo&lt;&#x2f;b&gt;"
      */
     M.escapeHTML = function (content) {
-        return content.replace(/&/g, '&amp;')
+        return (content + '').replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
@@ -1141,33 +1141,21 @@
          * Set a flag
          * @param {string} name
          * @param {boolean} is_active Flag status, default is True
-         * @param {string} prefix Add prefix to flag name
-         * @param {string} suffix Add suffix to flag name
          */
-        flag: function (name, is_active, prefix, suffix) {
+        flag: function (name, is_active) {
             if (_.isUndefined(is_active)) {
                 is_active = true;
             } else {
                 is_active = Boolean(is_active);
             }
-            if (!(_.isString(prefix) || _.M.isNumeric(prefix))) {
-                prefix = '';
-            } else {
-                prefix += '';
-            }
 
-            if (!(_.isString(suffix) || _.M.isNumeric(suffix))) {
-                suffix = '';
-            } else {
-                suffix += '';
-            }
 
             if (_.isArray(name)) {
                 _.each(name, function (tmp_name) {
-                    _flags[prefix + tmp_name + suffix] = is_active;
-                })
+                    _flags[tmp_name] = is_active;
+                });
             } else {
-                _flags[prefix + name + suffix] = is_active;
+                _flags[name] = is_active;
             }
         },
 
@@ -1194,65 +1182,41 @@
         /**
          * Check if a flag is exists
          * @param {string} name
-         * @param {string} prefix Add prefix to flag name
-         * @param {string} suffix Add suffix to flag name
          * @returns {*}
          */
-        isFlagged: function (name, prefix, suffix) {
+        isFlagged: function (name) {
             var result, self = this;
 
-            if (!(_.isString(prefix) || _.M.isNumeric(prefix))) {
-                prefix = '';
-            } else {
-                prefix += '';
-            }
 
-            if (!(_.isString(suffix) || _.M.isNumeric(suffix))) {
-                suffix = '';
-            } else {
-                suffix += '';
-            }
 
             if (_.isArray(name)) {
                 result = [];
                 _.each(name, function (tmp_name) {
-                    if (self.get(prefix + tmp_name + suffix)) {
+                    if (self.get(tmp_name)) {
                         result.push(tmp_name);
                     }
                 })
             } else {
-                result = this.get(prefix + name + suffix);
+                result = this.get(name);
             }
 
             return result;
         },
 
 
-        toggle: function (name, prefix, suffix, status) {
+        toggle: function (name, status) {
             var thisFunc = arguments.callee;
             var self = this;
-
-            if (!(_.isString(prefix) || _.M.isNumeric(prefix))) {
-                prefix = '';
-            } else {
-                prefix += '';
-            }
-
-            if (!(_.isString(suffix) || _.M.isNumeric(suffix))) {
-                suffix = '';
-            } else {
-                suffix += '';
-            }
-
+            
             if (_.isArray(name)) {
                 _.each(name, function (tmp_name) {
-                    thisFunc.apply(self, [tmp_name, prefix, suffix, status]);
+                    thisFunc.apply(self, [tmp_name, status]);
                 })
             } else {
                 if (!_.isUndefined(status)) {
-                    this.flag(name, Boolean(status), prefix, suffix);
+                    this.flag(name, Boolean(status));
                 } else {
-                    this.flag(name, !this.isFlagged(name, prefix, suffix), prefix, suffix);
+                    this.flag(name, !this.isFlagged(name));
                 }
             }
         }
@@ -1280,6 +1244,10 @@
         }
     }
 
+    /**
+     * 
+     * @type {_.M.BaseClass}
+     */
     _.M.BaseClass = BaseClass;
 })(_);
 /**
@@ -1777,8 +1745,8 @@
     };
 
     /**
-     *
-     * @type {ContentManager}
+     * 
+     * @type {_.M.ContentManager}
      */
     _.M.ContentManager = ContentManager;
 
@@ -1793,76 +1761,99 @@
 
     _.M.defineConstant({
         /**
+         * @name _.M.PRIORITY_HIGHEST
          * @constant {number}
          * @default
          */
         PRIORITY_HIGHEST: 100,
         /**
+         * @name _.M.PRIORITY_HIGH
          * @constant {number}
          * @default
          */
         PRIORITY_HIGH: 250,
         /**
+         * @name _.M.PRIORITY_DEFAULT
          * @constant {number}
          * @default
          */
         PRIORITY_DEFAULT: 500,
         /**
+         * @name _.M.PRIORITY_LOW
          * @constant {number}
          * @default
          */
         PRIORITY_LOW: 750,
         /**
+         * @name _.M.PRIORITY_LOWEST
          * @constant {number}
          * @default
          */
         PRIORITY_LOWEST: 1000,
+
         /**
+         * @name _.M.PRIORITY_LEVEL_1
          * @constant {number}
          * @default
          */
         PRIORITY_LEVEL_1: 100,
+
         /**
+         * @name _.M.PRIORITY_LEVEL_2
          * @constant {number}
          * @default
          */
         PRIORITY_LEVEL_2: 200,
+
         /**
+         * @name _.M.PRIORITY_LEVEL_3
          * @constant {number}
          * @default
          */
         PRIORITY_LEVEL_3: 300,
+
         /**
+         * @name _.M.PRIORITY_LEVEL_4
          * @constant {number}
          * @default
          */
         PRIORITY_LEVEL_4: 400,
+
         /**
+         * @name _.M.PRIORITY_LEVEL_5
          * @constant {number}
          * @default
          */
         PRIORITY_LEVEL_5: 500,
+
         /**
+         * @name _.M.PRIORITY_LEVEL_6
          * @constant {number}
          * @default
          */
         PRIORITY_LEVEL_6: 600,
+
         /**
+         * @name _.M.PRIORITY_LEVEL_7
          * @constant {number}
          * @default
          */
         PRIORITY_LEVEL_7: 700,
         /**
+         * @name _.M.PRIORITY_LEVEL_8
          * @constant {number}
          * @default
          */
         PRIORITY_LEVEL_8: 800,
+
         /**
+         * @name _.M.PRIORITY_LEVEL_9
          * @constant {number}
          * @default
          */
         PRIORITY_LEVEL_9: 900,
         /**
+         * @name _.M.PRIORITY_LEVEL_10
          * @constant {number}
          * @default
          */
@@ -1879,7 +1870,7 @@
          * @type {_.M.ContentManager}
          * @private
          */
-        this._content_manager = new ContentManager();
+        this._content_manager = new _.M.ContentManager();
         /**
          *
          * @type {{}}
@@ -2012,7 +2003,7 @@
 
     /**
      *
-     * @type {Priority}
+     * @type {_.M.Priority}
      */
     _.M.Priority = Priority;
 })(_);
@@ -2136,17 +2127,21 @@
 /**
  * @module _.M.EventEmitter
  * @memberOf _.M
+ * @requires _.M.Priority
  */
 ;(function (_) {
     _.M.defineConstant({
         /**
          * Default limit event't listeners
+         * @name _.M.EVENT_EMITTER_EVENT_LIMIT_LISTENERS
          * @constant {number}
          * @default
          */
         EVENT_EMITTER_EVENT_LIMIT_LISTENERS: 10,
+
         /**
-         * Unlimit event's listeners
+         * Unlimited event's listeners
+         * @name _.M.EVENT_EMITTER_EVENT_UNLIMITED
          * @constant {number}
          * @default
          */
@@ -2211,7 +2206,7 @@
 
     /**
      * Reset events
-     * @param {string} [event = undefined] Special event to reset
+     * @param {string} [event] Special event to reset, if not, reset all events
      */
     EventEmitter.prototype.resetEvents = function (event) {
         if (event) {
@@ -2284,7 +2279,7 @@
      * @param {string} event Event name
      * @param {(string|function|Array)} listeners Event listener
      * @param {object} option Option is object with keys:
-     * priority (_.M.PRIORITY_DEFAULT),
+     * priority {@see _.M.PRIORITY_DEFAULT},
      * times (-1 - forever) - call times,
      * context (this event emitter instance) - context for callback,
      * key (auto increment of key: event_emitter_key_) - listener key. Useful when remove listener
@@ -2325,7 +2320,7 @@
 
         if (listeners.length) {
             if (option.key === null) {
-                option.key = _._.M.nextID('event_emitter_listener_', true);
+                option.key = _.M.nextID('event_emitter_listener_', true);
             }
             var keys = [];
             _.M.loop(listeners, function (listener) {
@@ -2736,36 +2731,42 @@
     _.M.defineConstant({
         /**
          * 10 seconds
+         * @name _.M.CACHE_MIN
          * @constant {number}
          * @default
          */
         CACHE_MIN: 10,
         /**
          * 1 minute
+         * @name _.M.CACHE_TINY
          * @constant {number}
          * @default
          */
         CACHE_TINY: 60,
         /**
          * 5 minutes
+         * @name _.M.CACHE_SHORT
          * @constant {number}
          * @default
          */
-        CACHE_SHORT: 5 * 60,
+        CACHE_SHORT: 300,
         /**
          * 10 minutes
+         * @name _.M.CACHE_MEDIUM
          * @constant {number}
          * @default
          */
-        CACHE_MEDIUM: 10 * 60,
+        CACHE_MEDIUM: 600,
         /**
          * 1 hour
+         * @name _.M.CACHE_LONG
          * @constant {number}
          * @default
          */
-        CACHE_LONG: 60 * 60,
+        CACHE_LONG: 3600,
         /**
          * Forever
+         * @name _.M.CACHE_FOREVER
          * @constant {number}
          * @default
          */
@@ -2915,12 +2916,7 @@
      * @type {{}}
      */
     _.M.CACHE = _.M.defineObject({
-        /**
-         * Add cache
-         * @param {string} name
-         * @param {*} value
-         * @param {number} [live_time = _.M.CACHE_MEDIUM]
-         */
+        
         set: function (name, value, live_time) {
             _set_cache(name, value, live_time);
         },
@@ -3085,8 +3081,10 @@
  * Application
  * @module _.M.App
  * @memberOf _.M
+ * @requires _.M.EventEmitter
+ * @requires  _.M.mError
  */
-;(function(_){
+;(function (_) {
     /**
      *
      * @class _.M.App
@@ -3100,6 +3098,8 @@
         this.options = {};
 
         this.plugins = {};
+
+        this.error_handlers = [];
     }
 
     _.M.inherit(App, _.M.EventEmitter);
@@ -3114,11 +3114,21 @@
     };
 
     /**
-     * Get cloned version of this options
-     * @returns {{}}
+     * Get option
+     * @param {string} option
+     * @param {*} [default_value] Default value if option not found
+     * @returns {*}
+     * @throws option not found and don't special default value
      */
-    App.prototype.getOptions = function () {
-        return _.clone(this.options);
+    App.prototype.getOption = function (option, default_value) {
+        if (this.options.hasOwnProperty(option)) {
+            return _.clone(this.options[option]);
+        }
+        if (arguments.length >= 2) {
+            return default_value;
+        }
+
+        throw new Error('Option not found');
     };
 
     /**
@@ -3138,21 +3148,26 @@
         this.resetEvents('init');
     };
 
+    App.prototype.hasPlugin = function (name) {
+        return this.plugins.hasOwnProperty(name);
+    };
+
     /**
      * Add jQuery Plugin callback
+     * @param {string} name plugin name, default is unique id
      * @param {function} callback Callback, call arguments are: dom, options
-     * @param {string} [name] plugin name, default is unique id
-     * @returns {string} Name of plugin
+     * @returns {boolean} True if plugin with name is not existed, otherwise
      */
-    App.prototype.addPlugin = function (callback, name) {
-        if (!name) {
-            name = _.M.nextID('plugin_');
+    App.prototype.addPlugin = function (name, callback) {
+        if (!this.hasPlugin(name)) {
+            this.plugins[name] = callback;
+
+            return true;
         }
 
-        this.plugins[name] = callback;
-
-        return name;
+        return false;
     };
+
 
     /**
      * Remove plugin
@@ -3181,10 +3196,22 @@
             selector_or_dom = $('body');
         } else if (_.isString(selector_or_dom)) {
             selector_or_dom = $(selector_or_dom);
+        } else {
+            try {
+                selector_or_dom = $(selector_or_dom);
+            } catch (e) {
+                throw new Error('Invalid selector/DOM');
+            }
         }
 
         if (!plugins) {
             plugins = Object.keys(this.plugins);
+        } else {
+            var not_found = _.difference(plugins, Object.keys(this.plugins));
+
+            if (!_.isEmpty(not_found)) {
+                throw new Error(['Apply not found plugin: ', not_found.join(', ')].join(''));
+            }
         }
 
         if (!_.isObject(options)) {
@@ -3192,19 +3219,18 @@
         }
 
         _.each(plugins, function (plugin) {
-            _.M.async(self.plugins[plugin], [selector_or_dom, _.has(options, plugin) ? options[plugins] : {}], null);
+            self.plugins[plugin](selector_or_dom, _.has(options, plugin) ? options[plugin] : {});
         });
     };
-
-
+    
     _.M.App = App;
 
     /**
-     * 
+     *
      * @type {_.M.App}
      */
     var app_instance = new App();
-    
+
     _.module('App', app_instance);
 
 })(_);
@@ -3214,7 +3240,7 @@
  * instance itself
  * @module _.M.AJAX
  * @memberOf _.M
- * @requires module:_.M.EventEmitter
+ * @requires _.M.EventEmitter
  */
 ;(function (_) {
 
@@ -3290,8 +3316,7 @@
          *
          * @type {{}}
          */
-        data_adapters = {},
-        ajax_global_option = {};
+        data_adapters = {};
 
 
     /**
@@ -3305,12 +3330,21 @@
 
         /**
          * Option values
-         * @type {{response_adapters: {}, data_adapters: {}, auto_abort: boolean}}
+         * - response_adapters: Response adapter object with key is adapter name, value is adapter option object
+         * - data_adapters: Data adapter object with key is adapter name, value is adapter option object
+         * - auto_abort: abort prev request if not completed
+         * - retry: retry times when error
+         * - is_continue: check if continue to retry request. Boolean or function which bind to AJAX instance, return
+         * boolean value,
+         * @type {{response_adapters: {}, data_adapters: {}, auto_abort: boolean, retry: number, is_continue:
+         *     boolean|function}}
          */
         this.options = {
             response_adapters: {},
             data_adapters: {},
-            auto_abort: true
+            auto_abort: true,
+            retry: 0,
+            is_continue: true
         };
 
         /**
@@ -3324,6 +3358,11 @@
          * @type {number}
          */
         this.requested = 0;
+
+        this.retried = 0;
+
+        this.retry_request_options = null;
+
         /**
          *
          * @type {*}
@@ -3354,35 +3393,6 @@
     }
 
     _.M.inherit(AJAX, _.M.EventEmitter);
-
-    /**
-     * @method
-     * @param option
-     * @param value
-     */
-    AJAX.globalOption = function (option, value) {
-        ajax_global_option = _.M.setup.apply(_.M, [ajax_global_option].concat(Array.prototype.slice.apply(arguments)));
-    };
-
-    /**
-     * Get global option
-     * @method
-     * @param option
-     * @param {*} [default_value = undefined]
-     * @returns {*}
-     */
-    AJAX.getGlobalOption = function (option, default_value) {
-        if (arguments.length == 0) {
-            return _.clone(ajax_global_option);
-        }
-        option += '';
-
-        if (ajax_global_option.hasOwnProperty(option)) {
-            return _.clone(ajax_global_option[option]);
-        }
-
-        return default_value;
-    };
 
     /**
      * Get error detail
@@ -3466,13 +3476,15 @@
      * @param {{}} [request_options] Request options
      */
     AJAX.ResponseAdapter.prototype.process = function (response, options, request_options) {
-        if (!_.isFunction(this.handler)) {
+        if (_.isFunction(this.handler)) {
             this.handler.apply(this, [
                 response,
-                _.isObject(options) ? option : {},
+                _.isObject(options) ? options : {},
                 _.isObject(request_options) ? _.clone(request_options) : {},
                 this
             ]);
+
+            return;
         }
         throw new Error('AJAX response adapter handler must be function');
     };
@@ -3541,18 +3553,8 @@
 
         _.M.loop(adapters, function (adapter_options, adapter_name) {
             if (response_adapters.hasOwnProperty(adapter_name)) {
-                try {
-                    adapter = AJAX.responseAdapterFactory(adapter_name);
-                } catch (e) {
-                    result.error = {
-                        code: null,
-                        message: e.message
-                    };
-
-                    return 'break';
-                }
-
-                adapter.process(response, adapter_options, request_options);
+                adapter = AJAX.responseAdapterFactory(adapter_name);
+                adapter.process(response, _.isObject(adapter_options) ? adapter_options : {}, request_options);
 
                 if (adapter.is_error) {
                     result.error = adapter.error;
@@ -3746,12 +3748,39 @@
         return this.error && (this.error.code === _.M.AJAX_ABORTED);
     };
 
+    AJAX.prototype.isRetrying = function () {
+        return this.error && this.options.retry && parseInt(this.retried) <= parseInt(this.options.retry);
+    };
+
+    AJAX.prototype.isLastRetry = function () {
+        return this.isRetrying() && parseInt(this.retried) >= parseInt(this.options.retry);
+    };
+
+    AJAX.prototype.isContinue = function () {
+        if (this.isRetrying() && !this.isLastRetry()) {
+            var is_continue;
+
+            if (_.isFunction(this.options.is_continue)) {
+                is_continue = this.options.is_continue.bind(this)(_.clone(this.error));
+            } else {
+                is_continue = Boolean(this.options.is_continue);
+            }
+
+            return is_continue;
+        }
+
+        return false;
+    };
+
     function _ajax_success_cb(response) {
         var result = AJAX.applyResponseAdapters(response, this.options.response_adapters);
 
         if (result.error) {
             this.error = result.error;
-            this.emitEvent('catch', [result.error.message, result.error.code]);
+
+            if (!this.isContinue()) {
+                this.emitEvent('catch', [result.error.message, result.error.code]);
+            }
 
             return;
         }
@@ -3766,10 +3795,27 @@
         var err_result = AJAX.beautifyError(arguments);
 
         this.error = err_result;
-        this.emitEvent('catch', [err_result.message, err_result.code]);
+
+        if (!this.isContinue()) {
+            this.emitEvent('catch', [err_result.message, err_result.code]);
+        }
     }
 
     function _ajax_complete_cb(jqXHR, textStatus) {
+        if (this.isContinue()) {
+            this.emitEvent('retry_time_complete', [jqXHR, textStatus]);
+
+            if (_.App) {
+                _.App.emitEvent('ajax_retry_time_complete', [this]);
+            }
+
+            this.retried++;
+            this.request();
+
+            return;
+        }
+
+        this.retry_request_options = null;
         this.emitEvent('finally', [jqXHR, textStatus]);
 
         if (_.App) {
@@ -3777,8 +3823,13 @@
         }
     }
 
-    AJAX.prototype.request = function (options) {
-        var last_options = _.extend({}, ajax_global_option, this.options, options);
+    /**
+     * Get request option, ready for request
+     * @param {{}} custom_options
+     * @return {{}}
+     */
+    AJAX.prototype.getRequestOptions = function (custom_options) {
+        var last_options = _.extend({}, this.options, _.isObject(custom_options) ? custom_options : {});
 
         if (last_options.hasOwnProperty('beforeSend')) {
             this.last_before_send_cb = last_options.beforeSend;
@@ -3811,10 +3862,10 @@
         last_options['beforeSend'] = function (jqXHR, settings) {
             var result = true;
 
-            if (_.isFunction(this.last_before_send_cb)) {
+            if (_.isFunction(this.last_before_send_cb) && !this.isRetrying()) {
                 result = _.M.callFunc(this, this.last_before_send_cb, [jqXHR, settings]);
             }
-            if (this.option('auto_abort')) {
+            if (this.option('auto_abort') && this.isRequesting()) {
                 this.abort();
             }
             if (false !== result) {
@@ -3823,7 +3874,11 @@
                 this.response = null;
                 this.responses = null;
 
-                this.emitEvent('request');
+                if (this.isRetrying()) {
+                    this.emitEvent('retry');
+                } else {
+                    this.emitEvent('request');
+                }
             }
 
             return result;
@@ -3836,6 +3891,19 @@
             last_options.data = AJAX.applyDataAdapters(_.clone(last_options.data), last_options.data_adapters);
         }
 
+        return last_options;
+    };
+
+    AJAX.prototype.request = function (options) {
+        var last_options;
+
+        if (this.isRetrying() && _.isObject(this.retry_request_options) && !_.isEmpty(this.retry_request_options)) {
+            last_options = this.retry_request_options;
+        } else {
+            last_options = this.getRequestOptions(options);
+        }
+
+        this.retry_request_options = last_options;
         this.jqXHR = $.ajax(last_options);
 
         return this.jqXHR;
@@ -3913,5 +3981,9 @@
 
     };
 
+    /**
+     *
+     * @type {_.M.AJAX}
+     */
     _.M.AJAX = AJAX;
 })(_);
