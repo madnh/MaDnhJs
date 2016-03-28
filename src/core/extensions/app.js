@@ -3,7 +3,6 @@
  * @module _.M.App
  * @memberOf _.M
  * @requires _.M.EventEmitter
- * @requires  _.M.mError
  */
 ;(function (_) {
     /**
@@ -19,8 +18,6 @@
         this.options = {};
 
         this.plugins = {};
-
-        this.error_handlers = [];
     }
 
     _.M.inherit(App, _.M.EventEmitter);

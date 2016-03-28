@@ -100,12 +100,10 @@
 
     function _open_dialog() {
 
-        var options = getDialogOption(this.getDialog());
-
-        var modal_options = getModalOption(options.close_manual);
-        var dialog = this.getDialog();
-
-        var data = {};
+        var options = getDialogOption(this.getDialog()),
+            modal_options = getModalOption(options.close_manual),
+            dialog = this.getDialog(),
+            data = {};
 
 
         data['close_func'] = _.M.WAITER.createFunc(function () {
@@ -119,9 +117,28 @@
         console.log('Template dialog open');
         this.getDOM().modal(modal_options);
 
-        this.getDOM().on('hidden.bs.modal', function () {
-            this.getDialog().close();
+        this.getDOM().on('show.bs.modal', function (event) {
+            if (event.target.is(this.getDOM())) {
+                this.emitEvent('show');
+            }
         }.bind(this));
+        this.getDOM().on('shown.bs.modal', function (event) {
+            if (event.target.is(this.getDOM())) {
+                this.emitEvent('shown');
+            }
+        }.bind(this));
+        this.getDOM().on('hide.bs.modal', function (event) {
+            if (event.target.is(this.getDOM())) {
+                this.emitEvent('hide');
+            }
+        }.bind(this));
+        this.getDOM().on('hidden.bs.modal', function (event) {
+            if (event.target.is(this.getDOM())) {
+                this.emitEvent('hidden');
+                this.getDialog().close();
+            }
+        }.bind(this));
+
     }
 
     function update_dialog_close_status() {

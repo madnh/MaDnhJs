@@ -1,7 +1,17 @@
 /**
  * AJAX
- * Each AJAX instance when request complete will notice App instance `ajax_complete` event, with argument is AJAX
- * instance itself
+ * Each AJAX instance when request complete will notice App instance events
+ * Events:
+ * - request
+ * - retry
+ * - catch: error message, error code
+ * - then: response
+ * - finally: jqXHR, textStatus
+ * - retry_time_complete: jqXHR, textStatus
+ * App events:
+ * - ajax_retry_time_complete: AJAX instance
+ * - ajax_complete: AJAX instance
+ *
  * @module _.M.AJAX
  * @memberOf _.M
  * @requires _.M.EventEmitter
@@ -100,8 +110,8 @@
          * - retry: retry times when error
          * - is_continue: check if continue to retry request. Boolean or function which bind to AJAX instance, return
          * boolean value,
-         * @type {{response_adapters: {}, data_adapters: {}, auto_abort: boolean, retry: number, is_continue:
-         *     boolean|function}}
+         * @type {{response_adapters: {}, data_adapters: {}, auto_abort: boolean,
+         * retry: number, is_continue: boolean|function}}
          */
         this.options = {
             response_adapters: {},
