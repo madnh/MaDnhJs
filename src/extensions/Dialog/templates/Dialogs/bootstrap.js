@@ -15,7 +15,7 @@
     function getDialogOption(dialog) {
         var options = _.extend({}, default_options, dialog.options);
 
-        options.buttons_align = _.M.oneOf(['right', 'left', 'center'], options.buttons_align);
+        options.buttons_align = _.M.oneOf(options.buttons_align, ['right', 'left', 'center']);
 
         return options;
     }

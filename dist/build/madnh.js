@@ -385,13 +385,8 @@
      * @returns {*}
      * @example
      * var obj = {a: 'A', b: 'B'}
-     * _.M.setup(obj, 'a', '123')
-     * _.M.setup(obj, {
-     *      a: 123,
-     *      b: 'Yahoo',
-     *      c: 'ASD'
-     * })
-     *
+     * _.M.setup(obj, 'a', '123'); //obj -> {a: '123', b: 'B'}
+     * _.M.setup(obj, {b: 'Yahoo', c: 'ASD'}); //obj -> {a: 123, b: 'Yahoo', c: 'ASD'}
      */
     M.setup = function (object, option, value) {
         if (!_.isObject(object)) {
@@ -454,24 +449,24 @@
 
     /**
      * Add missing value to fit value's length
-     * @param {*} value
+     * @param {string|number} value
      * @param {number} length Number of result need to fit
-     * @param {string} span add value
+     * @param {string} span_character add value
      * @param {boolean} [before = true]
-     * @returns {*}
+     * @returns {string}
      * @example
      * _.M.span(123, 5, '_'); //'__123'
      * _.M.span(123, 5, '_', false); //'123__'
      * _.M.span('ABCDEF', 5, '_'); //'ABCDEF'
      */
-    M.span = function (value, length, span, before) {
+    M.span = function (value, length, span_character, before) {
         if (_.isUndefined(before)) {
             before = true;
         }
         value += '';
         if (value.length < length) {
-            span = M.repeat(span, length - value.length);
-            value = before ? span + '' + value : value + '' + span;
+            span_character = M.repeat((span_character + '').charAt(0), length - value.length);
+            value = before ? span_character + '' + value : value + '' + span_character;
         }
         return value;
     };
@@ -517,7 +512,7 @@
     };
 
     /**
-     * Padding number with string
+     * Padding number with 0 and sign
      * @param {number} num
      * @param {number} place
      * @param {boolean} sign Include number sign. If number is less than 0 then include sign, override this parameter
@@ -541,8 +536,8 @@
     };
 
     /**
-     * Check object is numeric
-     * @param obj
+     * Check value is numeric
+     * @param value
      * @returns {boolean}
      *
      * @example
@@ -550,8 +545,8 @@
      * _.M.isNumeric(123.5); //true
      * _.M.isNumeric('123.5'); //true
      */
-    M.isNumeric = function (obj) {
-        return !_.isArray(obj) && (obj - parseFloat(obj) + 1) >= 0;
+    M.isNumeric = function (value) {
+        return !_.isArray(value) && (value - parseFloat(value) + 1) >= 0;
     };
 
     /**
@@ -576,9 +571,14 @@
      * _.M.isMultiple(12, 3); //true
      * _.M.isMultiple(12, 5); // false
      * _.M.isMultiple(12, '4'); // true
+     * _.M.isMultiple(12, 0); //false
      */
     M.isMultiple = function (n1, n2) {
-        return n1 % n2 === 0;
+        try {
+            return n1 % n2 === 0;
+        } catch (e) {
+            return false;
+        }
     };
     /**
      * Check if a numeric is odd
@@ -608,21 +608,27 @@
 
     /**
      * Make sure value is in array
-     * @param {Array} values
      * @param {*} value
-     * @returns {*} If found then return value itself, else, return first item of array
+     * @param {Array} values
+     * @param {*} [default_value] Default value if not found value in values
+     * @returns {*} If found then return value itself, else, return default_value or first item of array
      * @example
      * var items = [1,2,3,'a'];
-     * _.M.oneOf(items, 1); // 1
-     * _.M.oneOf(items, 0); // 1
-     * _.M.oneOf(items, 'a'); // 'a'
+     * _.M.oneOf(1, items); // 1
+     * _.M.oneOf(0, items); // 1
+     * _.M.oneOf('a', items); // 'a'
+     * _.M.oneOf('b', items, 'C'); // 'C'
      */
-    M.oneOf = function (values, value) {
-        if (-1 == values.indexOf(value)) {
-            return _.first(values);
+    M.oneOf = function (value, values, default_value) {
+        if (-1 !== values.indexOf(value)) {
+            return value;
         }
 
-        return value;
+        if (arguments.length >= 3) {
+            return default_value;
+        }
+
+        return _.first(values);
     };
 
     /**
@@ -669,7 +675,7 @@
         return str.split('').reverse().join('');
     };
     /**
-     * Check a string if trimmed value is empty
+     * Check if a trimmed string is empty
      * @param {string} str
      * @returns {boolean}
      * @example
@@ -729,7 +735,7 @@
 
     /**
      * Return array value at index
-     * @param {string|Array} array String or array of items
+     * @param {string|number|Array} array String or array of items
      * @param {number} index
      * @returns {*}
      * @example
@@ -743,8 +749,8 @@
      * _.M.valueAt(str, -2); //'o'
      */
     M.valueAt = function (array, index) {
-        if (_.isString(array)) {
-            array = array.split('');
+        if (_.isLikeString(array)) {
+            array = (array + '').split('');
         }
         if (!_.isArray(array)) {
             array += '';
@@ -802,10 +808,10 @@
     /**
      * Toggle array's elements
      * @param {Array} array
-     * @param {Array}elements
+     * @param {Array} elements
      * @param {boolean} status If this param is boolean then add/remove base on it value. By default it is undefined -
      *     add if none exists, remove if existed
-     * @returns {*}
+     * @returns {array}
      * @example
      * var arr = ['A', 'B', 'C', 'D'];
      * _.M.toggle(arr, ['A', 'V']) => ['B', 'C', 'D', 'V']
@@ -872,7 +878,7 @@
     };
 
     /**
-     * Define a MaDnh constant, no support function
+     * Define a MaDnh constant
      * @param {(string|Object)} name
      * @param {*} [value = undefined]
      * @example
@@ -928,7 +934,7 @@
     /**
      * Call callback with arguments
      * @param {Object|null} context context of "this" keyword
-     * @param {(string|function|Array)} callback
+     * @param {string|function|Array} callback
      * @param {*} [args] Callback arguments, if only one argument as array passed then it must be wrapped by array, eg:
      *     [users]
      * @returns {*}
@@ -969,8 +975,9 @@
 
                 return callback.apply(context, args);
             } else if (_.isArray(callback)) {
-                var result = [];
-                var this_func = arguments.callee;
+                var result = [],
+                    this_func = arguments.callee;
+
                 _.each(callback, function (tmpFunc) {
                     result.push(this_func(context, tmpFunc, args));
                 });
@@ -1013,7 +1020,7 @@
     }
 
     /**
-     ** Like console.log with dynamic arguments
+     * Like console.log with dynamic arguments
      * @example
      * var args = [1,2,3,4];
      * _.M.logArgs('a',123);
@@ -3082,7 +3089,6 @@
  * @module _.M.App
  * @memberOf _.M
  * @requires _.M.EventEmitter
- * @requires  _.M.mError
  */
 ;(function (_) {
     /**
@@ -3098,8 +3104,6 @@
         this.options = {};
 
         this.plugins = {};
-
-        this.error_handlers = [];
     }
 
     _.M.inherit(App, _.M.EventEmitter);
@@ -3236,8 +3240,18 @@
 })(_);
 /**
  * AJAX
- * Each AJAX instance when request complete will notice App instance `ajax_complete` event, with argument is AJAX
- * instance itself
+ * Each AJAX instance when request complete will notice App instance events
+ * Events:
+ * - request
+ * - retry
+ * - catch: error message, error code
+ * - then: response
+ * - finally: jqXHR, textStatus
+ * - retry_time_complete: jqXHR, textStatus
+ * App events:
+ * - ajax_retry_time_complete: AJAX instance
+ * - ajax_complete: AJAX instance
+ *
  * @module _.M.AJAX
  * @memberOf _.M
  * @requires _.M.EventEmitter
@@ -3336,8 +3350,8 @@
          * - retry: retry times when error
          * - is_continue: check if continue to retry request. Boolean or function which bind to AJAX instance, return
          * boolean value,
-         * @type {{response_adapters: {}, data_adapters: {}, auto_abort: boolean, retry: number, is_continue:
-         *     boolean|function}}
+         * @type {{response_adapters: {}, data_adapters: {}, auto_abort: boolean,
+         * retry: number, is_continue: boolean|function}}
          */
         this.options = {
             response_adapters: {},
