@@ -21,7 +21,7 @@
         /**
          * Set a flag
          * @param {string} name
-         * @param {boolean} is_active Flag status, default is True
+         * @param {boolean} [is_active=true] Flag status, default is True
          */
         flag: function (name, is_active) {
             if (_.isUndefined(is_active)) {
@@ -42,7 +42,7 @@
 
         /**
          * Get flags
-         * @param {boolean} detail If true then return flags with detail of it, else only return flags name
+         * @param {boolean} [detail=false] If true then return flags with detail of it, else only return flags name
          */
         flags: function (detail) {
             if (detail) {
@@ -67,8 +67,6 @@
          */
         isFlagged: function (name) {
             var result, self = this;
-
-
 
             if (_.isArray(name)) {
                 result = [];

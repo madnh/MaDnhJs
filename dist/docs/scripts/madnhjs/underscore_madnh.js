@@ -2475,8 +2475,8 @@
         var proto = destination.prototype = Object.create(source.prototype);
         proto.constructor = destination;
 
-        if (addSuper || typeof addSuper === 'undefined') {
-            destination._super = source.prototype;
+        if (addSuper || _.isUndefined(addSuper)) {
+            proto._super = source.prototype;
         }
     };
 
