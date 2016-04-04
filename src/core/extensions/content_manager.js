@@ -259,7 +259,7 @@
     ContentManager.prototype.isUsingContent = function (content, type) {
         var positions = this.contentPositions(content, type);
 
-        return positions.length && this._usesing.hasOwnProperty(positions.shift().key);
+        return Boolean(positions.length && this._usesing.hasOwnProperty(positions.shift().key));
     };
 
     /**

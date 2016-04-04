@@ -1147,7 +1147,7 @@
         /**
          * Set a flag
          * @param {string} name
-         * @param {boolean} is_active Flag status, default is True
+         * @param {boolean} [is_active=true] Flag status, default is True
          */
         flag: function (name, is_active) {
             if (_.isUndefined(is_active)) {
@@ -1168,7 +1168,7 @@
 
         /**
          * Get flags
-         * @param {boolean} detail If true then return flags with detail of it, else only return flags name
+         * @param {boolean} [detail=false] If true then return flags with detail of it, else only return flags name
          */
         flags: function (detail) {
             if (detail) {
@@ -1193,8 +1193,6 @@
          */
         isFlagged: function (name) {
             var result, self = this;
-
-
 
             if (_.isArray(name)) {
                 result = [];
@@ -1261,6 +1259,7 @@
  * Store data by key and data type. Support add, check exists, get and delete
  * @module _.M.ContentManager
  * @memberOf _.M
+ * @requires _.M.BaseClass
  */
 ;(function (_) {
     
@@ -1321,6 +1320,9 @@
      * @class _.M.ContentManager
      */
     function ContentManager() {
+        this.type_prefix = 'content';
+        _.M.BaseClass.call(this);
+
         this._contents = {};
         this._usesing = {};
     }
@@ -1462,7 +1464,7 @@
             type = _.M.contentType(content);
         }
 
-        var key = _.M.nextID('content_' + type + '_', true);
+        var key = _.M.nextID(this.type_prefix + '_'+ type, true);
 
         if (!this._contents.hasOwnProperty(type)) {
             this._contents[type] = {};
@@ -1539,7 +1541,7 @@
     };
 
     /**
-     * Remove content by key. Return content
+     * Remove content by key. Return removed keys
      * @param {string|Array} keys
      */
     ContentManager.prototype.remove = function (keys) {
@@ -1637,7 +1639,7 @@
         var type = getContentTypeFromKey(key);
 
         if (false !== type && this._contents[type].hasOwnProperty(key)) {
-            return this._contents[type][key];
+            return _.clone(this._contents[type][key]);
         }
 
         return false;
@@ -1650,7 +1652,7 @@
      */
     ContentManager.prototype.getType = function (type) {
         if (this.hasType(type)) {
-            return this._contents[type];
+            return _.clone(this._contents[type]);
         }
 
         return false;
@@ -1667,7 +1669,7 @@
 
         if (false !== result) {
 
-            return result.content;
+            return _.clone(result.content);
         }
 
         return default_value;
@@ -1684,7 +1686,7 @@
 
         if (false !== result) {
 
-            return result.meta;
+            return _.clone(result.meta);
         }
 
         return default_value;
