@@ -5,7 +5,7 @@
  * @requires _.M.BaseClass
  */
 ;(function (_) {
-    
+
     _.M.defineConstant({
         /**
          * @constant {string}
@@ -67,7 +67,7 @@
         _.M.BaseClass.call(this);
 
         this._contents = {};
-        this._usesing = {};
+        this._usings = {};
     }
 
     /**
@@ -207,7 +207,7 @@
             type = _.M.contentType(content);
         }
 
-        var key = _.M.nextID(this.type_prefix + '_'+ type, true);
+        var key = _.M.nextID(this.type_prefix + '_' + type, true);
 
         if (!this._contents.hasOwnProperty(type)) {
             this._contents[type] = {};
@@ -242,12 +242,59 @@
     };
 
     /**
+     *
+     * @param {string|string[]} keys
+     * @param with_meta
+     * @return {{}}
+     */
+    ContentManager.prototype.items = function (keys, with_meta) {
+        var result = {},
+            type,
+            key,
+            callback;
+
+        if (with_meta) {
+            callback = function (item) {
+                return _.clone(item)
+            };
+        } else {
+            callback = function (item) {
+                return _.clone(item.content);
+            }
+        }
+        if (!_.isEmpty(keys)) {
+            var type_grouped = _.groupBy(_.M.asArray(keys), getContentTypeFromKey);
+
+            for (type in type_grouped) {
+                if (type_grouped.hasOwnProperty(type)) {
+                    _.each(_.pick(this._contents[type], type_grouped[type]), function (value, key) {
+                        result[key] = callback(value);
+                    });
+                }
+            }
+        } else {
+            for (type in this._contents) {
+                if (this._contents.hasOwnProperty(type)) {
+                    for (key in this._contents[type]) {
+                        if (this._contents[type].hasOwnProperty(key)) {
+                            result[key] = callback(this._contents[type][key]);
+                        }
+                    }
+                }
+            }
+        }
+
+
+        return result;
+    };
+
+    /**
      * Check if content key is using
      * @param {string} key
      * @returns {boolean}
      */
     ContentManager.prototype.isUsing = function (key) {
-        return this._usesing.hasOwnProperty(key);
+        return this._usings.hasOwnProperty(key);
     };
 
     /**
@@ -259,94 +306,21 @@
     ContentManager.prototype.isUsingContent = function (content, type) {
         var positions = this.contentPositions(content, type);
 
-        return Boolean(positions.length && this._usesing.hasOwnProperty(positions.shift().key));
+        return Boolean(positions.length && this._usings.hasOwnProperty(positions.shift().key));
     };
 
     /**
      * Toggle using key
      * @param {string} key
      * @param {boolean} [is_using = true]
+     * @return {boolean} True -> key is exists and set using status success. False -> key is not exists
      */
     ContentManager.prototype.using = function (key, is_using) {
-        if (_.isUndefined(is_using) || is_using) {
-            this._usesing[key] = true;
-        } else {
-            delete this._usesing[key];
-        }
-    };
-
-    /**
-     * Remove flaged content key is using
-     * @param key
-     */
-    ContentManager.prototype.unused = function (key) {
-        delete this._usesing[key];
-    };
-
-    /**
-     * Remove content by key. Return removed keys
-     * @param {string|Array} keys
-     */
-    ContentManager.prototype.remove = function (keys) {
-        var removes = [], self = this;
-
-        _.M.asArray(keys).forEach(function (key) {
-            var type = getContentTypeFromKey(key);
-
-            if (false !== type && self._contents.hasOwnProperty(type)) {
-                delete self._contents[type][key];
-                delete self._usesing[key];
-
-                removes.push({
-                    type: type,
-                    key: key
-                });
-            }
-        });
-
-
-        this.clean();
-
-        return removes;
-    };
-
-    /**
-     * Remove content, return content key
-     * @param {*} content
-     * @param {string} [type]
-     * @returns {Array} Removed positions
-     */
-    ContentManager.prototype.removeContent = function (content, type) {
-        var positions = this.contentPositions(content, type),
-            self = this;
-
-        if (positions.length) {
-            _.each(positions, function (pos) {
-                delete self._contents[pos.type][pos.key];
-                delete self._usesing[pos.key];
-            });
-        }
-
-        this.clean();
-
-        return positions;
-    };
-
-    /**
-     * Update content and meta
-     * @param {string} key
-     * @param {*} content
-     * @param {*} [meta]
-     * @returns {boolean}
-     */
-    ContentManager.prototype.update = function (key, content, meta) {
         if (this.hasKey(key)) {
-            var type = getContentTypeFromKey(key);
-
-            this._contents[type][key].content = content;
-
-            if (arguments.length >= 3) {
-                this._contents[type][key].meta = meta;
+            if (_.isUndefined(is_using) || is_using) {
+                this._usings[key] = true;
+            } else {
+                delete this._usings[key];
             }
 
             return true;
@@ -356,21 +330,53 @@
     };
 
     /**
-     * Update meta
-     * @param {string} key
-     * @param {*} meta
-     * @returns {boolean}
+     * Set keys to unused
+     * @param {string|string[]}keys
      */
-    ContentManager.prototype.updateMeta = function (key, meta) {
-        if (this.hasKey(key)) {
-            var type = getContentTypeFromKey(key);
+    ContentManager.prototype.unused = function (keys) {
+        this._usings = _.omit(this._usings, keys);
+    };
 
-            this._contents[type][key].meta = meta;
-
-            return true;
+    /**
+     * Get using keys
+     * @param {boolean} [grouped=false] Group keys by type
+     * @return {*}
+     */
+    ContentManager.prototype.usingKeys = function (grouped) {
+        if (grouped) {
+            return _.groupBy(Object.keys(this._usings), getContentTypeFromKey);
         }
 
-        return false;
+        return _.clone(this._usings);
+    };
+    /**
+     * Get unused keys
+     * @param {boolean} [grouped=false] Group keys by type
+     * @return {{}|string[]}
+     */
+    ContentManager.prototype.unusedKeys = function (grouped) {
+        var using_grouped = this.usingKeys(true),
+            result = {};
+
+        for (var type in this._contents) {
+            if (this._contents.hasOwnProperty(type)) {
+                if (!using_grouped.hasOwnProperty(type)) {
+                    result[type] = Object.keys(this._contents[type]);
+                } else {
+                    result[type] = _.difference(Object.keys(this._contents[type]), using_grouped[type]);
+                }
+
+                if (_.isEmpty(result[type])) {
+                    delete result[type];
+                }
+            }
+        }
+
+        if (!grouped) {
+            return _.flatten(_.values(result));
+        }
+
+        return result;
     };
 
     /**
@@ -436,46 +442,114 @@
     };
 
     /**
-     * Remove using content
-     * @returns {Array} Removed position
+     * Remove content by key. Return removed keys
+     * @param {string|string[]} keys
      */
-    ContentManager.prototype.removeUsing = function () {
-        return this.remove(Object.keys(this._usesing));
+    ContentManager.prototype.remove = function (keys) {
+        var removes = [],
+            key_grouped = _.groupBy(_.M.asArray(keys), getContentTypeFromKey);
+
+        delete key_grouped['false'];
+
+        for (var type in key_grouped) {
+            if (key_grouped.hasOwnProperty(type) && this._contents.hasOwnProperty(type)) {
+                for (var index in key_grouped[type]) {
+                    if (key_grouped[type].hasOwnProperty(index)) {
+                        removes.push({
+                            type: type,
+                            key: key_grouped[type][index]
+                        });
+
+                        delete this._contents[type][key_grouped[type][index]];
+                        delete this._usings[key_grouped[type][index]];
+                    }
+                }
+            }
+        }
+
+        this.clean();
+
+        return removes;
     };
+
+    /**
+     * Remove content, return content key
+     * @param {*} content
+     * @param {string} [type]
+     * @returns {Array} Removed positions
+     */
+    ContentManager.prototype.removeContent = function (content, type) {
+        var positions = this.contentPositions(content, type),
+            self = this;
+
+        if (positions.length) {
+            _.each(positions, function (pos) {
+                delete self._contents[pos.type][pos.key];
+                delete self._usings[pos.key];
+            });
+        }
+
+        this.clean();
+
+        return positions;
+    };
+
+    /**
+     * Update content and meta
+     * @param {string} key
+     * @param {*} content
+     * @param {*} [meta]
+     * @returns {boolean}
+     */
+    ContentManager.prototype.update = function (key, content, meta) {
+        if (this.hasKey(key)) {
+            var type = getContentTypeFromKey(key);
+
+            this._contents[type][key].content = content;
+
+            if (arguments.length >= 3) {
+                this._contents[type][key].meta = meta;
+            }
+
+            return true;
+        }
+
+        return false;
+    };
+
+    /**
+     * Update meta
+     * @param {string} key
+     * @param {*} meta
+     * @returns {boolean}
+     */
+    ContentManager.prototype.updateMeta = function (key, meta) {
+        if (this.hasKey(key)) {
+            var type = getContentTypeFromKey(key);
+
+            this._contents[type][key].meta = meta;
+
+            return true;
+        }
+
+        return false;
+    };
+
 
     /**
      * Remove using content
      * @returns {Array} Removed position
      */
+    ContentManager.prototype.removeUsing = function () {
+        return this.remove(Object.keys(this._usings));
+    };
+
+    /**
+     * Remove using content
+     * @returns {array} Removed position
+     */
     ContentManager.prototype.removeUnusing = function () {
-        var uses = Object.keys(this._usesing),
-            types = {},
-            self = this,
-            removes = {};
-
-        uses.forEach(function (using) {
-            var type = getContentTypeFromKey(using);
-
-            if (type) {
-                if (!types.hasOwnProperty(type)) {
-                    types[type] = [];
-                }
-                types[type].push(using);
-            }
-        });
-
-        Object.keys(this._contents).forEach(function (type) {
-            if (types.hasOwnProperty(type)) {
-                removes[type] = _.difference(Object.keys(self._contents[type]), types[type]);
-                self._contents[type] = _.pick(self._contents[type], types[type]);
-            } else {
-                removes[type] = types[type];
-                delete self._contents[type];
-            }
-
-        });
-
-        return _.flatten(_.values(removes));
+        return this.remove(this.unusedKeys());
     };
 
     /**
@@ -484,7 +558,7 @@
      */
     ContentManager.prototype.status = function () {
         var status = {
-                using: Object.keys(this._usesing).length,
+                using: Object.keys(this._usings).length,
                 types: {}
             },
             self = this;
@@ -497,7 +571,7 @@
     };
 
     /**
-     * 
+     *
      * @type {_.M.ContentManager}
      */
     _.M.ContentManager = ContentManager;

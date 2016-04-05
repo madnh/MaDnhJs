@@ -1,2 +1,0 @@
-(function(a){function b(a,b){var c,d;return window.getComputedStyle?d=document.defaultView.getComputedStyle(c,null).getPropertyValue(b):c.currentStyle&&(d=c.currentStyle[b]),d}var c,d={},e=[];d.status=function(){return a.clone(e)},d.has=function(b){return a.contains(e,b)},d.create=function(a){c||(c=document.createElement("div"),c.className="overlay");var d=b(a,"zIndex");console.log("Style",a.style),console.log("Index",d),document.body.appendChild(c),c.style.zIndex=d-1},a.mixinAll({OVERLAY:d})}).call(this,_);
-//# sourceMappingURL=mad_overlay.js.map
