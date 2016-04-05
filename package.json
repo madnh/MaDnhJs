@@ -1,11 +1,10 @@
 {
   "name": "madnhjs",
-  "version": "2.0.5",
+  "version": "1.0.0",
   "description": "An Underscore extension",
   "main": "/src/madnh.js",
   "directories": {
-    "doc": "docs",
-    "test": "test"
+    "doc": "docs"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
