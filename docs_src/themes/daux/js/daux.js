@@ -86,7 +86,8 @@ $(function () {
         localStorage.setItem("codeBlockState", codeBlockState);
     } else codeBlockState = parseInt(codeBlockState);
 
-    setCodeBlockStyle(codeBlockState);
+    // setCodeBlockStyle(codeBlockState);
+    setCodeBlockStyle(1);
 });
 
 

@@ -88,60 +88,105 @@
     };
 
     /**
-     * Find positions of content by content and [type]
-     * @param {*} content
-     * @param {string} [type] Find in this type, if missing then auto detect
-     * @returns {Array} Array of object with keys: type, key
+     * Filter content by callback, return position of valid contents
+     * @param callback Callback arguments: content, meta, content key, content type. Return true on valid content, otherwise
+     * @param types
+     * @returns {Array} Each item is object:
+     *  - type: content type
+     *  - key: content key
+     *  - content: content
+     *  - meta: content meta
      */
-    ContentManager.prototype.contentPositions = function (content, type) {
-        var pos = [],
-            self = this;
+    ContentManager.prototype.filter = function (callback, types) {
+        var result = [],
+            type_checked = false,
+            type, self = this;
 
-        if (!type) {
-            type = _.M.contentType(content);
-        }
-        if (this._contents.hasOwnProperty(type)) {
-            Object.keys(this._contents[type]).forEach(function (key) {
-                if (self._contents[type][key].content === content) {
-                    pos.push({
-                        type: type,
-                        key: key
-                    });
-                }
-            });
+        if (_.isUndefined(types)) {
+            types = Object.keys(this._contents);
+            type_checked = true;
+        } else {
+            types = _.M.asArray(types);
         }
 
-        return pos;
+        _.M.loop(types, function (type) {
+            if (type_checked || self._contents.hasOwnProperty(type)) {
+                _.M.loop(Object.keys(self._contents[type]), function (key) {
+                    if (callback(_.clone(self._contents[type][key].content), _.clone(self._contents[type][key].meta), key, type)) {
+                        result.push({
+                            type: type,
+                            key: key,
+                            content: _.clone(self._contents[type][key].content),
+                            meta: _.clone(self._contents[type][key].meta)
+                        });
+                    }
+                });
+            } else {
+                throw new Error('Content type not found');
+            }
+        });
+
+        return result;
     };
 
     /**
-     * Filter meta, return positions
-     * @param {Function} callback
-     * @param {(string|Array)} types Filter all type of contents if this parameter is missing
-     * @returns {Array}
+     * Find first position of valid content
+     * @param callback Callback arguments: content, meta, content key, content type. Return true on valid content, otherwise
+     * @param types
+     * @returns {boolean|{}} False if not found, else return object:
+     *  - type: content type
+     *  - key: content key
+     *  - content: content
      */
-    ContentManager.prototype.metaPositions = function (callback, types) {
-        var pos = [],
-            self = this;
+    ContentManager.prototype.find = function (callback, types) {
+        var found = false,
+            type_checked = false,
+            type, self = this;
 
-        if (!types) {
+        if (_.isUndefined(types)) {
             types = Object.keys(this._contents);
+            type_checked = true;
+        } else {
+            types = _.M.asArray(types);
         }
-        types = _.M.asArray(types);
 
+        _.M.loop(types, function (type) {
+            if (type_checked || self._contents.hasOwnProperty(type)) {
+                _.M.loop(Object.keys(self._contents[type]), function (key) {
+                    if (callback(_.clone(self._contents[type][key].content), _.clone(self._contents[type][key].meta), key, type)) {
+                        found = {
+                            type: type,
+                            key: key,
+                            content: _.clone(self._contents[type][key].content)
+                        };
 
-        types.forEach(function (type) {
-            Object.keys(self._contents[type]).forEach(function (key) {
-                if (callback(self._contents[type][key])) {
-                    pos.push({
-                        type: type,
-                        key: key
-                    });
+                        return 'break';
+                    }
+                });
+
+                if (found) {
+                    return 'break';
                 }
-            });
+            } else {
+                throw new Error('Invalid content type');
+            }
         });
 
-        return pos;
+        return found;
+    };
+
+    /**
+     * Find positions of content by content and [types]
+     * @param {*} content
+     * @param {string} [types] Find in this types, if missing then auto detect
+     * @returns {Array} Array of object with keys: type, key
+     */
+    ContentManager.prototype.contentPositions = function (content, types) {
+        var callback = function (check_content) {
+            return content === check_content;
+        };
+
+        return this.filter(callback, types);
     };
 
     /**
@@ -156,29 +201,32 @@
     /**
      * Find content exists
      * @param content
-     * @param type
+     * @param types
      * @returns {boolean}
      */
-    ContentManager.prototype.hasContent = function (content, type) {
-        return this.contentPositions(content, type).length > 0;
+    ContentManager.prototype.hasContent = function (content, types) {
+        var callback = function (check_content) {
+            return content === check_content;
+        };
+
+        return false !== this.find(callback, types);
     };
 
     /**
      * Check if key is exists
      * @param {string} key
-     * @param {string} [type]
      * @returns {boolean}
      */
-    ContentManager.prototype.hasKey = function (key, type) {
+    ContentManager.prototype.hasKey = function (key) {
         if (this.isUsing(key)) {
             return true;
         }
-        if (!type) {
-            type = getContentTypeFromKey(key);
-            if (!type) {
-                return false;
-            }
+
+        if(!this.isValidKey(key)){
+            return false;
         }
+
+        var type = getContentTypeFromKey(key);
 
         return this._contents.hasOwnProperty(type) && this._contents[type].hasOwnProperty(key);
     };
@@ -306,7 +354,11 @@
     ContentManager.prototype.isUsingContent = function (content, type) {
         var positions = this.contentPositions(content, type);
 
-        return Boolean(positions.length && this._usings.hasOwnProperty(positions.shift().key));
+        if(!_.isEmpty(positions)){
+            return !_.isEmpty(_.intersection(_.pluck(positions, 'key'), Object.keys(this._usings)));
+        }
+
+        return false;
     };
 
     /**
@@ -334,20 +386,20 @@
      * @param {string|string[]}keys
      */
     ContentManager.prototype.unused = function (keys) {
-        this._usings = _.omit(this._usings, keys);
+        this._usings = _.omit(this._usings, _.flatten(_.toArray(arguments)));
     };
 
     /**
      * Get using keys
      * @param {boolean} [grouped=false] Group keys by type
-     * @return {*}
+     * @return {string[], {}}
      */
     ContentManager.prototype.usingKeys = function (grouped) {
         if (grouped) {
             return _.groupBy(Object.keys(this._usings), getContentTypeFromKey);
         }
 
-        return _.clone(this._usings);
+        return Object.keys(this._usings);
     };
     /**
      * Get unused keys
@@ -395,7 +447,7 @@
     };
 
     /**
-     * Get type content
+     * Get type contents
      * @param {string} type
      * @returns {({}|boolean)}
      */
@@ -447,7 +499,7 @@
      */
     ContentManager.prototype.remove = function (keys) {
         var removes = [],
-            key_grouped = _.groupBy(_.M.asArray(keys), getContentTypeFromKey);
+            key_grouped = _.groupBy(_.flatten(_.toArray(arguments)), getContentTypeFromKey);
 
         delete key_grouped['false'];
 
@@ -554,11 +606,11 @@
 
     /**
      * Get status
-     * @returns {{using: Number, types: {}}}
+     * @returns {{using: string[], types: {}}}
      */
     ContentManager.prototype.status = function () {
         var status = {
-                using: Object.keys(this._usings).length,
+                using: Object.keys(this._usings),
                 types: {}
             },
             self = this;
