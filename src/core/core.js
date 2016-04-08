@@ -428,6 +428,50 @@
     };
 
     /**
+     * Like _.pairs but array item is an object with field is "key", "value"
+     * @param object
+     * @returns {Array}
+     * @example
+     * _.M.pairsAsObject({one: 1, two: 2, three: 3});
+     * => [{key: 'one', value: 1},{key: 'two', value: 2},{key: 'three', value: 3}]
+     */
+    M.pairsAsObject = function (object) {
+        var result = [];
+
+        _.each(object, function (value, key) {
+            result.push({
+                key: key,
+                value: value
+            });
+        });
+
+        return result;
+    };
+    /**
+     * A convenient version of what is perhaps the most common use-case for map: extracting a list of property values, with a column as key.
+     * @param {object[]} collection
+     * @param {string} key_field If key field not found then use as "undefined"
+     * @param {string} value_field If value field not found then use as "undefined"
+     * @returns {{}}
+     * @example
+     * var stooges = [{name: 'moe', id: 1, age: 40}, {name: 'larry', id: 2, age: 50}, {name: 'curly', id: 4, age: 60}];
+     * _.M.pluckBy(stooges, 'id', 'name');
+     * => {1: 'moe', 2: 'larry', 3: 'curly'}
+     */
+    M.pluckBy = function (collection, key_field, value_field) {
+        var result = {};
+
+        _.each(collection, function (object) {
+            var key = object.hasOwnProperty(key_field) ? object[key_field] : undefined;
+            var value = object.hasOwnProperty(value_field) ? object[value_field] : undefined;
+
+            result[key] = value;
+        });
+
+        return result;
+    };
+
+    /**
      * Repeat value by times
      * @param {*} value
      * @param {number} times Repeat times, >= 0
