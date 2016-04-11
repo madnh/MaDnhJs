@@ -119,7 +119,7 @@
          */
         this._content_manager = new _.M.ContentManager();
         /**
-         *
+         * Priority number and keys
          * @type {{}}
          * @private
          */
@@ -235,6 +235,7 @@
 
         _.each(priority_keys, function (priority) {
             var content_picked = _.pick(raw_contents, self._priorities[priority]);
+            
             if (content_only) {
                 contents = contents.concat(_.pluck(
                     _.values(content_picked),

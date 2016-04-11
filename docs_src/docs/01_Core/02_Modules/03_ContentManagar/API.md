@@ -4,7 +4,7 @@
     <tr>
         <th>Tên</th>
         <th>Kiểu dữ liệu</th>
-        <th>Tham số tùy chọn và giá trị mặc định</th>
+        <th>Giá trị mặc định</th>
         <th>Mô tả</th>
     </tr>
     </thead>
