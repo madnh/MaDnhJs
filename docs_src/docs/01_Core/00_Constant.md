@@ -201,3 +201,27 @@ _.M.isDefinedConstant('BAZ'); //true
     </tr>
     </tbody>
 </table>
+
+## _.M.EventEmitter
+-----
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <td>Constant</td>
+        <td>Value</td>
+        <td>Description</td>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>EVENT_EMITTER_EVENT_LIMIT_LISTENERS</td>
+        <td>10</td>
+        <td>Số lượng giới hạn các listener của mỗi event. Quá số lượng này sẽ hiện thông báo</td>
+    </tr>
+    <tr>
+        <td>EVENT_EMITTER_EVENT_UNLIMITED</td>
+        <td>-1</td>
+        <td>Không giới hạn số listener của mỗi event</td>
+    </tr>
+    </tbody>
+</table>
