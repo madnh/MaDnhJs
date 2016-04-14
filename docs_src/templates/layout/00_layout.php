@@ -59,6 +59,6 @@
 
     <script src="<?= $base_url; ?>themes/daux/js/daux.js"></script>
     <script src="/dist/underscore.js"></script>
-    <script src="/dist/madnh.min.js"></script>
+    <script src="/dist/madnh.js"></script>
 </body>
 </html>

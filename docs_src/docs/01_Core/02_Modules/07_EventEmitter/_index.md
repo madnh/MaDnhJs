@@ -28,7 +28,7 @@ Lắng nghe sự kiện của EventEmitter instance khác
 <pre><code class="javascript">
     var obj2 = new _.M.EventEmitter();
     
-    obj2.attach(obj);
+    obj2.attachTo(obj);
     
     obj2.on('noticed', function(){
         console.log('EventEmitter instance 2 noticed', arguments);

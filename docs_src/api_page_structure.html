@@ -1,41 +1,152 @@
-<p><strong>EventEmitter</strong> là base class, hỗ trợ quản lý các sự kiện của instance</p>
-<p>Kế thừa class <code>_.M.BaseClass</code></p>
+<div class="panel panel-info">
+    <div class="panel-heading"><strong>resetEvents</strong></div>
+    <div class="panel-body">
+        Xóa các listener của một event
+    </div>
+    <ul class="list-group">
+        <li class="list-group-item">
+            <h4>Parameters</h4>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Tên</th>
+                    <th>Kiểu dữ liệu</th>
+                    <th>Tham số tùy chọn và giá trị mặc định</th>
+                    <th>Mô tả</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td><code>event</code></td>
+                    <td>string</td>
+                    <td>undefined</td>
+                    <td>Tên event cần xóa. Nếu không chỉ định rõ sẽ xóa toàn bộ các event</td>
+                </tr>
+                </tbody>
+            </table>
+        </li>
+        <li class="list-group-item">
+            <h4>Returns</h4>
+            <div class="alert alert-info">
+                Không có dữ liệu trả về
+            </div>
+        </li>
+        <li class="list-group-item">
+            <h4>Throws</h4>
 
-<ul>
-    <li>Đăng ký/Hủy đăng ký các listener cho các event</li>
-    <li>Khởi tạo các event</li>
-    <li>Lắng nghe sự kiện của các EventEmitter khác</li>
-</ul>
-
-<pre><code class="javascript">
-    var obj = new _.M.EventEmitter();
-    
-    obj.on('event_1', function(){
-        console.log('Event 1, Callback 1');
-    });
-    
-    obj.on('event_1', function(){
-        console.log('Event 1, Callback 2');
-    });
-    
-    obj.emit('event_1');
-    => 'Event 1, Callback 1'
-    => 'Event 1, Callback 2'
-</code></pre>
-
-Lắng nghe sự kiện của EventEmitter instance khác
-
-<pre><code class="javascript">
-    var obj2 = new _.M.EventEmitter();
-    
-    obj2.attach(obj);
-    
-    obj2.on('noticed', function(){
-        console.log('EventEmitter instance 2 noticed', arguments);
-    });
-    
-    obj.emit('event_1');
-    => 'Event 1, Callback 1'
-    => 'Event 1, Callback 2'
-    => 'EventEmitter instance 2 noticed' ......
-</code></pre>
+        </li>
+    </ul>
+</div>
+<div class="panel panel-info">
+    <div class="panel-heading"><strong>reset</strong></div>
+    <div class="panel-body">
+        Alias của <code>resetEvents</code>
+    </div>
+</div>
+<div class="panel panel-info">
+    <div class="panel-heading"><strong>events</strong></div>
+    <div class="panel-body">
+        Trả về danh sách các event
+    </div>
+    <ul class="list-group">
+        <li class="list-group-item">
+            <h4>Parameters</h4>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Tên</th>
+                    <th>Kiểu dữ liệu</th>
+                    <th>Tham số tùy chọn và giá trị mặc định</th>
+                    <th>Mô tả</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td><code>count</code></td>
+                    <td>boolean</td>
+                    <td>false</td>
+                    <td>Kết quả trả về sẽ bao gồm số lượng các listener mỗi event</td>
+                </tr>
+                </tbody>
+            </table>
+        </li>
+        <li class="list-group-item">
+            <h4>Returns</h4>
+            <dl class="dl-horizontal">
+                <dt>string[]</dt><dd>Mảng tên các event</dd>
+                <dt>{}</dt><dd>Object với key là tên event, value là số lượng listener của event đó</dd>
+            </dl>
+        </li>
+    </ul>
+</div>
+<div class="panel panel-info">
+    <div class="panel-heading"><strong>emitted</strong></div>
+    <div class="panel-body">
+        Trả về số lần đã phát sinh của các sự kiện
+    </div>
+    <ul class="list-group">
+        <li class="list-group-item">
+            <h4>Parameters</h4>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Tên</th>
+                    <th>Kiểu dữ liệu</th>
+                    <th>Tham số tùy chọn và giá trị mặc định</th>
+                    <th>Mô tả</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td><code>event</code></td>
+                    <td>string</td>
+                    <td>undefined</td>
+                    <td>Nếu chỉ định sẽ trả về số lần phát sinh của sự kiện này. Nếu chưa phát sinh lần nào hoặc sự kiện không tồn tại sẽ trả về <strong>0</strong></td>
+                </tr>
+                </tbody>
+            </table>
+        </li>
+        <li class="list-group-item">
+            <h4>Returns</h4>
+            <dl class="dl-horizontal">
+                <dt>number</dt><dd>Số lần phát sinh của một event cụ thể</dd>
+                <dt>{}</dt><dd>Object với key là tên sự kiện, value là số lần đã phát sinh của sự kiện đó</dd>
+            </dl>
+        </li>
+    </ul>
+</div>
+<div class="panel panel-info">
+    <div class="panel-heading"><strong>limit</strong></div>
+    <div class="panel-body">
+        Đặt số lượng giới hạn của các listener cho mỗi event. Nếu vượt quá số lượng này thì khi thêm listener sẽ show warning ở console
+    </div>
+    <ul class="list-group">
+        <li class="list-group-item">
+            <h4>Parameters</h4>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Tên</th>
+                    <th>Kiểu dữ liệu</th>
+                    <th>Tham số tùy chọn và giá trị mặc định</th>
+                    <th>Mô tả</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td><code>limit</code></td>
+                    <td>number</td>
+                    <td></td>
+                    <td>Số lượng giới hạn mới</td>
+                </tr>
+                </tbody>
+            </table>
+        </li>
+    </ul>
+</div>
+<div class="panel panel-info">
+    <div class="panel-heading"><strong>unlimited</strong></div>
+    <div class="panel-body">
+        Đặt số lượng giới hạn của các listener mỗi event là không giới hạn
+    </div>
+</div>

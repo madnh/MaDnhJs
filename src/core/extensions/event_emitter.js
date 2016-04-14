@@ -77,7 +77,7 @@
          * @type {Array}
          * @private
          */
-        this._event_privates = [];
+        this._event_privates = ['attach', 'attached'];
     }
 
     /**
@@ -235,11 +235,11 @@
     /**
      * Add once time listener
      * @param event
-     * @param listener
+     * @param listeners
      * @param option
      * @returns {string}
      */
-    EventEmitter.prototype.addOnceListener = function (event, listener, option) {
+    EventEmitter.prototype.addOnceListener = function (event, listeners, option) {
         if (_.M.isNumeric(option)) {
             option = {
                 priority: option,
@@ -252,7 +252,7 @@
         }
 
 
-        return this.addListener(event, listener, option);
+        return this.addListener(event, listeners, option);
     };
 
     /**
@@ -327,10 +327,6 @@
                         this._event_emitted[event] += 1;
                     }
 
-                    if (final_cb) {
-                        final_cb.call(this);
-                    }
-
                     if (event !== 'event_emitted') {
                         thisFunc.call(self, 'event_emitted', [event, data]);
                     }
@@ -351,6 +347,10 @@
                 }
             }
         }
+
+        if (final_cb) {
+            final_cb.call(this);
+        }
     };
 
     /**
@@ -364,7 +364,7 @@
     /**
      * Remove listener by key
      * @param {string|Function|Array} key_or_listener Listener key or listener it self
-     * @param {number} [priority=_.M.PRIORITY_DEFAULT]
+     * @param {number} [priority]
      */
     EventEmitter.prototype.removeListener = function (key_or_listener, priority) {
         var self = this;
@@ -382,7 +382,6 @@
                     }
                 });
             } else if (_.isFunction(remover)) {
-                priority = priority || _.M.PRIORITY_DEFAULT;
                 _.each(Object.keys(self._events), function (event_name) {
                     self._events[event_name].priority.removeContent(remover, priority);
 
@@ -421,8 +420,10 @@
                 };
                 this.emitEvent('attach', [eventEmitter, only, excepts]);
                 eventEmitter.attachTo(this, only, excepts);
+                return true;
             }
-            return true;
+
+            return false;
         }
 
         throw new Error('Invalid _.M.EventEmitter instance');
@@ -432,9 +433,10 @@
      * @param eventEmitter
      * @param only
      * @param excepts
+     * @return boolean
      */
     EventEmitter.prototype.attachHard = function (eventEmitter, only, excepts) {
-        this.attach(eventEmitter, only, excepts, false);
+        return this.attach(eventEmitter, only, excepts, false);
     };
 
     /**
@@ -452,7 +454,7 @@
         if (!this._event_following.hasOwnProperty(eventEmitter.id)) {
             this._event_following[eventEmitter.id] = {
                 id: eventEmitter.id,
-                type: eventEmitter.constructor.name,
+                type: eventEmitter.type_prefix,
                 only: _.M.asArray(only || []),
                 excepts: _.M.asArray(excepts || [])
             };
@@ -462,6 +464,7 @@
             }
 
             return eventEmitter.attach(this);
+
         }
         return true;
     };
@@ -515,16 +518,16 @@
 
                 var notices = [
                     info.id + '.' + eventName,
-                    info.type + '.' + eventName,
+                    info.type_prefix + '.' + eventName,
                     'noticed.' + info.id + '.' + eventName,
                     'noticed.' + info.id,
-                    'noticed.' + info.type + '.' + eventName,
-                    'noticed.' + info.type,
+                    'noticed.' + info.type_prefix + '.' + eventName,
+                    'noticed.' + info.type_prefix,
                     'noticed'
                 ];
 
                 var mimic = null;
-                _.M.loop([eventName, info.type + '.*', info.type + '.' + eventName], function (mimic_event_name) {
+                _.M.loop([eventName, info.type_prefix + '.*', info.type_prefix + '.' + eventName], function (mimic_event_name) {
                     if (-1 != self._event_mimics.indexOf(mimic_event_name)) {
                         mimic = mimic_event_name;
                         self.emitEvent(eventName, data);
@@ -534,7 +537,7 @@
                 });
 
 
-                this.emitEvent(mimic ? _.omit(notices, mimic) : notices, [data, _.clone(notice_data)]);
+                this.emitEvent(mimic ? _.omit(notices, mimic) : notices, _.clone(notice_data));
             }
         }
     };
@@ -550,9 +553,11 @@
                 this.emitEvent('detach', [eventEmitter]);
                 delete this._event_followers[eventEmitter.id];
                 eventEmitter.detachFrom(this);
+
+                return true;
             }
 
-            return true;
+            return false;
         }
 
         throw new Error('Invalid _.M.EventEmitter instance');
@@ -569,9 +574,11 @@
                 this.emitEvent('detached', [eventEmitter]);
                 delete this._event_following[eventEmitter.id];
                 eventEmitter.detach(this);
-            }
 
-            return true;
+                return true;
+            }
+            return false;
+
         }
 
         throw new Error('Invalid _.M.EventEmitter instance');
