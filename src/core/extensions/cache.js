@@ -50,7 +50,7 @@
     });
 
     var _cache_data = {};
-    var _clean_interval_time = _.M.CACHE_SHORT;
+    var _clean_interval_time = _.M.CACHE_MIN;
     var _clean_interval;
 
     /**
@@ -150,22 +150,24 @@
         if (_.isUndefined(addMode)) {
             addMode = true;
         }
-        if (addMode === false) {
-            value *= -1;
+        if (addMode) {
+            value = Math.abs(value);
+        }else{
+            value = -1 * Math.abs(value);
         }
 
         if (!_has_cache(name)) {
             _set_cache(name, value);
         } else {
-            var old_detail = _cache_data[name];
-            var old_value = Number(old_detail.value);
+            _cache_data[name].value =  Number(_cache_data[name].value);
 
-            if (!_.M.isNumeric(old_value)) {
-                old_value = 0;
+            if (!_.M.isNumeric(_cache_data[name].value)) {
+                _cache_data[name].value = 0;
             }
-            old_value += value;
-            _set_cache(name, old_value, old_detail.live_time);
+
+            _cache_data[name].value += value;
         }
+
         return _cache_data[name].value;
     }
 
@@ -184,7 +186,7 @@
         _expire_cache(removes);
     }
 
-    //Clean cache every 30 seconds
+    //Clean cache every 10 seconds
     _clean_interval = setInterval(_clean_cache, _clean_interval_time * 1000);
 
     /**
@@ -192,7 +194,7 @@
      * @type {{}}
      */
     _.M.CACHE = _.M.defineObject({
-        
+
         set: function (name, value, live_time) {
             _set_cache(name, value, live_time);
         },
@@ -208,34 +210,49 @@
         /**
          * Get cached value
          * @param {string} name
+         * @param {*} default_value
          * @returns {*}
          */
-        get: function (name) {
+        get: function (name, default_value) {
             if (_.has(_cache_data, name)) {
                 if (_cache_data[name].expire_time === true || _cache_data[name].expire_time > _.M.nowSecond()) {
                     return _cache_data[name].value;
                 }
                 delete _cache_data[name];
             }
+
+            return default_value;
         },
 
         /**
          * Add live time
          * @param {string} name
          * @param {number} [live_time] Default is cached live time
+         * @return {boolean|number} False - cache is not exists. True - cache is forever. Number - next expire time
          */
         touch: function (name, live_time) {
-            if (this.has(name) && _cache_data[name].expire_time !== true) {
-                if (!_.M.isNumeric(live_time)) {
-                    live_time = _cache_data[name].live_time;
+            if (this.has(name)) {
+                if (_cache_data[name].expire_time !== true) {
+                    var cache = _cache_data[name];
+
+                    if (!_.M.isNumeric(live_time)) {
+                        live_time = cache.live_time;
+                    }
+
+                    cache.expire_time = Math.max(cache.expire_time, _.M.nowSecond() + live_time);
+
+                    return cache.expire_time;
                 }
-                _cache_data[name].expire_time += live_time;
+
+                return true;
             }
+
+            return false;
         },
 
         /**
          * Get valid caches
-         * @param {boolean} [name_only = true] Include cache value or not? default is true
+         * @param {boolean} [name_only = true] Only return cache name
          * @returns {*}
          */
         list: function (name_only) {
@@ -250,7 +267,7 @@
              * @type {function}
              */
             var addItem;
-            if (name_only) {
+            if (name_only || _.isUndefined(name_only)) {
                 result = [];
                 addItem = function (key) {
                     result.push(key);
@@ -286,20 +303,6 @@
         },
 
         /**
-         * Get or set clean expired caches interval time.
-         * @param time
-         * @returns {number}
-         */
-        cleanIntervalTime: function (time) {
-            if (_.M.isNumeric(time)) {
-                _clean_interval_time = _.M.minMax(parseInt(time), _.M.CACHE_MIN, _.M.CACHE_LONG);
-                clearInterval(_clean_interval);
-                _clean_interval = setInterval(_clean_cache, _clean_interval_time * 1000);
-            }
-            return _clean_interval_time;
-        },
-
-        /**
          * Increment value of a cache, if cache is not exists then create with value and live time as default
          * (CACHE_MEDIUM), if exists then increment it and set live time as old. If old value isn't a valid numeric
          * then set it to 0
@@ -309,7 +312,7 @@
          * @returns {number}
          */
         increment: function (name, value) {
-            if (_.isUndefined(value)) {
+            if (!_.isNumeric(value)) {
                 value = 1;
             }
             return _cache_number_change(name, value, true);
@@ -325,7 +328,7 @@
          * @returns {number}
          */
         decrement: function (name, value) {
-            if (_.isUndefined(value)) {
+            if (!_.isNumeric(value)) {
                 value = 1;
             }
             return _cache_number_change(name, value, false);

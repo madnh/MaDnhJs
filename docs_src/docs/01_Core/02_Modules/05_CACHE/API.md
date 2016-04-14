@@ -41,7 +41,7 @@
         <li class="list-group-item">
             <h4>Examples</h4>
 <pre><code class="javascript">_.M.CACHE.set('user_selected', [1,2,3]);
-    _.M.CACHE.set('group_count', 6, _.M.CACHE.CACHE_LONG);</code></pre>
+_.M.CACHE.set('group_count', 6, _.M.CACHE.CACHE_LONG);</code></pre>
         </li>
     </ul>
 </div>
@@ -125,9 +125,9 @@
         <li class="list-group-item">
             <h4>Examples</h4>
 <pre><code class="javascript">_.M.CACHE.get('group_count');
-    => 6 hoặc undefined khi cache đã hết hạn
-    _.M.CACHE.get('group_count', 0);
-    => 6 hoặc 0 khi cache đã hết hạn</code></pre>
+=> 6 hoặc undefined khi cache đã hết hạn
+_.M.CACHE.get('group_count', 0);
+=> 6 hoặc 0 khi cache đã hết hạn</code></pre>
         </li>
     </ul>
 </div>
@@ -181,14 +181,14 @@
         <li class="list-group-item">
             <h4>Example</h4>
 <pre><code class="javascript">//Current time is 09:15
-    _.M.CACHE.set('a', 123, CACHE_MIN);
-    => Set cache with expire time is 10s, expire at 09:25
+_.M.CACHE.set('a', 123, CACHE_MIN);
+=> Set cache with expire time is 10s, expire at 09:25
 
-    //Next, in 09:20
-    _.M.CACHE.touch('a', 2);
-    => Next expire time still is 09:25, because added time is 09:22, less than current expire time: 09:25
-    _.M.CACHE.touch('a', 30);
-    => Next expire time is 09:50, because added time is 09:50, greater than current expire time: 09:25</code></pre>
+//Next, in 09:20
+_.M.CACHE.touch('a', 2);
+=> Next expire time still is 09:25, because added time is 09:22, less than current expire time: 09:25
+_.M.CACHE.touch('a', 30);
+=> Next expire time is 09:50, because added time is 09:50, greater than current expire time: 09:25</code></pre>
         </li>
     </ul>
 </div>
@@ -286,8 +286,8 @@
         <li class="list-group-item">
             <h4>Examples</h4>
 <pre><code class="javascript">_.M.CACHE.expire('user_selected');
-    _.M.CACHE.expire('user_selected', 'group_count');
-    _.M.CACHE.expire(['user_selected', 'group_count'], 'yahoo');</code></pre>
+_.M.CACHE.expire('user_selected', 'group_count');
+_.M.CACHE.expire(['user_selected', 'group_count'], 'yahoo');</code></pre>
         </li>
     </ul>
 </div>
@@ -338,8 +338,8 @@
         <li class="list-group-item">
             <h4>Examples</h4>
 <pre><code class="javascript">_.M.CACHE.increment('group_count'); //7
-    _.M.CACHE.increment('group_count', 2); //9
-    _.M.CACHE.increment('non_exists', 2); //2</code></pre>
+_.M.CACHE.increment('group_count', 2); //9
+_.M.CACHE.increment('non_exists', 2); //2</code></pre>
         </li>
     </ul>
 </div>

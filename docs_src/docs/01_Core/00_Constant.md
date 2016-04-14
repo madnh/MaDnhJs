@@ -157,3 +157,47 @@ _.M.isDefinedConstant('BAZ'); //true
     </tr>
     </tbody>
 </table>
+
+## _.M.CACHE
+-----
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <td>Constant</td>
+        <td>Value</td>
+        <td>Description</td>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>CACHE_MIN</td>
+        <td>10</td>
+        <td>10 giây</td>
+    </tr>
+    <tr>
+        <td>CACHE_TINY</td>
+        <td>60</td>
+        <td>1 phút</td>
+    </tr>
+    <tr>
+        <td>CACHE_SHORT</td>
+        <td>300</td>
+        <td>5 phút</td>
+    </tr>
+    <tr>
+        <td>CACHE_MEDIUM</td>
+        <td>600</td>
+        <td>10 phút</td>
+    </tr>
+    <tr>
+        <td>CACHE_LONG</td>
+        <td>3600</td>
+        <td>1 giờ</td>
+    </tr>
+    <tr>
+        <td>CACHE_FOREVER</td>
+        <td>true</td>
+        <td>Không giới hạn</td>
+    </tr>
+    </tbody>
+</table>
