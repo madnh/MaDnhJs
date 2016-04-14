@@ -142,7 +142,7 @@
                 this.addType(type);
             }
             if (!(_.isString(name) || _.M.isNumeric(name)) || (name + '').length == 0) {
-                name = _.M.nextID('madnh_list_item_', true);
+                name = _.M.nextID('madnh_list_item', true);
             }
             if (override || !this.hasItem(type, name)) {
                 _list_system[type][name] = data;

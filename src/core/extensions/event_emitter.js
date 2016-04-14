@@ -194,7 +194,7 @@
 
         if (listeners.length) {
             if (option.key === null) {
-                option.key = _.M.nextID('event_emitter_listener_', true);
+                option.key = _.M.nextID('event_emitter_listener', true);
             }
             var keys = [];
             _.M.loop(listeners, function (listener) {

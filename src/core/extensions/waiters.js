@@ -12,25 +12,25 @@
      */
     _.M.WAITER = _.M.defineObject({
         /**
-         * Check if a callback is exists
-         * @param {string} waiterKey
+         * Check if a waiter key is exists
+         * @param {string} waiter_key
          */
-        has: function (waiterKey) {
-            return _.has(_waiters, waiterKey);
+        has: function (waiter_key) {
+            return _.has(_waiters, waiter_key);
         },
 
         /**
          * Add callback
-         * @param {(string|function)} runner Callback
+         * @param {(string|function)} callback Callback
          * @param {boolean} [once = true] Waiter is run only one time
          * @param {string} [description = ''] Waiter description
-         * @returns {(string|number)}
+         * @returns string Callback key
          */
-        add: function (runner, once, description) {
-            var key = _.M.nextID('waiter_key_', true);
+        add: function (callback, once, description) {
+            var key = _.M.nextID('waiter_key', true);
 
             _waiters[key] = {
-                runner: runner,
+                callback: callback,
                 once: _.isUndefined(once) || Boolean(once),
                 description: description || ''
             };
@@ -40,13 +40,13 @@
 
         /**
          * Similar to "add" but add waiter key to window as function
-         * @param {(string|function)} runner Callback
+         * @param {(string|function)} callback Callback
          * @param {boolean} [once = true] Waiter is run only one time
          * @param {string} description Waiter description
          * @returns {(string|number)} Waiter key/function name
          */
-        createFunc: function (runner, once, description) {
-            var key = this.add(runner, once, description);
+        createFunc: function (callback, once, description) {
+            var key = this.add(callback, once, description);
             var self = this;
 
             window[key] = function () {
@@ -78,20 +78,20 @@
 
         /**
          * Run the waiter
-         * @param {string} waiterKey
+         * @param {string} waiter_key
          * @param {Array} args
          * @param {Object} thisArg
          * @returns {*}
          */
-        run: function (waiterKey, args, thisArg) {
+        run: function (waiter_key, args, thisArg) {
             var result = false;
 
-            if (this.has(waiterKey)) {
-                var waiter = _waiters[waiterKey];
+            if (this.has(waiter_key)) {
+                var waiter = _waiters[waiter_key];
 
-                result = waiter.runner.apply(thisArg || null, _.M.asArray(args));
+                result = waiter.callback.apply(thisArg || null, _.M.asArray(args));
                 if (waiter.once) {
-                    this.remove(waiterKey);
+                    this.remove(waiter_key);
                 }
             }
             return result;
