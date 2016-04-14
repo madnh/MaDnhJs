@@ -29,6 +29,8 @@
      * @extends _.M.BaseClass
      */
     function EventEmitter(limit) {
+        this.type_prefix = 'event_emitter';
+
         _.M.BaseClass.call(this);
 
         /**
@@ -294,7 +296,8 @@
      */
     EventEmitter.prototype.emitEvent = function (events, data, final_cb) {
         var self = this,
-            emitted = false;
+            emitted = false,
+            thisFunc = arguments.callee;
 
         events = _.M.asArray(events);
 
@@ -303,8 +306,7 @@
                 var event = events[i];
 
                 if (this._events.hasOwnProperty(event)) {
-                    var listeners = this._events[event].priority.getContents(),
-                        thisFunc = arguments.callee;
+                    var listeners = this._events[event].priority.getContents();
 
                     if (listeners.length) {
                         emitted = true;
@@ -312,7 +314,7 @@
                             if (listener.meta.async) {
                                 _.M.async(listener.content, data, listener.meta.context || self);
                             } else {
-                                _.M.callFunc(listener.meta.context || self, listener.content, data);
+                                _.M.callFunc(listener.content, data, listener.meta.context || self);
                             }
                         });
                     }
@@ -343,9 +345,8 @@
                         if (eventEmitterAttached.async) {
                             _.M.async(cb, [self.id, event, data], self);
                         } else {
-                            _.M.callFunc(self, cb, [self.id, event, data]);
+                            _.M.callFunc(cb, [self.id, event, data], self);
                         }
-
                     });
                 }
             }

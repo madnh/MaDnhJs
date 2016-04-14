@@ -977,11 +977,11 @@
 
     /**
      * Call callback with arguments
-     * @param {Object|null} context context of "this" keyword
      * @param {string|function|Array} callback
      * @param {*} [args] Callback arguments, if only one argument as array passed then it must be wrapped by array, eg:
      *     [users]
-     * @returns {*}
+     * @param {Object|null} context context of "this" keyword
+ * @returns {*}
      *
      * @example
      * _.M.callFunc(null, alert, 123);
@@ -994,7 +994,7 @@
      *      alert((say_hi ? 'Hi' : 'Hello') + '! my name is ' + this.name + ', ' + this.old + ' years old');
      * }, true);
      */
-    M.callFunc = function (context, callback, args) {
+    M.callFunc = function (callback, args, context) {
         if (arguments.length > 2) {
             if (arguments.length == 3) {
                 args = M.asArray(args);
@@ -1023,7 +1023,7 @@
                     this_func = arguments.callee;
 
                 _.each(callback, function (tmpFunc) {
-                    result.push(this_func(context, tmpFunc, args));
+                    result.push(this_func(tmpFunc, args, context));
                 });
                 return result;
             }
@@ -1034,21 +1034,21 @@
     /**
      * Call callback asynchronous. Similar to _.M.callFunc
      *
-     * @param {Object|null} context context of "this" keyword
      * @param {(string|function|Array)} callback
      * @param {*} [args] Callback arguments, if only one argument as array passed then it must be wrapped by array, eg:
      *     [users]
      * @param {number} [delay=1] Delay milliseconds
-     * @see callFunc
+     * @param {Object|null} context context of "this" keyword
+ * @see callFunc
      */
-    M.async = function (context, callback, args, delay) {
+    M.async = function (callback, args, delay, context) {
         delay = parseInt(delay);
         if (_.isNaN(delay)) {
             delay = 1;
         }
 
         setTimeout(function () {
-            M.callFunc(context, callback, args);
+            M.callFunc(callback, args, context || null);
         }, Math.max(1, delay));
     };
 

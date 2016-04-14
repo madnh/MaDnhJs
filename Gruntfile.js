@@ -8,7 +8,13 @@ module.exports = function (grunt) {
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
         clean: {
-            main: 'dist/build/*'
+            main: 'dist/*'
+        },
+        copy: {
+            main: {
+                src: 'src/underscore.js',
+                dest: 'dist/underscore.js'
+            }
         },
         concat: {
             madnhjs: {
@@ -67,6 +73,6 @@ module.exports = function (grunt) {
     });
 
     
-    grunt.registerTask('build', ['clean:main', 'concat', 'uglify']);
+    grunt.registerTask('build', ['clean:main', 'copy:main', 'concat', 'uglify']);
     grunt.registerTask('default', ['build']);
 };

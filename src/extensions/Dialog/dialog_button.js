@@ -191,7 +191,7 @@
         if (this.isClickable()) {
             this.emitEvent('click');
             if (this.options.handler) {
-                _.M.callFunc(this, this.options.handler, this);
+                _.M.callFunc(this.options.handler, this, this);
             }
             this.emitEvent('clicked');
 

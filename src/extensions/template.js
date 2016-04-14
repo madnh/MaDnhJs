@@ -268,7 +268,7 @@
      */
     Template.render = function (name, data) {
         if (this.hasCompiler(name)) {
-            return _.M.callFunc(this, _templates.compilers[name], [data]);
+            return _.M.callFunc(_templates.compilers[name], [data], this);
         }
         return false;
     };

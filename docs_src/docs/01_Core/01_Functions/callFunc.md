@@ -1,6 +1,5 @@
 title: _.M.callFunc
 -----
-
 Gọi callback với các tham số
 
 ### Tham số
@@ -14,17 +13,6 @@ Gọi callback với các tham số
     </tr>
     </thead>
     <tbody>
-    <tr>
-        <td><code>context</code></td>
-        <td>
-            <ul>
-                <li>object</li>
-                <li>null</li>
-            </ul>
-        </td>
-        <td></td>
-        <td>Ngữ cảnh của context ("this" keyword)</td>
-    </tr>
     <tr>
         <td><code>callback</code></td>
         <td>
@@ -42,6 +30,12 @@ Gọi callback với các tham số
         <td>*</td>
         <td>[]</td>
         <td>Mảng các đối số của <code>callback</code></td>
+    </tr>
+    <tr>
+        <td><code>context</code></td>
+        <td>object</td>
+        <td>null</td>
+        <td>Ngữ cảnh của context ("this" keyword)</td>
     </tr>
     </tbody>
 </table>

@@ -80,16 +80,16 @@
          * Run the waiter
          * @param {string} waiter_key
          * @param {Array} args
-         * @param {Object} thisArg
+         * @param {Object} this_arg
          * @returns {*}
          */
-        run: function (waiter_key, args, thisArg) {
+        run: function (waiter_key, args, this_arg) {
             var result = false;
 
             if (this.has(waiter_key)) {
                 var waiter = _waiters[waiter_key];
 
-                result = waiter.callback.apply(thisArg || null, _.M.asArray(args));
+                result = waiter.callback.apply(this_arg || null, _.M.asArray(args));
                 if (waiter.once) {
                     this.remove(waiter_key);
                 }

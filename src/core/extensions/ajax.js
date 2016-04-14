@@ -637,7 +637,7 @@
             var result = true;
 
             if (_.isFunction(this.last_before_send_cb) && !this.isRetrying()) {
-                result = _.M.callFunc(this, this.last_before_send_cb, [jqXHR, settings]);
+                result = _.M.callFunc(this.last_before_send_cb, [jqXHR, settings], this);
             }
             if (this.option('auto_abort') && this.isRequesting()) {
                 this.abort();

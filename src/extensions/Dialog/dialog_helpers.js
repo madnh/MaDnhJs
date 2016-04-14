@@ -130,7 +130,7 @@
                 this.getDialog().removeListener('default_button');
                 this.getDialog().close();
 
-                _.M.callFunc(null, callback, btn.options.name);
+                _.M.callFunc(callback, btn.options.name, null);
             };
 
         options = _.extend({
@@ -155,7 +155,7 @@
 
         //Default button
         dialog.on('close', function () {
-            _.M.callFunc(null, callback, options.default_button);
+            _.M.callFunc(callback, options.default_button, null);
         }, {
             key: 'default_button'
         });
@@ -321,7 +321,7 @@
 
             if ('close' === btn.options.name) {
                 btn.closeDialog(true);
-                _.M.callFunc(btn_dialog, callback, [btn.options.name, null, btn, btn_dialog]);
+                _.M.callFunc(callback, [btn.options.name, null, btn, btn_dialog], btn_dialog);
                 return;
             }
 
@@ -336,7 +336,7 @@
                 return;
             }
 
-            _.M.callFunc(btn_dialog, callback, [btn.options.name, form, btn, btn_dialog]);
+            _.M.callFunc(callback, [btn.options.name, form, btn, btn_dialog], btn_dialog);
         }
 
 

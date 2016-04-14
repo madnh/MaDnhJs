@@ -15,17 +15,6 @@ Gọi callback với các tham số, bất đồng bộ. Tương tự [`_.M.call
     </thead>
     <tbody>
     <tr>
-        <td><code>context</code></td>
-        <td>
-            <ul>
-                <li>object</li>
-                <li>null</li>
-            </ul>
-        </td>
-        <td></td>
-        <td>Ngữ cảnh của context ("this" keyword)</td>
-    </tr>
-    <tr>
         <td><code>callback</code></td>
         <td>
             <ul>
@@ -48,6 +37,12 @@ Gọi callback với các tham số, bất đồng bộ. Tương tự [`_.M.call
         <td>number</td>
         <td>1</td>
         <td>Delay milliseconds</td>
+    </tr>
+    <tr>
+        <td><code>context</code></td>
+        <td>object</td>
+        <td>null</td>
+        <td>Ngữ cảnh của context ("this" keyword)</td>
     </tr>
     </tbody>
 </table>
