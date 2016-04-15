@@ -7,9 +7,9 @@
  * - catch: error message, error code
  * - then: response
  * - finally: jqXHR, textStatus
- * - retry_time_complete: jqXHR, textStatus
+ * - retry_complete: retry time, is last retry time?, jqXHR, textStatus
  * App events:
- * - ajax_retry_time_complete: AJAX instance
+ * - ajax_retry_complete: AJAX instance, retry time, is last retry time?, jqXHR, textStatus
  * - ajax_complete: AJAX instance
  *
  * @module _.M.AJAX
@@ -114,10 +114,12 @@
          * retry: number, is_continue: boolean|function}}
          */
         this.options = {
+            before_send: true,
             response_adapters: {},
             data_adapters: {},
             auto_abort: true,
             retry: 0,
+            retry_delay: 0,
             is_continue: true
         };
 
@@ -133,9 +135,10 @@
          */
         this.requested = 0;
 
-        this.retried = 0;
+        this.retry_time = 0;
 
-        this.retry_request_options = null;
+        this._last_options = null;
+        this._is_retrying = false;
 
         /**
          *
@@ -154,12 +157,6 @@
          * @type {{code: number|string, message: string}}
          */
         this.error = null;
-
-        /**
-         * Last before send callback
-         * @type {callback|null}
-         */
-        this.last_before_send_cb = null;
 
         if (_.isObject(options)) {
             this.option(options);
@@ -514,6 +511,14 @@
         return this.status() === 4;
     };
 
+    AJAX.prototype.isError = function () {
+        return this.isDone() && !_.isEmpty(this.error);
+    };
+
+    AJAX.prototype.isSuccess = function () {
+        return this.isDone() && !this.isError();
+    };
+
     /**
      * Check if current request is aborted
      * @returns {boolean}
@@ -523,15 +528,15 @@
     };
 
     AJAX.prototype.isRetrying = function () {
-        return this.error && this.options.retry && parseInt(this.retried) <= parseInt(this.options.retry);
+        return Boolean(this._is_retrying);
     };
 
-    AJAX.prototype.isLastRetry = function () {
-        return this.isRetrying() && parseInt(this.retried) >= parseInt(this.options.retry);
+    AJAX.prototype.isLastRetryTime = function () {
+        return this.isRetrying() && this.options.retry && parseInt(this.retry_time)  >= parseInt(this.options.retry);
     };
 
-    AJAX.prototype.isContinue = function () {
-        if (this.isRetrying() && !this.isLastRetry()) {
+    AJAX.prototype.isRetryable = function () {
+        if (this.isError() && !this.isAborted() && this.options.retry && parseInt(this.retry_time) < parseInt(this.options.retry)) {
             var is_continue;
 
             if (_.isFunction(this.options.is_continue)) {
@@ -552,7 +557,7 @@
         if (result.error) {
             this.error = result.error;
 
-            if (!this.isContinue()) {
+            if (!this.isRetryable()) {
                 this.emitEvent('catch', [result.error.message, result.error.code]);
             }
 
@@ -570,26 +575,39 @@
 
         this.error = err_result;
 
-        if (!this.isContinue()) {
+        if (!this.isRetryable()) {
             this.emitEvent('catch', [err_result.message, err_result.code]);
         }
     }
 
     function _ajax_complete_cb(jqXHR, textStatus) {
-        if (this.isContinue()) {
-            this.emitEvent('retry_time_complete', [jqXHR, textStatus]);
+        var self = this;
 
-            if (_.App) {
-                _.App.emitEvent('ajax_retry_time_complete', [this]);
+        if (this.isAborted()) {
+            this.emitEvent('aborted');
+        } else if (this.isRetryable()) {
+            if (this.isRetrying()) {
+                this.emitEvent('retry_complete', [this.retry_time, this.isLastRetryTime(), jqXHR, textStatus]);
+
+                if (_.App) {
+                    _.App.emitEvent('ajax_retry_complete', [this, this.retry_time, this.isLastRetryTime(), jqXHR, textStatus]);
+                }
             }
 
-            this.retried++;
-            this.request();
+            this._is_retrying = true;
+            if(!this.options.retry_delay){
+                this.request();
+            }else{
+                _.M.async(function () {
+                    self.request()
+                }, [], this.options.retry_delay);
+            }
 
             return;
         }
 
-        this.retry_request_options = null;
+        this._last_options = null;
+        this._is_retrying = false;
         this.emitEvent('finally', [jqXHR, textStatus]);
 
         if (_.App) {
@@ -603,31 +621,32 @@
      * @return {{}}
      */
     AJAX.prototype.getRequestOptions = function (custom_options) {
-        var last_options = _.extend({}, this.options, _.isObject(custom_options) ? custom_options : {});
+        var last_options = _.extend({}, this.options, _.isObject(custom_options) ? custom_options : {}),
+            before_send_cb;
 
-        if (last_options.hasOwnProperty('beforeSend')) {
-            this.last_before_send_cb = last_options.beforeSend;
-        }
         if (last_options.hasOwnProperty('success')) {
-            this.removeListener('listener_success');
+            this.removeListener('success_listeners');
             this.addListener('then', last_options['success'], {
                 priority: _.M.PRIORITY_HIGHEST,
-                key: 'listener_success'
+                key: 'success_listeners'
             })
         }
         if (last_options.hasOwnProperty('error')) {
-            this.removeListener('listener_error');
+            this.removeListener('error_listeners');
             this.addListener('catch', last_options['error'], {
                 priority: _.M.PRIORITY_HIGHEST,
-                key: 'listener_error'
+                key: 'error_listeners'
             })
         }
         if (last_options.hasOwnProperty('complete')) {
-            this.removeListener('listener_complete');
+            this.removeListener('complete_listeners');
             this.addListener('finally', last_options['complete'], {
                 priority: _.M.PRIORITY_HIGHEST,
-                key: 'listener_complete'
+                key: 'complete_listeners'
             })
+        }
+        if (last_options.hasOwnProperty('beforeSend')) {
+            before_send_cb = last_options.beforeSend;
         }
 
         last_options['success'] = _ajax_success_cb.bind(this);
@@ -636,8 +655,8 @@
         last_options['beforeSend'] = function (jqXHR, settings) {
             var result = true;
 
-            if (_.isFunction(this.last_before_send_cb) && !this.isRetrying()) {
-                result = _.M.callFunc(this.last_before_send_cb, [jqXHR, settings], this);
+            if (_.isFunction(before_send_cb) && !this.isRetrying()) {
+                result = _.M.callFunc(before_send_cb, [jqXHR, settings], this);
             }
             if (this.option('auto_abort') && this.isRequesting()) {
                 this.abort();
@@ -649,8 +668,10 @@
                 this.responses = null;
 
                 if (this.isRetrying()) {
+                    this.retry_time++;
                     this.emitEvent('retry');
                 } else {
+                    this.retry_time = 0;
                     this.emitEvent('request');
                 }
             }
@@ -671,13 +692,13 @@
     AJAX.prototype.request = function (options) {
         var last_options;
 
-        if (this.isRetrying() && _.isObject(this.retry_request_options) && !_.isEmpty(this.retry_request_options)) {
-            last_options = this.retry_request_options;
+        if (this.isRetrying() && _.isObject(this._last_options) && !_.isEmpty(this._last_options)) {
+            last_options = this._last_options;
         } else {
             last_options = this.getRequestOptions(options);
+            this._last_options = last_options;
         }
 
-        this.retry_request_options = last_options;
         this.jqXHR = $.ajax(last_options);
 
         return this.jqXHR;
@@ -690,10 +711,20 @@
      */
     AJAX.prototype.abort = function () {
         if (this.isRequesting() && this.jqXHR.abort) {
-            this.emitEvent('abort');
+            if (this.isRetrying()) {
+
+            }
+
             this.jqXHR.abort();
         }
     };
+
+
+    /*
+     |--------------------------------------------------------------------------
+     | AJAX Helpers
+     |--------------------------------------------------------------------------
+     */
 
     function _load_apply_content(response, target, apply_type) {
         target = $(target);
