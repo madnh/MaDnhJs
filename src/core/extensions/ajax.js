@@ -139,6 +139,7 @@
 
         this._last_options = null;
         this._is_retrying = false;
+        this._retry_timeout_id = null;
 
         /**
          *
@@ -248,6 +249,7 @@
      */
     AJAX.ResponseAdapter.prototype.process = function (response, options, request_options) {
         if (_.isFunction(this.handler)) {
+            this.response = response;
             this.handler.apply(this, [
                 response,
                 _.isObject(options) ? options : {},
@@ -432,13 +434,17 @@
     /**
      * Add success callback. Callback arguments:
      * - response: last response after processed by AJAXResponseAdapters
-     * - responses: response of each AJAXResponseAdapter
      *
      * @param callback
      * @returns {AJAX}
      */
     AJAX.prototype.then = function (callback) {
         this.on('then', callback);
+
+        if (this.isSuccess()) {
+            callback.apply(this, [_.clone(this.response)]);
+        }
+
 
         return this;
     };
@@ -453,6 +459,10 @@
      */
     AJAX.prototype.catch = function (callback) {
         this.on('catch', callback);
+
+        if (this.isError()) {
+            callback.apply(this, [this.error.message, this.error.code]);
+        }
 
         return this;
     };
@@ -469,6 +479,10 @@
     AJAX.prototype.finally = function (callback) {
         this.on('finally', callback);
 
+        if (this.isDone()) {
+            callback.call(this);
+        }
+
         return this;
     };
 
@@ -483,16 +497,6 @@
 
         return false;
     };
-
-    /**
-     * Check if instance is requesting
-     * @returns {boolean}
-     */
-    AJAX.prototype.isRequesting = function () {
-        var status = this.status();
-
-        return status !== false && status >= 1 && status <= 3;
-    };
     /**
      * Check if instance is ready for request
      * @returns {boolean}
@@ -504,11 +508,25 @@
     };
 
     /**
-     * Check if instance is done
+     * Check if instance is requesting
+     * @returns {boolean}
+     */
+    AJAX.prototype.isRequesting = function () {
+        var status = this.status();
+
+        return status !== false && status >= 1 && status <= 3;
+    };
+
+    AJAX.prototype.isRetrying = function () {
+        return Boolean(this._is_retrying);
+    };
+
+    /**
+     * Check if request is done and not retrying
      * @returns {boolean}
      */
     AJAX.prototype.isDone = function () {
-        return this.status() === 4;
+        return !this.isRetrying() && this.status() === 4;
     };
 
     AJAX.prototype.isError = function () {
@@ -516,7 +534,7 @@
     };
 
     AJAX.prototype.isSuccess = function () {
-        return this.isDone() && !this.isError();
+        return this.isDone() && _.isEmpty(this.error);
     };
 
     /**
@@ -527,16 +545,13 @@
         return this.error && (this.error.code === _.M.AJAX_ABORTED);
     };
 
-    AJAX.prototype.isRetrying = function () {
-        return Boolean(this._is_retrying);
-    };
 
     AJAX.prototype.isLastRetryTime = function () {
-        return this.isRetrying() && this.options.retry && parseInt(this.retry_time)  >= parseInt(this.options.retry);
+        return this.isRetrying() && this.options.retry && this.retry_time >= parseInt(this.options.retry);
     };
 
     AJAX.prototype.isRetryable = function () {
-        if (this.isError() && !this.isAborted() && this.options.retry && parseInt(this.retry_time) < parseInt(this.options.retry)) {
+        if (!_.isEmpty(this.error) && !this.isAborted() && this.options.retry && this.retry_time < parseInt(this.options.retry)) {
             var is_continue;
 
             if (_.isFunction(this.options.is_continue)) {
@@ -575,11 +590,20 @@
 
         this.error = err_result;
 
-        if (!this.isRetryable()) {
+        if (!this.isRetryable() && !this.isAborted()) {
             this.emitEvent('catch', [err_result.message, err_result.code]);
         }
     }
 
+    function at_the_end(ajax_instance) {
+        ajax_instance._last_options = null;
+        ajax_instance._is_retrying = false;
+        ajax_instance.emitEvent('finally');
+
+        if (_.App) {
+            _.App.emitEvent('ajax_complete', [ajax_instance]);
+        }
+    }
     function _ajax_complete_cb(jqXHR, textStatus) {
         var self = this;
 
@@ -595,24 +619,18 @@
             }
 
             this._is_retrying = true;
-            if(!this.options.retry_delay){
+            if (!this.options.retry_delay) {
                 this.request();
-            }else{
-                _.M.async(function () {
-                    self.request()
+            } else {
+                this._retry_timeout_id = _.M.async(function () {
+                    self.request();
                 }, [], this.options.retry_delay);
             }
 
             return;
         }
 
-        this._last_options = null;
-        this._is_retrying = false;
-        this.emitEvent('finally', [jqXHR, textStatus]);
-
-        if (_.App) {
-            _.App.emitEvent('ajax_complete', [this]);
-        }
+        at_the_end(this);
     }
 
     /**
@@ -692,7 +710,7 @@
     AJAX.prototype.request = function (options) {
         var last_options;
 
-        if (this.isRetrying() && _.isObject(this._last_options) && !_.isEmpty(this._last_options)) {
+        if (this.isRetrying() && _.isObject(this._last_options)) {
             last_options = this._last_options;
         } else {
             last_options = this.getRequestOptions(options);
@@ -706,16 +724,14 @@
 
     /**
      * Abort current request
-     * Emit events
-     * - abort: before call real abort on jqXHR
      */
     AJAX.prototype.abort = function () {
         if (this.isRequesting() && this.jqXHR.abort) {
-            if (this.isRetrying()) {
-
-            }
-
             this.jqXHR.abort();
+        }else if(this.isRetrying()){
+            clearTimeout(this._retry_timeout_id);
+            this.emitEvent('aborted');
+            at_the_end(this);
         }
     };
 
@@ -774,7 +790,7 @@
                 response = ['Load content failed: ', error_message, '. Error code: ', error_code].join('');
             } else {
                 if (_.isFunction(options.error_content)) {
-                    response = options.error_content(error_message, error_code);
+                    response = options.error_content(ajax, error_message, error_code);
                 } else {
                     response = options.error_content + '';
                 }
@@ -783,7 +799,9 @@
             _load_apply_content(response, target, options.apply_type);
         });
 
+        ajax.request();
 
+        return ajax;
     };
 
     /**

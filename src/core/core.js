@@ -981,7 +981,7 @@
      * @param {*} [args] Callback arguments, if only one argument as array passed then it must be wrapped by array, eg:
      *     [users]
      * @param {Object|null} context context of "this" keyword
- * @returns {*}
+     * @returns {*}
      *
      * @example
      * _.M.callFunc(null, alert, 123);
@@ -1039,7 +1039,7 @@
      *     [users]
      * @param {number} [delay=1] Delay milliseconds
      * @param {Object|null} context context of "this" keyword
- * @see callFunc
+     * @see callFunc
      */
     M.async = function (callback, args, delay, context) {
         delay = parseInt(delay);
@@ -1047,7 +1047,7 @@
             delay = 1;
         }
 
-        setTimeout(function () {
+        return setTimeout(function () {
             M.callFunc(callback, args, context || null);
         }, Math.max(1, delay));
     };
