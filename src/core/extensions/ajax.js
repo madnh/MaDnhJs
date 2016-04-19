@@ -595,7 +595,7 @@
         }
     }
 
-    function at_the_end(ajax_instance) {
+    function _at_the_end(ajax_instance) {
         ajax_instance._last_options = null;
         ajax_instance._is_retrying = false;
         ajax_instance.emitEvent('finally');
@@ -630,7 +630,7 @@
             return;
         }
 
-        at_the_end(this);
+        _at_the_end(this);
     }
 
     /**
@@ -731,7 +731,7 @@
         }else if(this.isRetrying()){
             clearTimeout(this._retry_timeout_id);
             this.emitEvent('aborted');
-            at_the_end(this);
+            _at_the_end(this);
         }
     };
 

@@ -15,5 +15,5 @@ Các hàm hỗ trợ khi làm việc với AJAX
     error: function(jqXHR, textStatus, errorThrown){
     console.log('AJAX ERROR', _.M.AJAX.beautifyError(arguments));
     }
-    });
-    //=> AJAX ERROR Object {code: 404, message: "The server has not found anything matching the URI given"}</code></pre>
+});
+//=> AJAX ERROR Object {code: 404, message: "The server has not found anything matching the URI given"}</code></pre>
