@@ -129,7 +129,7 @@
      *     true/false to remove/keep item
      */
     M.removeItem = function (obj, args) {
-        var keys = slice.call(arguments, 1);
+        var keys = _.flatten(slice.call(arguments, 1));
         var removed = [], old_items = Object.keys(obj);
 
         if (keys.length == 1 && _.isFunction(keys[0])) {

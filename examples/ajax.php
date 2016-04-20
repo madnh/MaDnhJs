@@ -1,5 +1,5 @@
 <?php
-sleep(5);
+//sleep(5);
 $name = 'Client';
 if (!empty($_POST['name'])) {
     $name = $_POST['name'];

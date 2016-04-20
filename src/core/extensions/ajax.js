@@ -1,17 +1,4 @@
 /**
- * AJAX
- * Each AJAX instance when request complete will notice App instance events
- * Events:
- * - request
- * - retry
- * - catch: error message, error code
- * - then: response
- * - finally: jqXHR, textStatus
- * - retry_complete: retry time, is last retry time?, jqXHR, textStatus
- * App events:
- * - ajax_retry_complete: AJAX instance, retry time, is last retry time?, jqXHR, textStatus
- * - ajax_complete: AJAX instance
- *
  * @module _.M.AJAX
  * @memberOf _.M
  * @requires _.M.EventEmitter
@@ -66,7 +53,7 @@
         AJAX_NOT_FOUND: 404
     });
 
-    var http_response_statuses = {
+    var jqXHR_response_statuses = {
         204: 'Server has received the request but there is no information to send back',
         400: 'The request had bad syntax or was inherently impossible to be satisfied',
         401: 'The parameter to this message gives a specification of authorization schemes which are acceptable',
@@ -80,7 +67,9 @@
         429: 'Too many requests',
         431: 'Request header fields too large',
         500: 'The server encountered an unexpected condition which prevented it from fulfilling the request',
-        501: 'The server does not support the facility required'
+        501: 'The server does not support the facility required',
+        parser_error: 'Parse response failed',
+        aborted: 'Manual abort request'
     };
 
     var response_adapters = {},
@@ -110,11 +99,9 @@
          * - retry: retry times when error
          * - is_continue: check if continue to retry request. Boolean or function which bind to AJAX instance, return
          * boolean value,
-         * @type {{response_adapters: {}, data_adapters: {}, auto_abort: boolean,
-         * retry: number, is_continue: boolean|function}}
+         * @type {{response_adapters: {}, data_adapters: {}, auto_abort: boolean, retry: number, is_continue: boolean|function}}
          */
         this.options = {
-            before_send: true,
             response_adapters: {},
             data_adapters: {},
             auto_abort: true,
@@ -182,23 +169,21 @@
 
         switch (textStatus) {
             case 'parsererror':
-                err_result.message = 'Parse response failed';
                 err_result.code = _.M.AJAX_PARSER_ERROR;
                 break;
 
             case 'abort':
-                err_result.message = 'Manual abort request';
                 err_result.code = _.M.AJAX_ABORTED;
                 break;
 
             default:
                 err_result.code = jqXHR.status;
+        }
 
-                if (http_response_statuses.hasOwnProperty(jqXHR.status)) {
-                    err_result.message = http_response_statuses[jqXHR.status];
-                } else {
-                    err_result.message = errorThrown;
-                }
+        if (jqXHR_response_statuses.hasOwnProperty(err_result.code)) {
+            err_result.message = jqXHR_response_statuses[err_result.code];
+        } else {
+            err_result.message = errorThrown;
         }
 
         return err_result;
@@ -438,8 +423,8 @@
      * @param callback
      * @returns {AJAX}
      */
-    AJAX.prototype.then = function (callback) {
-        this.on('then', callback);
+    AJAX.prototype.done = function (callback) {
+        this.on('done', callback);
 
         if (this.isSuccess()) {
             callback.apply(this, [_.clone(this.response)]);
@@ -457,10 +442,10 @@
      * @param callback
      * @returns {AJAX}
      */
-    AJAX.prototype.catch = function (callback) {
-        this.on('catch', callback);
+    AJAX.prototype.fail = function (callback) {
+        this.on('fail', callback);
 
-        if (this.isError()) {
+        if (this.isFailed()) {
             callback.apply(this, [this.error.message, this.error.code]);
         }
 
@@ -469,15 +454,12 @@
 
     /**
      * Add finally callback
-     * callback with arguments
-     * - jqXHR: jQuery AJAX object
-     * - textStatus: "success", "notmodified", "nocontent", "error", "timeout", "abort", or "parsererror"
      *
      * @param callback
      * @returns {AJAX}
      */
-    AJAX.prototype.finally = function (callback) {
-        this.on('finally', callback);
+    AJAX.prototype.always = function (callback) {
+        this.on('always', callback);
 
         if (this.isDone()) {
             callback.call(this);
@@ -529,7 +511,7 @@
         return !this.isRetrying() && this.status() === 4;
     };
 
-    AJAX.prototype.isError = function () {
+    AJAX.prototype.isFailed = function () {
         return this.isDone() && !_.isEmpty(this.error);
     };
 
@@ -566,14 +548,14 @@
         return false;
     };
 
-    function _ajax_success_cb(response) {
+    function _ajax_done_cb(response) {
         var result = AJAX.applyResponseAdapters(response, this.options.response_adapters);
 
         if (result.error) {
             this.error = result.error;
 
             if (!this.isRetryable()) {
-                this.emitEvent('catch', [result.error.message, result.error.code]);
+                this.emitEvent('fail', [result.error.message, result.error.code]);
             }
 
             return;
@@ -582,29 +564,30 @@
         this.response = result.response;
         this.responses = result.responses;
 
-        this.emitEvent('then', [_.clone(result.response)]);
+        this.emitEvent('done', [_.clone(result.response)]);
     }
 
-    function _ajax_error_cb(jqXHR, textStatus, errorThrown) {
+    function _ajax_fail_cb(jqXHR, textStatus, errorThrown) {
         var err_result = AJAX.beautifyError(arguments);
 
         this.error = err_result;
 
         if (!this.isRetryable() && !this.isAborted()) {
-            this.emitEvent('catch', [err_result.message, err_result.code]);
+            this.emitEvent('fail', [err_result.message, err_result.code]);
         }
     }
 
     function _at_the_end(ajax_instance) {
         ajax_instance._last_options = null;
         ajax_instance._is_retrying = false;
-        ajax_instance.emitEvent('finally');
+        ajax_instance.emitEvent('always');
 
         if (_.App) {
             _.App.emitEvent('ajax_complete', [ajax_instance]);
         }
     }
-    function _ajax_complete_cb(jqXHR, textStatus) {
+
+    function _ajax_always_cb(jqXHR, textStatus) {
         var self = this;
 
         if (this.isAborted()) {
@@ -642,34 +625,37 @@
         var last_options = _.extend({}, this.options, _.isObject(custom_options) ? custom_options : {}),
             before_send_cb;
 
-        if (last_options.hasOwnProperty('success')) {
-            this.removeListener('success_listeners');
-            this.addListener('then', last_options['success'], {
+        if (last_options.hasOwnProperty('success') || last_options.hasOwnProperty('done')) {
+            this.removeListener('success_listeners_from_options');
+            this.addListener('done', _.pick(last_options, ['success', 'done']), {
                 priority: _.M.PRIORITY_HIGHEST,
-                key: 'success_listeners'
+                key: 'success_listeners_from_options'
             })
         }
-        if (last_options.hasOwnProperty('error')) {
-            this.removeListener('error_listeners');
-            this.addListener('catch', last_options['error'], {
+        if (last_options.hasOwnProperty('error') || last_options.hasOwnProperty('fail')) {
+            this.removeListener('error_listeners_from_options');
+            this.addListener('fail', _.pick(last_options, ['error', 'fail']), {
                 priority: _.M.PRIORITY_HIGHEST,
-                key: 'error_listeners'
+                key: 'error_listeners_from_options'
             })
         }
-        if (last_options.hasOwnProperty('complete')) {
-            this.removeListener('complete_listeners');
-            this.addListener('finally', last_options['complete'], {
+        if (last_options.hasOwnProperty('complete') || last_options.hasOwnProperty('always')) {
+            this.removeListener('complete_listeners_from_options');
+            this.addListener('always', _.pick(last_options, ['complete', 'always']), {
                 priority: _.M.PRIORITY_HIGHEST,
-                key: 'complete_listeners'
+                key: 'complete_listeners_from_options'
             })
         }
         if (last_options.hasOwnProperty('beforeSend')) {
             before_send_cb = last_options.beforeSend;
         }
 
-        last_options['success'] = _ajax_success_cb.bind(this);
-        last_options['error'] = _ajax_error_cb.bind(this);
-        last_options['complete'] = _ajax_complete_cb.bind(this);
+        _.M.removeItem(last_options, ['success', 'done', 'error', 'fail', 'complete', 'always', 'beforeSend',
+            'response_adapters', 'data_adapters', 'auto_abort', 'retry', 'retry_delay', 'is_continue']);
+
+        last_options['done'] = _ajax_done_cb.bind(this);
+        last_options['fail'] = _ajax_fail_cb.bind(this);
+        last_options['always'] = _ajax_always_cb.bind(this);
         last_options['beforeSend'] = function (jqXHR, settings) {
             var result = true;
 
@@ -717,7 +703,10 @@
             this._last_options = last_options;
         }
 
-        this.jqXHR = $.ajax(last_options);
+        this.jqXHR = $.ajax(_.omit(last_options, ['done', 'fail', 'always']))
+            .done(last_options['done'])
+            .fail(last_options['fail'])
+            .always(last_options['always']);
 
         return this.jqXHR;
     };
@@ -728,7 +717,7 @@
     AJAX.prototype.abort = function () {
         if (this.isRequesting() && this.jqXHR.abort) {
             this.jqXHR.abort();
-        }else if(this.isRetrying()){
+        } else if (this.isRetrying()) {
             clearTimeout(this._retry_timeout_id);
             this.emitEvent('aborted');
             _at_the_end(this);
@@ -781,9 +770,9 @@
         });
 
         ajax.option(options);
-        ajax.then(function (response) {
+        ajax.done(function (response) {
             _load_apply_content(response, target, options.apply_type);
-        }).catch(function (error_message, error_code) {
+        }).fail(function (error_message, error_code) {
             var response = '';
 
             if (_.isNull(options.error_content)) {
