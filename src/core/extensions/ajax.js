@@ -602,7 +602,7 @@
     function _at_the_end(ajax_instance) {
         ajax_instance._last_options = null;
         ajax_instance._is_retrying = false;
-        ajax_instance.emitEvent('always');
+        ajax_instance.emitEvent('always', [ajax_instance.error, ajax_instance.response]);
 
         if (_.App) {
             _.App.emitEvent('ajax_complete', [ajax_instance]);
@@ -726,7 +726,7 @@
     function _do_request(instance, options) {
         var last_options;
 
-        if (arguments.length == 1 || (instance.isRetrying() && _.isObject(instance._last_options))) {
+        if ((arguments.length == 1 || instance.isRetrying()) && _.isObject(instance._last_options)) {
             last_options = instance._last_options;
         } else {
             last_options = _getRequestOptions(instance, options);
@@ -780,6 +780,8 @@
         if (args.dataType) {
             options.dataType = args.dataType;
         }
+
+        instance.option(options);
 
         return _do_request(instance, options);
     }
