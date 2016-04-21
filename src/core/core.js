@@ -341,6 +341,38 @@
     };
 
     /**
+     * Check if value has a deep path
+     * @param {*} value
+     * @param {string|number|[]} deep
+     * @param {string} [split='.'] Character to split deep string to array of deeps
+     * @returns {boolean}
+     * @example
+     * var obj = {a: {a1: {a2: true}}, b: 'hihi'};
+     * _.M.hasDeep(obj, 'a.a1'); //true
+     * _.M.hasDeep(obj, 'a.yahoo'); //false
+     * _.M.hasDeep([obj, 123], 1); //true
+     * _.M.hasDeep([obj, 123], 10); //false
+     */
+    M.hasDeep = function (value, deep, split) {
+        if (!_.isArray(deep)) {
+            deep = (deep + '').split(split || '.');
+        }
+
+        var pointer = value, field;
+
+        while (field = deep.shift()) {
+            if (pointer.hasOwnProperty(field)) {
+                pointer = pointer[field];
+                continue;
+            }
+
+            return false;
+        }
+
+        return true;
+    };
+
+    /**
      * Make sure that a value is in a range
      * @param {number} value
      * @param {number} min
@@ -1124,7 +1156,6 @@
      * Create console error callback with description as first arguments
      * @param {string} description
      * @returns {*}
-     * @tutorial yahoo
      * @example
      * var cb = _.M.errorCb('Test 1');
      * cb(1,2,3); // Console error as: 'Test 1' 1 2 3
@@ -1133,6 +1164,79 @@
         return createConsoleCB.apply(null, ['error'].concat(slice.apply(arguments)));
     };
 
+    /**
+     *
+     * @param args
+     * @param order
+     * @param rules
+     * @returns {{}}
+     * @example
+     * //{int: 1, bool: true, str: "A"}
+     * optionalArgs([1, true, 'A'], ['int', 'bool', 'str'], {int: 'number', bool: 'boolean', str: 'string'});
+     * //{bool: true, str: "A"}
+     * optionalArgs([true, 'A'], ['int', 'bool', 'str'], {int: 'number', bool: 'boolean', str: 'string'});
+     * //{str: "A"}
+     * optionalArgs(['A'], ['int', 'bool', 'str'], {int: 'number', bool: 'boolean', str: 'string'});
+     * //{int: "A", bool: "V"}
+     * optionalArgs(['A', 'V'], ['int', 'bool', 'str'], {int: 'number', bool: 'boolean', str: 'string'});
+     * //{str: "A", str2: "V"}
+     * optionalArgs(['A', 'V'], ['int', 'bool', 'str', 'str2'], {int: 'number', bool: 'boolean', str: 'string', str2: 'string'});
+     * //{int: 1, bool: Array[0]}
+     * optionalArgs([1, []], ['int', 'bool', 'str'], {int: 'number', bool: 'boolean', str: 'string'});
+     * //{bool: true, str: Array[0]}
+     * optionalArgs([true, []], ['int', 'bool', 'str'], {int: 'number', bool: 'boolean', str: 'string'});
+     * //{int: "A", bool: Array[0]}
+     * optionalArgs(['A', []], ['int', 'bool', 'str'], {int: 'number', bool: 'boolean', str: 'string'});
+     * //{int: Array[0], bool: Array[0]}
+     * optionalArgs([[], []], ['int', 'bool', 'str'], {int: 'number', bool: 'boolean', str: 'string'});
+     */
+    M.optionalArgs = function (args, order, rules) {
+        var result = {},
+            arg, index = 0, last_index, missing_rules, type, args_cloned, args_with_type, found;
+
+        missing_rules = _.difference(order, Object.keys(rules));
+        missing_rules.forEach(function (missing) {
+            rules[missing] = true;
+        });
+
+        args_with_type = order.map(function (arg_name) {
+            return rules[arg_name];
+        });
+
+        if (_.isEmpty(args)) {
+            return result;
+        }
+        if (args.length >= order.length) {
+            result = _.object(order, args.slice(0, order.length));
+        } else {
+            args_cloned = args.slice(0);
+
+            while (arg = args_cloned.shift()) {
+                type = _.M.contentType(arg);
+                found = false;
+                last_index = index;
+
+                _.M.loop(args_with_type.slice(index), (function (type) {
+                    return function (types) {
+                        if (types === true || type === types || (_.isArray(types) && -1 != types.indexOf(type))) {
+                            found = true;
+                            return 'break';
+                        }
+                        index++;
+                    }
+                })(type));
+
+                if (!found) {
+                    result = _.object(order.slice(0, args.length), args);
+                    break;
+                }
+
+                result[order[index++]] = arg;
+            }
+        }
+
+        return result;
+    };
 
     /**
      * Sort number asc

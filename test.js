@@ -13,3 +13,18 @@ ajax.option({
 });
 
 ajax.request();
+
+function test(url, data, callback) {
+    var args = Array.prototype.slice.call(arguments, 1),
+        result;
+
+    console.log('args', args);
+    result = _.M.optionalArgs(args, ['data', 'callback'], {
+        data: ['string', 'object'],
+        callback: 'function'
+    });
+
+    result['url'] = url;
+
+    return result;
+}
