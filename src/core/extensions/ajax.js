@@ -765,10 +765,10 @@
                 method: (method + '').toUpperCase()
             };
 
-        args = _.M.optionalArgs(Array.prototype.slice.call(arguments, 3), ['data', 'callback', 'data_type'], {
+        args = _.M.optionalArgs(Array.prototype.slice.call(arguments, 3), ['data', 'callback', 'dataType'], {
             data: ['string', 'object'],
             callback: 'function',
-            data_type: 'string'
+            dataType: 'string'
         });
 
         if (args.data) {
@@ -777,8 +777,8 @@
         if (args.callback) {
             options.done = args.callback;
         }
-        if (args.data_type) {
-            options.data_type = args.data_type;
+        if (args.dataType) {
+            options.dataType = args.dataType;
         }
 
         return _do_request(instance, options);
