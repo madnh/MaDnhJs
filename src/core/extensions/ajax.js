@@ -438,6 +438,42 @@
         return this;
     };
 
+    AJAX.prototype.data = function (data) {
+        this.options.data = data;
+    };
+    AJAX.prototype.addData = function (name, value) {
+        var data;
+
+        if (!this.options.data) {
+            this.options.data = {};
+        }
+        if (_.isObject(this.options.data)) {
+            if (arguments.length < 2) {
+                if (_.isObject(arguments[0])) {
+                    data = name;
+                } else {
+                    throw new Error('Added data must be object');
+                }
+            } else {
+                data = {};
+                data[name] = value;
+            }
+            _.extend(this.options.data, data);
+        } else if (_.isString(this.options.data)) {
+            if (arguments.length < 2) {
+                data = name;
+            } else {
+                data = [name, '=', value].join('');
+            }
+
+            if (this.options.data.length) {
+                this.options.data += '&' + data;
+            } else {
+                this.options.data += data;
+            }
+        }
+    };
+
     /**
      * Add success callback. Callback arguments:
      * - response: last response after processed by AJAXResponseAdapters
@@ -548,7 +584,6 @@
     AJAX.prototype.isAborted = function () {
         return this.error && (this.error.code === _.M.AJAX_ABORTED);
     };
-
 
     AJAX.prototype.isLastRetryTime = function () {
         return this.isRetrying() && this.options.retry && this.retry_time >= parseInt(this.options.retry);
@@ -738,7 +773,7 @@
             .fail(last_options['fail'])
             .always(last_options['always']);
 
-        return instance.jqXHR;
+        return instance;
     }
 
     AJAX.prototype.request = function (options) {
@@ -781,8 +816,6 @@
             options.dataType = args.dataType;
         }
 
-        instance.option(options);
-
         return _do_request(instance, options);
     }
 
@@ -790,7 +823,33 @@
         AJAX.prototype[method] = function (url, data, callback, dataType) {
             return _ajax_restful_shorthand_func.apply(null, [this, method.toUpperCase()].concat(Array.prototype.slice.call(arguments, 0)));
         };
+    });
+    ['get', 'post'].forEach(function (method) {
+        AJAX.prototype[method + 'JSON'] = function (url, data, callback) {
+            var args = _.M.optionalArgs(Array.prototype.slice.call(arguments, 3), ['url', 'data', 'callback'], {
+                    url: 'string',
+                    data: ['string', 'object'],
+                    callback: 'function'
+                }),
+                options = {
+                    dataType: 'json'
+                };
 
+            if (args.url) {
+                options.url = args.url;
+            }
+            if (args.data) {
+                options.data = args.data;
+            }
+            if (args.callback) {
+                options.done = args.callback;
+            }
+
+            return this.request(options);
+        };
+    });
+
+    ['get', 'post', 'put', 'delete', 'getJSON', 'postJSON'].forEach(function (method) {
         AJAX[method] = function (url, data, callback, dataType) {
             var instance = new AJAX();
 
@@ -800,23 +859,27 @@
     });
 
     AJAX.prototype.query = function (data) {
-        this.option('method', 'GET');
+        var options = {
+            method: 'GET'
+        };
 
         if (data) {
-            this.option('data', data);
+            options.data = data;
         }
 
-        return _do_request(this);
+        return this.request(options);
     };
 
     AJAX.prototype.send = function (data) {
-        this.option('method', 'POST');
+        var options = {
+            method: 'POST'
+        };
 
         if (data) {
-            this.option('data', data);
+            options.data = data;
         }
 
-        return _do_request(this);
+        return this.request(options);
     };
 
 
@@ -851,30 +914,28 @@
      * - apply_type: Way to apply response to target: replace, append or prepend. Default is replace
      */
     AJAX.load = function (url, target, options) {
-        var ajax = new AJAX();
+        var instance = new AJAX();
 
         if (!_.isObject(options)) {
             options = {};
         }
 
         options = _.extend({
-            error_content: null,
+            error_content: '',
             apply_type: 'replace'
         }, options, {
             url: url
         });
 
-        ajax.option(options);
-        ajax.done(function (response) {
+        instance.option(options);
+        instance.done(function (response) {
             _load_apply_content(response, target, options.apply_type);
         }).fail(function (error_message, error_code) {
             var response = '';
 
-            if (_.isNull(options.error_content)) {
-                response = ['Load content failed: ', error_message, '. Error code: ', error_code].join('');
-            } else {
+            if (options.error_content) {
                 if (_.isFunction(options.error_content)) {
-                    response = options.error_content(ajax, error_message, error_code);
+                    response = options.error_content(instance, error_message, error_code);
                 } else {
                     response = options.error_content + '';
                 }
@@ -883,9 +944,9 @@
             _load_apply_content(response, target, options.apply_type);
         });
 
-        ajax.request();
+        instance.request();
 
-        return ajax;
+        return instance;
     };
 
     /**
