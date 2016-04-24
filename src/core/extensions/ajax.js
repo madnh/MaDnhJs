@@ -272,7 +272,7 @@
     /**
      * Register response adapter
      * @param {string} name
-     * @param {callback} handler Adapter callback with arguments: response, options, request options
+     * @param {function} handler Adapter callback with arguments: response, options, request options
      * @returns {boolean}
      */
     AJAX.registerResponseAdapter = function (name, handler) {
@@ -314,7 +314,7 @@
     /**
      * Apply AJAX response adapters
      * @param {*} response
-     * @param {{}} adapters Object of adapters with key is adapter name, value is adapter option object
+     * @param {{}|string|string[]} adapters Object of adapters with key is adapter name, value is adapter option object
      * @param {{}} [request_options] Request option
      * @returns {{error: null|{code, message}, response: null|*, responses: {raw}}}
      */
@@ -330,7 +330,10 @@
         if (!_.isObject(request_options)) {
             request_options = {};
         }
-
+        if(_.isString(adapters) || _.isArray(adapters)){
+            adapters = _.M.asArray(adapters);
+            adapters = _.object(adapters, _.M.repeat({}, adapters.length, true));
+        }
         _.M.loop(adapters, function (adapter_options, adapter_name) {
             if (response_adapters.hasOwnProperty(adapter_name)) {
                 adapter = AJAX.responseAdapterFactory(adapter_name);
@@ -373,8 +376,7 @@
     /**
      * Register data adapter
      * @param {string} name
-     * @param {callback} callback Callback receive arguments: request data, adapter options, request options - excluded
-     *     request data
+     * @param {function} callback Callback receive arguments: request data, adapter options, request options (without request data)
      * @returns {boolean}
      */
     AJAX.registerDataAdapter = function (name, callback) {
@@ -390,7 +392,7 @@
     /**
      * Apply AJAX data adapters
      * @param {*} data
-     * @param {{}} adapters Object of adapters with key is adapter name, value is adapter option object
+     * @param {{}|string|string[]} adapters Object of adapters with key is adapter name, value is adapter option object
      * @param {{}} [request_options] Request options, exclude request data
      * @returns {*}
      * @throws AJAX data adapter x must be a function
@@ -402,6 +404,10 @@
         }
         if (!_.isObject(request_options)) {
             request_options = {};
+        }
+        if(_.isString(adapters) || _.isArray(adapters)){
+            adapters = _.M.asArray(adapters);
+            adapters = _.object(adapters, _.M.repeat({}, adapters.length, true));
         }
         _.each(adapters, function (adapter_option, name) {
             if (data_adapters.hasOwnProperty(name)) {

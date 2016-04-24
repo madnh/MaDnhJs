@@ -28,3 +28,30 @@ function test(url, data, callback) {
 
     return result;
 }
+
+
+
+
+
+//Bien doi data
+_.M.AJAX.registerDataAdapter('append_name', function (request_data) {
+    request_data['name'] += ' điên';
+
+    return request_data;
+});
+_.M.AJAX.registerResponseAdapter('prepend', function (response) {
+    this.response = '[response]' + response;
+});
+
+$.ajax({
+    url: '/examples/ajax.php',
+    method: 'POST',
+    data: { name: 'Manh' },
+    success: function (response) {
+        console.log('Response: ', response);
+        response = _.M.AJAX.applyResponseAdapters(response, 'prepend');
+        console.log('New response: ', response.response);
+    }
+});
+//=> Response:  Hello, Manh
+//=> New response:  [response]Hello, Manh

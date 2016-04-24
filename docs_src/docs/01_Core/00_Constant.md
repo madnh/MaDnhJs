@@ -225,3 +225,64 @@ _.M.isDefinedConstant('BAZ'); //true
     </tr>
     </tbody>
 </table>
+
+## _.M.AJAX
+-----
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <td>Constant</td>
+        <td>Value</td>
+        <td>Description</td>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>AJAX_INVALID_RESPONSE_ADAPTER_OPTION</td>
+        <td>'ajax_invalid_response_adapter_option'</td>
+        <td>Option cho Response adapter không hợp lệ</td>
+    </tr>
+    <tr>
+        <td>AJAX_ERROR_RESPONSE_ADAPTER_NOT_FOUND</td>
+        <td>'ajax_response_adapter_not_found'</td>
+        <td>Response adapter không tồn tại</td>
+    </tr>
+    <tr>
+        <td>AJAX_ERROR_INVALID_RESPONSE_ADAPTER</td>
+        <td>'ajax_invalid_response_adapter'</td>
+        <td>Response adapter không hợp lệ</td>
+    </tr>
+    <tr>
+            <td>AJAX_ABORTED</td>
+            <td>'aborted'</td>
+            <td>AJAX đã bị hủy</td>
+        </tr>
+        <tr>
+            <td>AJAX_TIMEOUT</td>
+            <td>'timeout'</td>
+            <td>AJAX bị hủy do hết thời gian truy vấn</td>
+        </tr>
+        <tr>
+            <td>AJAX_PARSER_ERROR</td>
+            <td>'parser_error'</td>
+            <td>Parser kiểu dữ liệu từ response về dạng yêu cầu không thành công</td>
+        </tr>
+        <tr>
+            <td>AJAX_SERVER_ERROR</td>
+            <td>500</td>
+            <td>Có lỗi ở server</td>
+        </tr>
+        <tr>
+            <td>AJAX_FORBIDDEN</td>
+            <td>403</td>
+            <td>Không được phép truy cập tài nguyên</td>
+        </tr>
+        <tr>
+            <td>AJAX_NOT_FOUND</td>
+            <td>404</td>
+            <td>Tài nguyên không tồn tại</td>
+        </tr>
+    </tbody>
+</table>
+
+
