@@ -17,7 +17,7 @@
 
         this.options = {};
 
-        this.plugins = {};
+        this._dom_plugins = {};
     }
 
     _.M.inherit(App, _.M.EventEmitter);
@@ -66,8 +66,8 @@
         this.resetEvents('init');
     };
 
-    App.prototype.hasPlugin = function (name) {
-        return this.plugins.hasOwnProperty(name);
+    App.prototype.hasDOMPlugin = function (name) {
+        return this._dom_plugins.hasOwnProperty(name);
     };
 
     /**
@@ -76,9 +76,9 @@
      * @param {function} callback Callback, call arguments are: dom, options
      * @returns {boolean} True if plugin with name is not existed, otherwise
      */
-    App.prototype.addPlugin = function (name, callback) {
-        if (!this.hasPlugin(name)) {
-            this.plugins[name] = callback;
+    App.prototype.addDOMPlugin = function (name, callback) {
+        if (!this.hasDOMPlugin(name)) {
+            this._dom_plugins[name] = callback;
 
             return true;
         }
@@ -86,18 +86,17 @@
         return false;
     };
 
-
     /**
      * Remove plugin
      * @param {string} [name]
      * @returns {boolean}
      */
-    App.prototype.removePlugin = function (name) {
+    App.prototype.removeDOMPlugin = function (name) {
         var self = this;
 
         name = _.flatten(_.toArray(arguments));
         _.each(name, function (tmp_name) {
-            delete self.plugins[tmp_name];
+            delete self._dom_plugins[tmp_name];
         });
     };
 
@@ -107,7 +106,7 @@
      * @param {Array} [plugins] Name of plugins
      * @param {object} [options]
      */
-    App.prototype.applyPlugin = function (selector_or_dom, plugins, options) {
+    App.prototype.applyDOMPlugin = function (selector_or_dom, plugins, options) {
         var self = this;
 
         if (!selector_or_dom) {
@@ -123,12 +122,12 @@
         }
 
         if (!plugins) {
-            plugins = Object.keys(this.plugins);
+            plugins = Object.keys(this._dom_plugins);
         } else {
-            var not_found = _.difference(plugins, Object.keys(this.plugins));
+            var not_found = _.difference(plugins, Object.keys(this._dom_plugins));
 
             if (!_.isEmpty(not_found)) {
-                throw new Error(['Apply not found plugin: ', not_found.join(', ')].join(''));
+                throw new Error(['Apply not found DOM plugin: ', not_found.join(', ')].join(''));
             }
         }
 
@@ -137,7 +136,7 @@
         }
 
         _.each(plugins, function (plugin) {
-            self.plugins[plugin](selector_or_dom, _.has(options, plugin) ? options[plugin] : {});
+            self._dom_plugins[plugin](selector_or_dom, _.has(options, plugin) ? options[plugin] : {});
         });
     };
     
