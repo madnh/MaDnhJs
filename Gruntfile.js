@@ -26,6 +26,7 @@ module.exports = function (grunt) {
                     'src/core/extensions/waiters.js',
                     'src/core/extensions/event_emitter.js',
                     'src/core/extensions/cache.js',
+                    'src/core/extensions/task.js',
                     'src/core/extensions/app.js',
                     'src/core/extensions/ajax.js'],
                 dest: 'dist/madnh.js'
