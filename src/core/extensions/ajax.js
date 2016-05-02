@@ -75,16 +75,16 @@
 
     /**
      * Option values
-     * - response_adapters: Response adapter object with key is adapter name, value is adapter option object
-     * - data_adapters: Data adapter object with key is adapter name, value is adapter option object
+     * - response_tasks: Response adapter object with key is adapter name, value is adapter option object
+     * - data_tasks: Data adapter object with key is adapter name, value is adapter option object
      * - auto_abort: abort prev request if not completed
      * - retry: retry times when error
      * - is_continue: check if continue to retry request. Boolean or function which bind to AJAX instance, return
      * boolean value
      */
     _.M.PreOptions.define(_.M.AJAX_PRE_OPTIONS_NAME, {
-        response_adapters: {},
-        data_adapters: {},
+        response_tasks: {},
+        data_tasks: {},
         auto_abort: true,
         retry: 0,
         retry_delay: 0,
@@ -376,7 +376,7 @@
     };
 
     function _ajax_done_cb(response) {
-        var result = _.M.Task.apply(response, this.options.response_adapters);
+        var result = _.M.Task.apply(response, this.options.response_tasks);
 
         if (result.error) {
             this.error = result.error;
@@ -478,7 +478,7 @@
         }
 
         _.M.removeItem(last_options, ['success', 'done', 'error', 'fail', 'complete', 'always', 'beforeSend',
-            'response_adapters', 'data_adapters', 'auto_abort', 'retry', 'retry_delay', 'is_continue']);
+            'response_tasks', 'data_tasks', 'auto_abort', 'retry', 'retry_delay', 'is_continue']);
 
         last_options['done'] = _ajax_done_cb.bind(instance);
         last_options['fail'] = _ajax_fail_cb.bind(instance);
@@ -495,8 +495,8 @@
             if (!_.isObject(last_options.data)) {
                 last_options.data = {};
             }
-            if (last_options.data_adapters) {
-                var request_data_result = _.M.Task.apply(_.clone(last_options.data), last_options.data_adapters);
+            if (last_options.data_tasks) {
+                var request_data_result = _.M.Task.apply(_.clone(last_options.data), last_options.data_tasks);
 
                 if (request_data_result.data) {
                     last_options.data = request_data_result.data;

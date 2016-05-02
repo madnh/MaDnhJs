@@ -1,4 +1,4 @@
-(function (_) {
+;(function (_) {
     var tasks = {};
 
     /**
