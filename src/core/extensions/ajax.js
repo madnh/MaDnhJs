@@ -665,6 +665,17 @@
      |--------------------------------------------------------------------------
      */
 
+    /**
+     * Create AJAX instance with Pre Options
+     * @param {string} pre_options_name
+     * @param {{}} [custom_options={}]
+     * @returns {_.M.AJAX}
+     */
+    AJAX.use = function (pre_options_name, custom_options) {
+        return new AJAX(_.M.PreOptions.get(pre_options_name, custom_options));
+    };
+
+
     function _load_apply_content(response, target, apply_type) {
         target = $(target);
         switch (apply_type) {

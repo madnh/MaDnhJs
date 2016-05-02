@@ -55,7 +55,7 @@
          *
          * @param {string} src_name
          * @param {string} dest_name
-         * @param {{}} options
+         * @param {{}} [options={}]
          */
         extend: function (src_name, dest_name, options) {
             if (!_pre_options.hasOwnProperty(src_name)) {
