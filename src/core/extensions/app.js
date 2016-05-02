@@ -66,6 +66,12 @@
         this.resetEvents('init');
     };
 
+    /*
+     |--------------------------------------------------------------------------
+     | DOM Plugin
+     |--------------------------------------------------------------------------
+     */
+
     App.prototype.hasDOMPlugin = function (name) {
         return this._dom_plugins.hasOwnProperty(name);
     };

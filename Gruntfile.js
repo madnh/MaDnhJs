@@ -21,6 +21,7 @@ module.exports = function (grunt) {
                 src: ['src/core/core.js',
                     'src/core/extensions/flag.js',
                     'src/core/extensions/base_class.js',
+                    'src/core/extensions/pre_options.js',
                     'src/core/extensions/content_manager.js',
                     'src/core/extensions/priority.js',
                     'src/core/extensions/waiters.js',

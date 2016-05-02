@@ -118,7 +118,7 @@
             this.handler = _.M.asArray(this.handler);
         }
         if (_.isFunction(this.handler)) {
-            this.handler.bind(this)(data);
+            this.handler.bind(this)(data, this.setProcessResult, this.setProcessError);
         } else if (this.handler instanceof Task) {
             this.handler.process(self._result);
 
@@ -227,8 +227,30 @@
         throw new Error('Create unregistered task: ' + name);
     };
 
-    Task.all = function () {
-        return tasks;
+    Task.apply = function (data, tasks) {
+        var result = {
+            data: _.clone(data)
+        };
+
+        if(tasks){
+            if (_.isArray(tasks)) {
+                tasks = _.object(tasks, _.M.repeat({}, tasks.length, true));
+            }
+
+            _.M.loop(tasks, function (options, name) {
+                var task = Task.factory(name, options);
+
+                if (task.process(_.clone(result['data']))) {
+                    result['data'] = task.getResult();
+                } else {
+                    delete result['data'];
+                    result['error'] = task.getError();
+                    return 'break';
+                }
+            });
+        }
+
+        return result;
     };
 
     _.M.Task = Task;
