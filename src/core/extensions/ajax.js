@@ -11,21 +11,6 @@
          * @constant {string}
          * @default
          */
-        AJAX_INVALID_RESPONSE_ADAPTER_OPTION: 'ajax_invalid_response_adapter_option',
-        /**
-         * @constant {string}
-         * @default
-         */
-        AJAX_ERROR_RESPONSE_ADAPTER_NOT_FOUND: 'ajax_response_adapter_not_found',
-        /**
-         * @constant {string}
-         * @default
-         */
-        AJAX_ERROR_INVALID_RESPONSE_ADAPTER: 'ajax_invalid_response_adapter',
-        /**
-         * @constant {string}
-         * @default
-         */
         AJAX_ABORTED: 'aborted',
         /**
          * @constant {string}
@@ -154,6 +139,7 @@
          * @type {{code: number|string, message: string}}
          */
         this.error = null;
+        this._is_response_meaning_failed = false;
 
         if (_.isObject(options)) {
             this.option(options);
@@ -210,6 +196,8 @@
 
     AJAX.prototype.data = function (data) {
         this.options.data = data;
+
+        return this;
     };
     AJAX.prototype.addData = function (name, value) {
         var data;
@@ -217,31 +205,33 @@
         if (!this.options.data) {
             this.options.data = {};
         }
-        if (_.isObject(this.options.data)) {
+
+        if (_.isObject(arguments[0])) {
+            data = _.extend({}, name);
+        } else {
+            data = {};
             if (arguments.length < 2) {
-                if (_.isObject(arguments[0])) {
-                    data = name;
-                } else {
-                    throw new Error('Added data must be object');
-                }
+                data[name + ''] = 'true';
             } else {
-                data = {};
                 data[name] = value;
             }
+        }
+
+        if (_.isObject(this.options.data)) {
             _.extend(this.options.data, data);
         } else if (_.isString(this.options.data)) {
-            if (arguments.length < 2) {
-                data = name;
-            } else {
-                data = [name, '=', value].join('');
-            }
+            data = _.map(data, function (value, key) {
+                return key + '=' + value;
+            });
 
             if (this.options.data.length) {
                 this.options.data += '&' + data;
             } else {
-                this.options.data += data;
+                this.options.data = data;
             }
         }
+
+        return this;
     };
 
     /**
@@ -290,7 +280,7 @@
         this.on('always', callback);
 
         if (this.isDone()) {
-            callback.call(this);
+            callback.apply(this, [this.error, this.response]);
         }
 
         return this;
@@ -343,6 +333,10 @@
         return this.isDone() && !_.isEmpty(this.error);
     };
 
+    AJAX.prototype.isResponseMeaningFailed = function () {
+        return this.isFailed() && this._is_response_meaning_failed;
+    };
+
     AJAX.prototype.isSuccess = function () {
         return this.isDone() && _.isEmpty(this.error);
     };
@@ -360,7 +354,7 @@
     };
 
     AJAX.prototype.isRetryable = function () {
-        if (!_.isEmpty(this.error) && !this.isAborted() && this.options.retry && this.retry_time < parseInt(this.options.retry)) {
+        if (!_.isEmpty(this.error) && !this.isAborted() && !this.isResponseMeaningFailed() && this.options.retry && this.retry_time < parseInt(this.options.retry)) {
             var is_continue;
 
             if (_.isFunction(this.options.is_continue)) {
@@ -379,6 +373,7 @@
         var result = _.M.Task.apply(response, this.options.response_tasks);
 
         if (result.error) {
+            this._is_response_meaning_failed = true;
             this.error = result.error;
 
             if (!this.isRetryable()) {
@@ -446,7 +441,7 @@
      * Get request option, ready for request
      * @param instance
      * @param {{}} options
-     * @return {{}}
+     * @return {{}|boolean}
      */
     function _getRequestOptions(instance, options) {
         var last_options = _.extend({}, instance.options, _.isObject(options) ? options : {}),
@@ -477,8 +472,7 @@
             before_send_cb = last_options.beforeSend;
         }
 
-        _.M.removeItem(last_options, ['success', 'done', 'error', 'fail', 'complete', 'always', 'beforeSend',
-            'response_tasks', 'data_tasks', 'auto_abort', 'retry', 'retry_delay', 'is_continue']);
+        _.M.removeItem(last_options, ['success', 'done', 'error', 'fail', 'complete', 'always', 'beforeSend']);
 
         last_options['done'] = _ajax_done_cb.bind(instance);
         last_options['fail'] = _ajax_fail_cb.bind(instance);
@@ -495,20 +489,11 @@
             if (!_.isObject(last_options.data)) {
                 last_options.data = {};
             }
-            if (last_options.data_tasks) {
-                var request_data_result = _.M.Task.apply(_.clone(last_options.data), last_options.data_tasks);
-
-                if (request_data_result.data) {
-                    last_options.data = request_data_result.data;
-                } else {
-                    this.error = request_data_result.error;
-                    result = false;
-                }
-            }
 
             if (false !== result) {
                 instance.requested++;
                 instance.error = null;
+                instance._is_response_meaning_failed = false;
                 instance.response = null;
                 instance.responses = null;
 
@@ -523,6 +508,19 @@
 
             return result;
         };
+
+        if (!_.isEmpty(last_options.data_tasks)) {
+            var request_data_result = _.M.Task.apply(_.clone(last_options.data), last_options.data_tasks);
+
+            if (request_data_result.data) {
+                last_options.data = request_data_result.data;
+            } else {
+                this.error = request_data_result.error;
+                return false;
+            }
+        }
+
+        _.M.removeItem(last_options, ['response_tasks', 'data_tasks', 'auto_abort', 'retry', 'retry_delay', 'is_continue']);
 
         return last_options;
     }
@@ -541,13 +539,20 @@
             last_options = instance._last_options;
         } else {
             last_options = _getRequestOptions(instance, options);
-            instance._last_options = last_options;
+            if (false !== last_options) {
+                instance._last_options = last_options;
+            } else {
+                instance.emitEvent('fail', [instance.error.message, instance.error.code]);
+                _at_the_end(instance);
+            }
         }
 
-        instance.jqXHR = $.ajax(_.omit(last_options, ['done', 'fail', 'always']))
-            .done(last_options['done'])
-            .fail(last_options['fail'])
-            .always(last_options['always']);
+        if (last_options) {
+            instance.jqXHR = $.ajax(_.omit(last_options, ['done', 'fail', 'always']))
+                .done(last_options['done'])
+                .fail(last_options['fail'])
+                .always(last_options['always']);
+        }
 
         return instance;
     }
@@ -602,7 +607,7 @@
     });
     ['get', 'post'].forEach(function (method) {
         AJAX.prototype[method + 'JSON'] = function (url, data, callback) {
-            var args = _.M.optionalArgs(Array.prototype.slice.call(arguments, 3), ['url', 'data', 'callback'], {
+            var args = _.M.optionalArgs(Array.prototype.slice.call(arguments, 0, 3), ['url', 'data', 'callback'], {
                     url: 'string',
                     data: ['string', 'object'],
                     callback: 'function'
@@ -634,6 +639,10 @@
         }
     });
 
+    /**
+     *
+     * @param {string|object} [data]
+     */
     AJAX.prototype.query = function (data) {
         var options = {
             method: 'GET'
@@ -646,6 +655,10 @@
         return this.request(options);
     };
 
+    /**
+     *
+     * @param {string|object} [data]
+     */
     AJAX.prototype.send = function (data) {
         var options = {
             method: 'POST'

@@ -237,22 +237,12 @@ _.M.isDefinedConstant('BAZ'); //true
     </tr>
     </thead>
     <tbody>
-    <tr>
-        <td>AJAX_INVALID_RESPONSE_ADAPTER_OPTION</td>
-        <td>'ajax_invalid_response_adapter_option'</td>
-        <td>Option cho Response adapter không hợp lệ</td>
-    </tr>
-    <tr>
-        <td>AJAX_ERROR_RESPONSE_ADAPTER_NOT_FOUND</td>
-        <td>'ajax_response_adapter_not_found'</td>
-        <td>Response adapter không tồn tại</td>
-    </tr>
-    <tr>
-        <td>AJAX_ERROR_INVALID_RESPONSE_ADAPTER</td>
-        <td>'ajax_invalid_response_adapter'</td>
-        <td>Response adapter không hợp lệ</td>
-    </tr>
-    <tr>
+        <tr>
+            <td>AJAX_PRE_OPTIONS_NAME</td>
+            <td>'_.M.AJAX'</td>
+            <td>Tên PreOptions của _.M.AJAX</td>
+        </tr>
+        <tr>
             <td>AJAX_ABORTED</td>
             <td>'aborted'</td>
             <td>AJAX đã bị hủy</td>

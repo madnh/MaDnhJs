@@ -118,7 +118,7 @@
             this.handler = _.M.asArray(this.handler);
         }
         if (_.isFunction(this.handler)) {
-            this.handler.bind(this)(data, this.setProcessResult, this.setProcessError);
+            this.handler.bind(this)(data, this.setProcessResult.bind(this), this.setProcessError.bind(this));
         } else if (this.handler instanceof Task) {
             this.handler.process(self._result);
 
@@ -233,6 +233,9 @@
         };
 
         if(tasks){
+            if(_.isString(tasks)){
+                tasks = [tasks];
+            }
             if (_.isArray(tasks)) {
                 tasks = _.object(tasks, _.M.repeat({}, tasks.length, true));
             }
