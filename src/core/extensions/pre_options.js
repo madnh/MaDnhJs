@@ -1,6 +1,42 @@
 ;(function (_) {
     var _pre_options = {};
 
+
+    function _extend(sources, dest_name, options, real_time) {
+        if (_pre_options.hasOwnProperty(dest_name)) {
+            throw new Error('Destination Pre Options is already exists');
+        }
+        sources = _.M.asArray(sources);
+        var not_founds = _.filter(sources, function (source) {
+            return !_pre_options.hasOwnProperty(source);
+        });
+
+        if (!_.isEmpty(not_founds)) {
+            throw new Error('PreOptions are not defined:' + not_founds.join(', '));
+        }
+        if(!_.isObject(options)){
+            options = {};
+        }
+        if (!real_time) {
+            var base_options = {};
+
+            _.each(sources, function (base) {
+                _.extend(base_options, _.M.PreOptions.get(base));
+            });
+            _.extend(options, base_options);
+
+            _pre_options[dest_name] = {
+                options: options,
+                base: []
+            };
+        } else {
+            _pre_options[dest_name] = {
+                options: options,
+                base: sources
+            };
+        }
+    }
+
     _.M.PreOptions = _.M.defineObject({
         /**
          *
@@ -10,7 +46,10 @@
          */
         define: function (name, options, override) {
             if (override || !_pre_options.hasOwnProperty(name)) {
-                _pre_options[name] = options;
+                _pre_options[name] = {
+                    options: options,
+                    base: []
+                };
                 return true;
             }
 
@@ -32,7 +71,16 @@
          */
         update: function (name, options) {
             if (_pre_options.hasOwnProperty(name)) {
-                _.extend(_pre_options[name], options);
+                _.extend(_pre_options[name].options, options);
+                return true;
+            }
+
+            return false;
+        },
+        updateBase: function (name, new_base) {
+            if (_pre_options.hasOwnProperty(name)) {
+                _pre_options[name].base = new_base;
+
                 return true;
             }
 
@@ -49,24 +97,35 @@
                 throw new Error('Pre Options "' + name + '" is undefined');
             }
 
-            return _.extend({}, _pre_options[name], _.isObject(custom) ? custom : {});
+            var result = {};
+
+            _.each(_.M.asArray(_pre_options[name].base), function (base) {
+                _.extend(result, _.M.PreOptions.get(base));
+            });
+            _.extend(result, _pre_options[name].options, _.isObject(custom) ? custom : {});
+
+            return result;
         },
+
         /**
-         *
-         * @param {string} src_name
+         * Create PreOptions, base on real time value of other PreOptions
+         * @param {string|string[]} sources Base on other PreOptions
          * @param {string} dest_name
          * @param {{}} [options={}]
          */
-        extend: function (src_name, dest_name, options) {
-            if (!_pre_options.hasOwnProperty(src_name)) {
-                throw new Error('Source Pre Options is undefined');
-            }
-            if (_pre_options.hasOwnProperty(dest_name)) {
-                throw new Error('Destination Pre Options is already exists');
-            }
-
-            return this.define(dest_name, this.get(src_name, options));
+        extend: function (sources, dest_name, options) {
+            _extend(sources, dest_name, options, true);
         },
+        /**
+         * Create PreOptions, base on runtime-value of other PreOptions
+         * @param {string|string[]} sources Base on other PreOptions
+         * @param {string} dest_name
+         * @param {{}} [options={}]
+         */
+        baseOn: function (sources, dest_name, options) {
+            _extend(sources, dest_name, options, false);
+        },
+
         /**
          *
          * @param {boolean} [detail=false]
@@ -78,6 +137,9 @@
             }
 
             return Object.keys(_pre_options);
+        },
+        debug: function () {
+            return _pre_options;
         }
     });
 })(_);

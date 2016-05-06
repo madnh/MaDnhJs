@@ -184,7 +184,8 @@ _.M.PreOptions.get('test', {old: 20, id: 55}); //{name: 'M', old: 20, id: 55}
 <div class="panel panel-info">
     <div class="panel-heading"><strong>extend</strong></div>
     <div class="panel-body">
-        Kế thừa một PreOptions
+        Khai báo một PreOptions bằng cách kế thừa các PreOptions khác.
+        Giá trị của PreOptions dựa vào giá trị hiện tại của các PreOptions khác.
     </div>
     <ul class="list-group">
         <li class="list-group-item">
@@ -200,8 +201,8 @@ _.M.PreOptions.get('test', {old: 20, id: 55}); //{name: 'M', old: 20, id: 55}
                 </thead>
                 <tbody>
                 <tr>
-                    <td><code>src_name</code></td>
-                    <td>string</td>
+                    <td><code>sources</code></td>
+                    <td>string|string[]</td>
                     <td></td>
                     <td>Source PreOptions name</td>
                 </tr>
@@ -221,21 +222,81 @@ _.M.PreOptions.get('test', {old: 20, id: 55}); //{name: 'M', old: 20, id: 55}
             </table>
         </li>
         <li class="list-group-item">
-            <h4>Returns</h4>
-            boolean
-        </li>
-        <li class="list-group-item">
             <h4>Throws</h4>
             <dl>
                 <dt>Không tìm thấy source PreOptions</dt>
-                <dd>"Source Pre Options is undefined"</dd>
+                <dd>"PreOptions are not defined:"</dd>
                 <dt>PreOption đích đã tồn tại</dt>
                 <dd>"Destination Pre Options is already exists"</dd>
             </dl>
         </li>
         <li class="list-group-item">
             <h4>Examples</h4>
-<pre><code class="javascript">_.M.PreOptions.extend('test', 'test2', {from: 'VN'})</code></pre>
+<pre><code class="javascript">_.M.PreOptions.define('test', {name: 'M'});
+_.M.PreOptions.extend('test', 'test2', {from: 'VN'});
+_.M.PreOptions.get('test2'); //{name: 'M', from: 'VN'}
+_.M.PreOptions.update('test', {name: 'Manh'});
+_.M.preOptions.get('test2'); //{name: 'Manh', from: 'VN'}
+</code></pre>
+        </li>
+    </ul>
+</div>
+<div class="panel panel-info">
+    <div class="panel-heading"><strong>baseOn</strong></div>
+    <div class="panel-body">
+        Khai báo một PreOptions, giá trị dựa trên giá trị hiện tại lúc khai báo của các PreOptions khác
+    </div>
+    <ul class="list-group">
+        <li class="list-group-item">
+            <h4>Parameters</h4>
+<table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Tên</th>
+                    <th>Kiểu dữ liệu</th>
+                    <th>Tham số tùy chọn và giá trị mặc định</th>
+                    <th>Mô tả</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td><code>sources</code></td>
+                    <td>string|string[]</td>
+                    <td></td>
+                    <td>Source PreOptions name</td>
+                </tr>
+                <tr>
+                    <td><code>dest_name</code></td>
+                    <td>string</td>
+                    <td></td>
+                    <td>Destination PreOptions name</td>
+                </tr>
+                <tr>
+                    <td><code>options</code></td>
+                    <td>{}</td>
+                    <td>{}</td>
+                    <td>Các options mới</td>
+                </tr>
+                </tbody>
+            </table>
+        </li>
+        <li class="list-group-item">
+            <h4>Throws</h4>
+            <dl>
+                <dt>Không tìm thấy source PreOptions</dt>
+                <dd>"PreOptions are not defined:"</dd>
+                <dt>PreOption đích đã tồn tại</dt>
+                <dd>"Destination Pre Options is already exists"</dd>
+            </dl>
+        </li>
+        <li class="list-group-item">
+            <h4>Examples</h4>
+<pre><code class="javascript">_.M.PreOptions.define('test', {name: 'M'});
+_.M.PreOptions.baseOn('test', 'test2', {from: 'VN'});
+_.M.PreOptions.get('test2'); //{name: 'M', from: 'VN'}
+_.M.PreOptions.update('test', {name: 'Manh'});
+_.M.preOptions.get('test2'); //{name: 'M', from: 'VN'}
+</code></pre>
         </li>
     </ul>
 </div>
