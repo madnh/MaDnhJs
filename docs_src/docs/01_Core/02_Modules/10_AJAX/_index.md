@@ -9,6 +9,13 @@ Các hàm hỗ trợ khi làm việc với AJAX
     <li><i class="glyphicon glyphicon-check text-info"></i> AJAX class với nhiều tiện ích khi làm việc với AJAX</li>
 </ul>
 
+<div class="alert alert-success">
+    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+    <strong>Chú ý!</strong> Khi <code>_.M.AJAX</code> instance request xong sẽ phát sinh sự kiện
+    <strong>ajax_complete</strong> của object <code>_.App</code>. Sự kiện này có một parameter là _.M.AJAX instance đã
+    thự hiện request đó
+</div>
+
 ## Request path
 Các tập tin sau đây sẽ được dùng như là request path ở các ví dụ
 

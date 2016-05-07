@@ -342,9 +342,9 @@
 
     /**
      * Check if value has a deep path
-     * @param {*} value
+     * @param {*} object
      * @param {string|number|[]} deep
-     * @param {string} [split='.'] Character to split deep string to array of deeps
+     * @param {string} [separator='.'] Character to split deep string to array of deeps
      * @returns {boolean}
      * @example
      * var obj = {a: {a1: {a2: true}}, b: 'hihi'};
@@ -353,12 +353,12 @@
      * _.M.hasDeep([obj, 123], 1); //true
      * _.M.hasDeep([obj, 123], 10); //false
      */
-    M.hasDeep = function (value, deep, split) {
+    M.hasDeep = function (object, deep, separator) {
         if (!_.isArray(deep)) {
-            deep = (deep + '').split(split || '.');
+            deep = (deep + '').split(separator || '.');
         }
 
-        var pointer = value, field;
+        var pointer = object, field;
 
         while (field = deep.shift()) {
             if (pointer.hasOwnProperty(field)) {
@@ -370,6 +370,61 @@
         }
 
         return true;
+    };
+
+    /**
+     * Define object value in a deep path
+     * @param {*} object
+     * @param {string|[]} deep
+     * @param {*} value
+     * @param {string} [separator='.']
+     */
+    M.defineDeep = function (object, deep, value, separator) {
+        if (!_.isArray(deep)) {
+            deep = (deep + '').split(separator || '.');
+        }
+        var pointer = object, field, last_field = deep.pop();
+
+        while (field = deep.shift()) {
+            if (!pointer.hasOwnProperty(field)) {
+                pointer[field] = {};
+            }
+            pointer = pointer[field];
+        }
+
+        pointer[last_field] = value;
+    };
+
+    /**
+     * Get object's value at a deep path
+     * @param {*} object
+     * @param {string|[]} deep
+     * @param {*} [default_value=undefined]
+     * @param {string} [separator='.']
+     * @returns {*}
+     */
+    M.getDeep = function (object, deep, default_value, separator) {
+        if (!_.isArray(deep)) {
+            deep = (deep + '').split(separator || '.');
+        }
+
+        var pointer = object, field, found = true;
+
+        while (field = deep.shift()) {
+            if (pointer.hasOwnProperty(field)) {
+                pointer = pointer[field];
+                continue;
+            }
+
+            found = false;
+            break;
+        }
+
+        if (found) {
+            return pointer;
+        }
+
+        return default_value;
     };
 
     /**

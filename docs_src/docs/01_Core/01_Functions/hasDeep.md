@@ -15,7 +15,7 @@ Kiểm tra giá trị ở một độ sâu nào đó của value có tồn tại
     </thead>
     <tbody>
     <tr>
-        <td><code>value</code></td>
+        <td><code>object</code></td>
         <td>*</td>
         <td></td>
         <td>Giá trị chứa</td>
@@ -32,7 +32,7 @@ Kiểm tra giá trị ở một độ sâu nào đó của value có tồn tại
         <td>Độ sâu cần kiểm tra</td>
     </tr>
     <tr>
-        <td><code>split</code></td>
+        <td><code>separator</code></td>
         <td>string</td>
         <td>dấu chấm(<strong>.</strong>)</td>
         <td>Ký tự dùng để phân tách parameter <code>deep</code> khi giá trị là một chuỗi</td>
