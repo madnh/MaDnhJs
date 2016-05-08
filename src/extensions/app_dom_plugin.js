@@ -15,16 +15,13 @@
      * Add jQuery Plugin callback
      * @param {string} name plugin name, default is unique id
      * @param {function} callback Callback, call arguments are: dom, options
-     * @returns {boolean} True if plugin with name is not existed, otherwise
+     * @param {object} options Default options
      */
-    _.App.addDOMPlugin = function (name, callback) {
-        if (!this.hasDOMPlugin(name)) {
-            _dom_plugins[name] = callback;
-
-            return true;
-        }
-
-        return false;
+    _.App.addDOMPlugin = function (name, callback, options) {
+        _dom_plugins[name] = {
+            callback: callback,
+            options: _.isObject(options) ? options : {}
+        };
     };
 
     /**
@@ -48,34 +45,26 @@
      * @param {object} [options]
      */
     _.App.applyDOMPlugin = function (selector_or_dom, plugins, options) {
-        if (!selector_or_dom) {
-            selector_or_dom = $('body');
-        } else if (_.isString(selector_or_dom)) {
-            selector_or_dom = $(selector_or_dom);
-        } else {
-            try {
-                selector_or_dom = $(selector_or_dom);
-            } catch (e) {
-                throw new Error('Invalid selector/DOM');
-            }
-        }
+        var parameters = _.M.optionalArgs(_.toArray(arguments), ['selector', 'plugins', 'options'], {
+            selector: function (arg) {
+                return _.isString(arg) || arg instanceof $;
+            },
+            plugins: 'Array',
+            options: 'Object'
+        });
 
-        if (!plugins) {
-            plugins = Object.keys(_dom_plugins);
-        } else {
-            var not_found = _.difference(plugins, Object.keys(_dom_plugins));
+        selector_or_dom = $(parameters.selector || 'body');
+        plugins = parameters.plugins || Object.keys(_dom_plugins);
+        options = parameters.options || {};
 
-            if (!_.isEmpty(not_found)) {
-                throw new Error(['Apply not found DOM plugin: ', not_found.join(', ')].join(''));
-            }
-        }
-
-        if (!_.isObject(options)) {
-            options = {};
+        var not_found = _.difference(plugins, Object.keys(_dom_plugins));
+        if (!_.isEmpty(not_found)) {
+            throw new Error(['Apply not found DOM plugin: ', not_found.join(', ')].join(''));
         }
 
         _.each(plugins, function (plugin) {
-            _dom_plugins[plugin](selector_or_dom, _.has(options, plugin) ? options[plugin] : {});
+            var _options = _.has(options, plugin) ? options[plugin] : {};
+            _dom_plugins[plugin].callback(selector_or_dom, _.extend({}, _dom_plugins[plugin].options, _options));
         });
     };
 })(_);

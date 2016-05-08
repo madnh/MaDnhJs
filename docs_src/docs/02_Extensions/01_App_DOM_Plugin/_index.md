@@ -1,3 +1,73 @@
+Một ứng dụng web bây giờ thường sử dụng các plugin jQuery. Các plugin này thường được gọi vào lúc trang web khởi tạo xong.
+Tuy nhiên, các plugin này không thể thực hiện trên các DOM được load về sau, ví dụ như các DOM được load bằng AJAX, sinh ra từ JS,..
+
+Extension này giúp quản lý các thành phần jQuery Plugin, thực thi trên các vùng DOM, với các tùy chọn khác nhau.
+
+```js
+_.App.addDOMPlugin('test', function(holder, options) {
+    $(holder).find('p').css('color', options.color);
+}, {
+    color: 'red'
+});
+
+_.App.applyDOMPlugin('body', ['test']);
+_.App.applyDOMPlugin(['test']);
+_.App.applyDOMPlugin(['test'], {test: {color: 'blue'}});
+_.App.applyDOMPlugin({test: {color: 'green'}});
+_.App.applyDOMPlugin();
+```
+
+# Methods
+<div class="panel panel-info">
+    <div class="panel-heading"><strong>addDOMPlugin</strong></div>
+    <div class="panel-body">
+        Thêm một DOM plugin
+    </div>
+    <ul class="list-group">
+        <li class="list-group-item">
+            <h4>Parameters</h4>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Tên</th>
+                    <th>Kiểu dữ liệu</th>
+                    <th>Tham số tùy chọn và giá trị mặc định</th>
+                    <th>Mô tả</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td><code>name</code></td>
+                    <td>string</td>
+                    <td>Tên plugin</td>
+                    <td></td>
+                </tr><tr>
+                    <td><code>callback</code></td>
+                    <td>function</td>
+                    <td></td>
+                    <td>
+                        Callback nhận 2 parameter:
+                        <dl class="dl-horizontal">
+                            <dt>selector</dt>
+                            <dd>jQuery selected DOM</dd>
+                            <dt>options</dt>
+                            <dd>Custom options merged with default options</dd>
+                        </dl>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </li>
+        <li class="list-group-item">
+            <h4>Examples</h4>
+<pre><code class="javascript">_.App.addDOMPlugin('test', function(holder, options) {
+  $(holder).find('p').css('color', options.color);
+}, {
+  color: 'red'
+});</code></pre>
+        </li>
+    </ul>
+</div>
 <div class="panel panel-info">
     <div class="panel-heading"><strong>hasDOMPlugin</strong></div>
     <div class="panel-body">
@@ -108,10 +178,6 @@ _.App.removeDOMPlugin(['test', 'test2', 'test3']);
                 </tr>
                 </tbody>
             </table>
-        </li>
-        <li class="list-group-item">
-            <h4>Returns</h4>
-
         </li>
         <li class="list-group-item">
             <h4>Throws</h4>

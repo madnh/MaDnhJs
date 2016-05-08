@@ -243,15 +243,10 @@
         var type = typeof content;
 
         if (type === 'object') {
-            switch (true) {
-                case _.isArray(content):
-                    return 'array';
+            var class_name = M.className(content, true);
 
-                case _.isFunction(content):
-                    return 'function';
-
-                default:
-                    return M.className(content, true);
+            if (class_name) {
+                return class_name;
             }
         }
 
@@ -1226,24 +1221,20 @@
      * @param rules
      * @returns {{}}
      * @example
-     * //{int: 1, bool: true, str: "A"}
-     * optionalArgs([1, true, 'A'], ['int', 'bool', 'str'], {int: 'number', bool: 'boolean', str: 'string'});
-     * //{bool: true, str: "A"}
-     * optionalArgs([true, 'A'], ['int', 'bool', 'str'], {int: 'number', bool: 'boolean', str: 'string'});
-     * //{str: "A"}
-     * optionalArgs(['A'], ['int', 'bool', 'str'], {int: 'number', bool: 'boolean', str: 'string'});
-     * //{int: "A", bool: "V"}
-     * optionalArgs(['A', 'V'], ['int', 'bool', 'str'], {int: 'number', bool: 'boolean', str: 'string'});
-     * //{str: "A", str2: "V"}
-     * optionalArgs(['A', 'V'], ['int', 'bool', 'str', 'str2'], {int: 'number', bool: 'boolean', str: 'string', str2: 'string'});
-     * //{int: 1, bool: Array[0]}
-     * optionalArgs([1, []], ['int', 'bool', 'str'], {int: 'number', bool: 'boolean', str: 'string'});
-     * //{bool: true, str: Array[0]}
-     * optionalArgs([true, []], ['int', 'bool', 'str'], {int: 'number', bool: 'boolean', str: 'string'});
-     * //{int: "A", bool: Array[0]}
-     * optionalArgs(['A', []], ['int', 'bool', 'str'], {int: 'number', bool: 'boolean', str: 'string'});
-     * //{int: Array[0], bool: Array[0]}
-     * optionalArgs([[], []], ['int', 'bool', 'str'], {int: 'number', bool: 'boolean', str: 'string'});
+     * var order = ['int', 'bool', 'str'],
+     * rules = {int: 'number', bool: 'boolean', str: 'string'};
+     *
+     * _.M.optionalArgs([1, true, 'A'], order, rules); //{int: 1, bool: true, str: "A"}
+     * _.M.optionalArgs([true, 'A'], order, rules);//{bool: true, str: "A"}
+     * _.M.optionalArgs(['A'], order, rules); //{str: "A"}
+     * _.M.optionalArgs(['A', 'V'], order, rules); //{int: "A", bool: "V"}
+     * _.M.optionalArgs([1, []], order, rules); //{int: 1, bool: Array[0]}
+     * _.M.optionalArgs([true, []], order, rules); //{bool: true, str: Array[0]}
+     * _.M.optionalArgs(['A', []], order, rules); //{int: "A", bool: Array[0]}
+     * _.M.optionalArgs([[], []], order, rules); //{int: Array[0], bool: Array[0]}
+     *
+     * _.M.optionalArgs(['A', 'V'], ['int', 'bool', 'str', 'str2'], {int: 'number', bool: 'boolean', str: 'string', str2: 'string'});
+     * //=> {str: "A", str2: "V"}
      */
     M.optionalArgs = function (args, order, rules) {
         var result = {},
@@ -1267,19 +1258,23 @@
             args_cloned = args.slice(0);
 
             while (arg = args_cloned.shift()) {
-                type = _.M.contentType(arg);
+                type = M.contentType(arg);
                 found = false;
                 last_index = index;
 
-                _.M.loop(args_with_type.slice(index), (function (type) {
+                _.M.loop(args_with_type.slice(index), (function (tmp_arg, tmp_type) {
                     return function (types) {
-                        if (types === true || type === types || (_.isArray(types) && -1 != types.indexOf(type))) {
+                        if (types === true || tmp_type === types
+                            || (_.isArray(types) && -1 != types.indexOf(tmp_type))
+                            || (_.isFunction(types) && types(tmp_arg))) {
                             found = true;
+                        
                             return 'break';
                         }
+                        
                         index++;
                     }
-                })(type));
+                })(arg, type));
 
                 if (!found) {
                     result = _.object(order.slice(0, args.length), args);

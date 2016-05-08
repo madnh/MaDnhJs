@@ -1,7 +1,7 @@
 title: _.M.contentType
 -----
 
-Kiểu dữ liệu. Nếu là object sẽ trả về tên của object constructor
+Kiểu dữ liệu. Nếu là các dữ liệu nguyên thủy sẽ trả về dạng lowercase, nếu là dạng object sẽ trả về dạng in hoa chữ cái đầu tiên. Nếu là object sẽ trả về tên của object constructor
 
 ### Tham số
 <table class="table table-striped">
@@ -35,6 +35,7 @@ _.M.contentType('123'); //string
 _.M.contentType('Yahooooooo'); //string
 _.M.contentType(true); //boolean
 _.M.contentType(true); //boolean
-_.M.contentType([1,2]); //array
+_.M.contentType([1,2]); //Array
+_.M.contentType({color: 'red'}); //Object
 _.M.contentType(_.App); //App
 ```

@@ -32,9 +32,10 @@ Lấy các arguments tùy chọn phù hợp, bỏ qua các argument không cần
         <td>{}</td>
         <td>
             <p>Các kiểu dữ liệu cho phép của từng argument.</p>
-            <p>Object key là tên argument, value là kiểu dữ liệu cho phép, vd:</p>
-            <pre><code class="javascript">{id: 'number', force_update: 'boolean', callback: ['string', 'function'], anyway: true}</code></pre>
+            <p>Object key là tên argument, value là kiểu dữ liệu cho phép hoặc là callback, vd:</p>
+<pre><code class="javascript">{id: 'number', force_update: 'boolean', callback: ['string', 'function'], anyway: true, selector: function(arg){return _.isString(arg) || arg instanceof $;}}</code></pre>
             <div class="alert alert-info">Kiểu dữ liệu là <strong>true</strong> thì phù hợp với tất cả argument</div>
+            <div class="alert alert-info">Nếu value là callback thì callback đó phải trả về true/false - parameter phù hợp/không phù hợp. Callback có một parameter là giá trị cần kiểm tra</div>
         </td>
     </tr>
     </tbody>

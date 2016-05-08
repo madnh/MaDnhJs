@@ -32,6 +32,12 @@ module.exports = function (grunt) {
                     'src/core/extensions/ajax.js'],
                 dest: 'dist/madnh.js'
             },
+            madnhjs_extensions: {
+                src: [
+                    'src/extensions/app_dom_plugin.js'
+                ],
+                dest: 'dist/madnh_extensions.js'
+            },
             madnh_with_underscore: {
                 src: ['src/underscore.js', 'dist/madnh.js'],
                 dest: 'dist/underscore_madnh.js'
@@ -60,12 +66,8 @@ module.exports = function (grunt) {
                 dest: 'dist/underscore_madnh.min.js'
             },
             extensions: {
-                files: [{
-                    expand: true,
-                    cwd: 'src/extensions',
-                    src: '*.js',
-                    dest: 'dist/extensions'
-                }]
+                src: 'dist/madnh_extensions.js',
+                dest: 'dist/madnh_extensions.min.js'
             },
             dialog_concatenated: {
                 src: 'dist/extensions/dialog.js',
