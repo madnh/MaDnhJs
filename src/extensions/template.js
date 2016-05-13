@@ -52,17 +52,17 @@
 
     /**
      * Connect to data source
-     * @param {(Object|_.M.EventEmitter)} dataSource
+     * @param {(Object|_.M.EventEmitter)} data_source
      * @returns {Template}
      */
-    Template.prototype.connect = function (dataSource) {
+    Template.prototype.connect = function (data_source) {
         if (this.dataSource !== null) {
             this.disconnect();
         }
-        this.dataSource = dataSource;
+        this.dataSource = data_source;
 
-        if (_.M.isEventEmitter(dataSource)) {
-            this.attachHardTo(dataSource);
+        if (_.M.isEventEmitter(data_source)) {
+            this.attachHardTo(data_source);
         }
         this.emitEvent('connected');
 
@@ -70,7 +70,7 @@
     };
 
     /**
-     * Dis connect from data source
+     * Disconnect from data source
      * @returns {boolean} Disconnect result
      */
     Template.prototype.disconnect = function () {
@@ -105,22 +105,38 @@
         return this.dataSource !== null;
     };
 
+    /**
+     *
+     * @param {string|function} layout If is function then this func will receive parameters: template instance, object to display, render data
+     * @returns {Template}
+     */
     Template.prototype.setLayout = function (layout) {
         this._layout = layout;
+
+        return this;
     };
 
     Template.prototype.getLayout = function () {
         return this._layout;
     };
 
+    /**
+     *
+     * @param {string|{}} name Section name or object with name and value of sections
+     * @param {string|function} [content] Value of section, on case parameter name is string.
+     * If is function then that function will receive parameters: template instance, object to display, render data
+     * @returns {Template}
+     */
     Template.prototype.setSection = function (name, content) {
-        this._sections[name.toUpperCase()] = content;
-    };
+        if (_.isObject(name)) {
+            _.each(name, function (value, key) {
+                this._sections[key.toUpperCase()] = value;
+            }.bind(this));
+        } else {
+            this._sections[name.toUpperCase()] = content;
+        }
 
-    Template.prototype.setSections = function (sections) {
-        _.each(sections, function (content, name) {
-            this.setSection(name, content);
-        }.bind(this));
+        return this;
     };
 
     Template.prototype.currentDraw = function () {
@@ -186,9 +202,9 @@
      */
     Template.prototype.render = function (data) {
         var self = this,
-            _data = _.extend({}, _.isObject(data) ? data : {}, {
+            _data = _.extend({}, {
                 option: this.options,
-                datasource: this.getDataSource()
+                data_source: this.getDataSource()
             }),
             _sections = _.extend({}, this._sections),
             layout;
@@ -197,7 +213,7 @@
         _data.draw = this.currentDraw();
         _data.dom_id = this.getDOMID();
 
-        _.extend(_data, this.prepareData(_data));
+        _.extend(_data, this.prepareData(_data), _.isObject(data) ? data : {});
 
         if (_.isFunction(this._layout)) {
             layout = this._layout(self, this.dataSource, _data);
@@ -208,6 +224,8 @@
         layout = renderContent(layout, this, _sections, _data);
 
         return _.template(layout)(_data);
+    };
+    Template.prototype.rendered = function () {
     };
 
     /**
@@ -225,9 +243,10 @@
         if (dom) {
             var new_content = this.render(data);
 
-            this.emitEvent('redraw');
+            this.emitEvent('re-draw');
             dom.first().replaceWith(new_content);
             this.emitEvent('drawn', new_content);
+            this.rendered();
 
             return true;
         }
@@ -321,9 +340,16 @@
 
     /**
      * Return Template type list
+     * @param {boolean} [detail]
      * @returns {Array}
      */
-    Template.types = function () {
+    Template.types = function (detail) {
+        if(detail){
+            return _.mapObject(_templates.types, function (type_detail) {
+                return Object.keys(type_detail.constructors);
+            });
+        }
+
         return Object.keys(_templates.types);
     };
 
@@ -361,18 +387,29 @@
     };
 
     /**
-     * Get default template name
+     * Set/Get default template name
      * @param {string} type
+     * @param {string} [default_template] Name of default template. If missing then this func return default template of template type
      * @returns {string|boolean} False on fail
      */
-    Template.defaultTemplate = function (type) {
+    Template.defaultTemplate = function (type, default_template) {
         if (!_.isEmpty(_templates.types[type].constructors)) {
+            if (default_template) {
+                if (_templates.types[type].constructors.hasOwnProperty(default_template)) {
+                    _templates.types[type]._default = default_template;
+
+                    return true;
+                } else {
+                    throw new Error('Set default template with invalid template name');
+                }
+            }
             if (_templates.types[type]._default && this.hasTemplate(type, _templates.types[type]._default)) {
 
                 return _templates.types[type]._default;
             }
 
             var name = Object.keys(_templates.types[type].constructors)[0];
+
             _templates.types[type]._default = name;
 
             return new _templates.types[type].constructors[name];

@@ -20,144 +20,6 @@ _.M.Template.compiler('test', function(data) {
   $('body').append(_.M.Template.render('test') + '<br>');
 ```
 
-## Methods
-<div class="panel panel-info">
-    <div class="panel-heading"><strong>compiler</strong></div>
-    <div class="panel-body">
-        Thêm compiler
-    </div>
-    <ul class="list-group">
-        <li class="list-group-item">
-            <h4>Parameters</h4>
-            <table class="table table-striped">
-                <thead>
-                <tr>
-                    <th>Tên</th>
-                    <th>Kiểu dữ liệu</th>
-                    <th>Tham số tùy chọn và giá trị mặc định</th>
-                    <th>Mô tả</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr>
-                    <td><code>name</code></td>
-                    <td>string</td>
-                    <td></td>
-                    <td>Tên compiler</td>
-                </tr>
-                <tr>
-                    <td><code>compiler</code></td>
-                    <td>function</td>
-                    <td></td>
-                    <td>Callback</td>
-                </tr>
-                </tbody>
-            </table>
-        </li>
-        <li class="list-group-item">
-            <h4>Examples</h4>
-<pre><code class="javascript">_.M.Template.compiler('test', function(data) {
-    _.defaults(data, {name: 'Client'});
-    return '&lt;strong&gt;Hi, ' + data.name + '&lt;/strong&gt;';
-});</code></pre>
-        </li>
-    </ul>
-</div>
-<div class="panel panel-info">
-    <div class="panel-heading"><strong>hasCompiler</strong></div>
-    <div class="panel-body">
-        Kiểm tra một callback có tồn tại hay không?
-    </div>
-    <ul class="list-group">
-        <li class="list-group-item">
-            <h4>Parameters</h4>
-            <table class="table table-striped">
-                <thead>
-                <tr>
-                    <th>Tên</th>
-                    <th>Kiểu dữ liệu</th>
-                    <th>Tham số tùy chọn và giá trị mặc định</th>
-                    <th>Mô tả</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr>
-                    <td><code>name</code></td>
-                    <td>string</td>
-                    <td></td>
-                    <td>Compiler name</td>
-                </tr>
-                </tbody>
-            </table>
-        </li>
-        <li class="list-group-item">
-            <h4>Returns</h4>
-            boolean
-        </li>
-    </ul>
-</div>
-<div class="panel panel-info">
-    <div class="panel-heading"><strong>compilers</strong></div>
-    <div class="panel-body">
-        Trả về mảng tên các compiler
-    </div>
-    <ul class="list-group">
-        <li class="list-group-item">
-            <h4>Returns</h4>
-            string[]
-        </li>
-    </ul>
-</div>
-<div class="panel panel-info">
-    <div class="panel-heading"><strong>render</strong></div>
-    <div class="panel-body">
-        Render một compiler
-    </div>
-    <ul class="list-group">
-        <li class="list-group-item">
-            <h4>Parameters</h4>
-            <table class="table table-striped">
-                <thead>
-                <tr>
-                    <th>Tên</th>
-                    <th>Kiểu dữ liệu</th>
-                    <th>Tham số tùy chọn và giá trị mặc định</th>
-                    <th>Mô tả</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr>
-                    <td><code>name</code></td>
-                    <td>string</td>
-                    <td></td>
-                    <td>Compiler name</td>
-                </tr>
-                <tr>
-                    <td><code>data</code></td>
-                    <td>*</td>
-                    <td>{}</td>
-                    <td>Data cho compiler, có thể là bất cứ giá trị nào, thường là object chứa các giá trị</td>
-                </tr>
-                </tbody>
-            </table>
-        </li>
-        <li class="list-group-item">
-            <h4>Returns</h4>
-            <ul>
-                <li>Nội dung trả về của compiler</li>
-                <li>false - compiler không tồn tại</li>
-            </ul>
-        </li>
-        <li class="list-group-item">
-            <h4>Examples</h4>
-<pre><code class="javascript">['Tí', 'Tèo'].forEach(function(name) {
-    $('body').append(_.M.Template.render('test', {name: name}) + '&lt;br&gt;');
-});
-$('body').append(_.M.Template.render('test') + '&lt;br&gt;');</code></pre>
-        </li>
-    </ul>
-</div>
-
 # Template Class
 Nhằm tách biệt rõ giữa nghiệp vụ và giao diện, thể hiện của một object, hoặc chia giao diện ra thành nhiều thành phần, dễ dàng thay đổi cấu hình template.
 
@@ -216,10 +78,10 @@ Chi tiết các thành phần xem chi tiết ở page API của `_.M.Template`
 var PlainTemplate = new _.M.Template();
 
 PlainTemplate.setLayout('<div id="<%= dom_id %>">@LABEL@ @DETAIL@</div>');
-PlainTemplate.setSection('LABEL', '<strong><%= datasource.label %>:</strong>');
+PlainTemplate.setSection('LABEL', '<strong><%= data_source.label %>:</strong>');
 PlainTemplate.setSection('DETAIL', '@VALUE@/@TOTAL@');
-PlainTemplate.setSection('VALUE', '<span style="color: green"><%= datasource.value %></span><strong>');
-PlainTemplate.setSection('TOTAL', '</strong><span style="color: blue"><%= datasource.total %></span>');
+PlainTemplate.setSection('VALUE', '<span style="color: green"><%= data_source.value %></span><strong>');
+PlainTemplate.setSection('TOTAL', '</strong><span style="color: blue"><%= data_source.total %></span>');
 
 PlainTemplate.mimic('change','reset');
 PlainTemplate.on(['change', 'reset'], PlainTemplate.reDraw);
@@ -228,7 +90,7 @@ PlainTemplate.on(['change', 'reset'], PlainTemplate.reDraw);
 **Giải thích:**
 - Template chứa 2 section chính: `LABEL` và `DETAIL`. Section `DETAIL` chứa 2 section khác trong nó: `VALUE`, `TOTAL`
 - `_.M.Template` sử dụng method `_.template` của **UnderscoreJS** để gán data vào template. Biến trong template được thể hiện bằng cấu trúc `<= tên biến %%>`
-- Biến `datasource` trong template tham chiếu tới object mà template thể hiện - biến `process_bar`
+- Biến `data_source` trong template tham chiếu tới object mà template thể hiện - biến `process_bar`
 - Template sẽ theo dõi các sự kiện của object mà nó thể hiện (không bắt buộc). Khi object mà nó thể hiện có thay đổi thì nó sẽ có sự thay đổi tương ứng.
 Ở đây template theo dõi 2 sự kiện là `change` và `reset`, khi 2 sự kiện này phát sinh sẽ vẽ lại DOM
 
@@ -278,10 +140,10 @@ function PlainTemplate(){
     _.M.Template.call(this);
 
     this.setLayout('<div id="<%= dom_id %>">@LABEL@ @DETAIL@</div>');
-    this.setSection('LABEL', '<strong><%= datasource.label %>:</strong>');
+    this.setSection('LABEL', '<strong><%= data_source.label %>:</strong>');
     this.setSection('DETAIL', '@VALUE@/@TOTAL@');
-    this.setSection('VALUE', '<span style="color: green"><%= datasource.value %></span><strong>');
-    this.setSection('TOTAL', '</strong><span style="color: blue"><%= datasource.total %></span>');
+    this.setSection('VALUE', '<span style="color: green"><%= data_source.value %></span><strong>');
+    this.setSection('TOTAL', '</strong><span style="color: blue"><%= data_source.total %></span>');
 
     this.mimic('change','reset');
     this.on(['change', 'reset'], this.reDraw);
@@ -297,7 +159,7 @@ function BootstrapTemplate(){
     this.options = {
         type: 'primary'
     };
-    this.setLayout('<div class="progress" id="<%= dom_id %>"><div class="progress-bar progress-bar-<%= option.type %> active" role="progressbar" aria-valuenow="<%=datasource.value%>" aria-valuemin="0" aria-valuemax="<%= datasource.total %>" style="width: <%=percent%>%"></div></div>');
+    this.setLayout('<div class="progress" id="<%= dom_id %>"><div class="progress-bar progress-bar-<%= option.type %> active" role="progressbar" aria-valuenow="<%=data_source.value%>" aria-valuemin="0" aria-valuemax="<%= data_source.total %>" style="width: <%=percent%>%"></div></div>');
 
     this.mimic('change','reset');
     this.on(['change', 'reset'], this.reDraw);
