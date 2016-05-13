@@ -29,8 +29,6 @@
      * @extends _.M.BaseClass
      */
     function EventEmitter(limit) {
-        this.type_prefix = 'event_emitter';
-
         _.M.BaseClass.call(this);
 
         /**
@@ -152,7 +150,7 @@
 
     /**
      * Add event listener
-     * @param {string} event Event name
+     * @param {string|string[]} events Array of events name
      * @param {(string|function|Array)} listeners Event listener
      * @param {object} option Option is object with keys:
      * priority {@see _.M.PRIORITY_DEFAULT},
@@ -161,7 +159,7 @@
      * key (auto increment of key: event_emitter_key_) - listener key. Useful when remove listener
      * @returns {string|boolean|null} Listener key or false on fail
      */
-    EventEmitter.prototype.addListener = function (event, listeners, option) {
+    EventEmitter.prototype.addListener = function (events, listeners, option) {
         var self = this;
         if (_.M.isNumeric(option)) {
             option = {
@@ -177,21 +175,25 @@
             async: false
         });
         listeners = _.M.asArray(listeners);
-        if (!this._events.hasOwnProperty(event)) {
-            this._events[event] = {
-                priority: new _.M.Priority(),
-                key_mapped: {}
-            };
-        } else if (this._limit != _.M.EVENT_EMITTER_EVENT_UNLIMITED) {
-            var status = this._events[event].priority.status();
+        events = _.uniq(_.M.asArray(events));
 
-            if (status.contents + listeners.length > this._limit) {
-                console.warn('Possible _.M.EventEmitter memory leak detected. '
-                    + (status.contents + listeners.length) + ' listeners added (limit is ' + this._limit
-                    + '). Use emitter.limit() or emitter.unlimited to resolve this warning.'
-                );
+        _.each(events, function (event) {
+            if (!self._events.hasOwnProperty(event)) {
+                self._events[event] = {
+                    priority: new _.M.Priority(),
+                    key_mapped: {}
+                };
+            } else if (self._limit != _.M.EVENT_EMITTER_EVENT_UNLIMITED) {
+                var status = self._events[event].priority.status();
+
+                if (status.contents + listeners.length > self._limit) {
+                    console.warn('Possible _.M.EventEmitter memory leak detected. '
+                        + (status.contents + listeners.length) + ' listeners added (limit is ' + self._limit
+                        + '). Use emitter.limit() or emitter.unlimited to resolve this warning.'
+                    );
+                }
             }
-        }
+        });
 
 
         if (listeners.length) {
@@ -199,25 +201,29 @@
                 option.key = _.M.nextID('event_emitter_listener', true);
             }
             var keys = [];
-            _.M.loop(listeners, function (listener) {
-                if (option.context) {
-                    listener = listener.bind(option.context);
-                }
 
-                if (option.times != -1) {
-                    listener = _.before(option.times + 1, listener);
-                }
+            _.each(events, function (event) {
+                _.M.loop(listeners, function (listener) {
+                    if (option.context) {
+                        listener = listener.bind(option.context);
+                    }
 
-                keys.push(self._events[event].priority.addContent(listener, option.priority, {
-                    listener_key: option.key,
-                    async: option.async
-                }));
+                    if (option.times != -1) {
+                        listener = _.before(option.times + 1, listener);
+                    }
+
+                    keys.push(self._events[event].priority.addContent(listener, option.priority, {
+                        listener_key: option.key,
+                        async: option.async
+                    }));
+                });
+
+                if (!_.has(self._events[event].key_mapped, option.key)) {
+                    self._events[event].key_mapped[option.key] = keys;
+                } else {
+                    self._events[event].key_mapped[option.key] = self._events[event].key_mapped[option.key].concat(keys);
+                }
             });
-            if (!_.has(this._events[event].key_mapped, option.key)) {
-                this._events[event].key_mapped[option.key] = keys;
-            } else {
-                this._events[event].key_mapped[option.key] = this._events[event].key_mapped[option.key].concat(keys);
-            }
 
             return option.key;
         }
@@ -401,6 +407,10 @@
      */
     EventEmitter.prototype.off = function () {
         return this.removeListener.apply(this, arguments);
+    };
+    
+    EventEmitter.prototype.mimic = function () {
+        this._event_mimics = this._event_mimics.concat(_.flatten(_.toArray(arguments)));
     };
 
     /**

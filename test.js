@@ -1,57 +1,63 @@
-var ajax = new _.M.AJAX();
-
-ajax.option({
-    url: '/examples/ajax.php',
-    method: 'POST',
-    data: {name: 'Manh'}
-}).done(function (response) {
-    console.log('Response', response);
-}).fail(function () {
-    console.log('Failed', arguments);
-}).always(function () {
-    console.log('Ajax complete');
-});
-
-ajax.request();
-
-function test(url, data, callback) {
-    var args = Array.prototype.slice.call(arguments, 1),
-        result;
-
-    console.log('args', args);
-    result = _.M.optionalArgs(args, ['data', 'callback'], {
-        data: ['string', 'object'],
-        callback: 'function'
-    });
-
-    result['url'] = url;
-
-    return result;
+/**
+ *
+ * @param {number} [value]
+ * @param {number} [total]
+ * @constructor
+ */
+function ProcessBar(value, total) {
+    this.type_prefix = 'process_bar';
+    _.M.EventEmitter.call(this);
+    this.label = 'Test process bar';
+    this.total = total || 100;
+    this.value = value || 0;
 }
 
+_.M.inherit(ProcessBar, _.M.EventEmitter);
 
+ProcessBar.prototype.advance = function (items) {
+    this.value = _.M.minMax(this.value + parseInt(items || 1), 0, this.total);
 
+    this.emit('change', this.value);
+    return this.value;
+};
 
-
-//Bien doi data
-_.M.AJAX.registerDataAdapter('append_name', function (request_data) {
-    request_data['name'] += ' điên';
-
-    return request_data;
-});
-_.M.AJAX.registerResponseAdapter('prepend', function (response) {
-    this.response = '[response]' + response;
-});
-
-$.ajax({
-    url: '/examples/ajax.php',
-    method: 'POST',
-    data: { name: 'Manh' },
-    success: function (response) {
-        console.log('Response: ', response);
-        response = _.M.AJAX.applyResponseAdapters(response, 'prepend');
-        console.log('New response: ', response.response);
+ProcessBar.prototype.reset = function (total) {
+    if (typeof total !== 'undefined') {
+        this.total = parseInt(total);
     }
-});
-//=> Response:  Hello, Manh
-//=> New response:  [response]Hello, Manh
+
+    this.value = 0;
+    this.emit('reset', [this.total, this.value]);
+};
+var process_bar = new ProcessBar();
+
+var PlainTemplate = new _.M.Template();
+
+PlainTemplate.setLayout('<div id="<%= dom_id %>">@LABEL@ @DETAIL@</div>');
+PlainTemplate.setSection('LABEL', '<strong><%= datasource.label %>:</strong>');
+PlainTemplate.setSection('DETAIL', '@VALUE@/@TOTAL@');
+PlainTemplate.setSection('VALUE', '<span style="color: green"><%= datasource.value %></span><strong>');
+PlainTemplate.setSection('TOTAL', '</strong><span style="color: blue"><%= datasource.total %></span>');
+
+PlainTemplate.mimic('change','reset');
+
+PlainTemplate.on(['change', 'reset'], PlainTemplate.reDraw);
+
+var BootstrapTemplate = new _.M.Template();
+
+BootstrapTemplate.setLayout('<div class="progress" id="<%= dom_id %>"><div class="progress-bar active" role="progressbar" aria-valuenow="<%=datasource.value%>" aria-valuemin="0" aria-valuemax="<%= datasource.total %>" style="width: <%=datasource.value%>%"></div></div>');
+
+PlainTemplate.connect(process_bar);
+// BootstrapTemplate.connect(process_bar);
+$('body').append(PlainTemplate.render());
+// $('body').append(BootstrapTemplate.render());
+
+
+var timeInterval = setInterval(function () {
+    process_bar.advance();
+    if(process_bar.value === 100){
+        clearInterval(timeInterval);
+    }
+    // PlainTemplate.reDraw();
+    // BootstrapTemplate.reDraw();
+}, 200);

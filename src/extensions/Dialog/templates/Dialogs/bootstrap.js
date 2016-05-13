@@ -155,9 +155,9 @@
 
         this.waiter_keys = [];
 
-        this.section('header', _section_header);
-        this.section('body', _section_body);
-        this.section('footer', _section_footer);
+        this.setSection('header', _section_header);
+        this.setSection('body', _section_body);
+        this.setSection('footer', _section_footer);
 
         this.setLayout(_layout);
 

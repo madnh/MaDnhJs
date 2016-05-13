@@ -1042,11 +1042,11 @@
      * @see https://github.com/Olical/Heir
      *
      * @example
-     * function MyApp(){
-     *  _.M.App.call(this);
+     * function MyEE(){
+     *  _.M.EventEmitter.call(this);
      * }
      *
-     * _.M.inherit(MyApp, _.M.App);
+     * _.M.inherit(MyEE, _.M.EventEmitter);
      */
     M.inherit = function (destination, source, addSuper) {
         var proto = destination.prototype = Object.create(source.prototype);

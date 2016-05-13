@@ -457,6 +457,43 @@
     </div>
 </div>
 <div class="panel panel-info">
+    <div class="panel-heading"><strong>mimic</strong></div>
+    <div class="panel-body">
+        Thêm một mimic event.
+        <dl class="dl-horizontal">
+            <dt>Tên event</dt>
+            <dd>Tên cụ thể của event</dd>
+            <dt>[noticed event type].*</dt>
+            <dd>Tất cả event của một event emitter instance mà instance này đang theo dõi. VD: Dialog.*</dd>
+            <dt>[noticed event type].[tên event]</dt>
+            <dd>Event emitter instance mà instance này đang theo dõi và tên cụ thể của event</dd>
+        </dl>
+    </div>
+    <ul class="list-group">
+        <li class="list-group-item">
+            <h4>Parameters</h4>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Tên</th>
+                    <th>Kiểu dữ liệu</th>
+                    <th>Tham số tùy chọn và giá trị mặc định</th>
+                    <th>Mô tả</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td><code>mimic event</code></td>
+                    <td>string</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                </tbody>
+            </table>
+        </li>
+    </ul>
+</div>
+<div class="panel panel-info">
     <div class="panel-heading"><strong>attach</strong></div>
     <div class="panel-body">
         Attach một <code>_.M.EventEmitter</code> instance khác

@@ -34,7 +34,8 @@ module.exports = function (grunt) {
             },
             madnhjs_extensions: {
                 src: [
-                    'src/extensions/app_dom_plugin.js'
+                    'src/extensions/app_dom_plugin.js',
+                    'src/extensions/template.js'
                 ],
                 dest: 'dist/madnh_extensions.js'
             },

@@ -57,8 +57,8 @@
 
         var self = this;
 
-        this.section('icon', _section_icon);
-        this.section('label', _section_label);
+        this.setSection('icon', _section_icon);
+        this.setSection('label', _section_label);
 
         this.setLayout(_layout);
 

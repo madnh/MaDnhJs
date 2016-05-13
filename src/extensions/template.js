@@ -1,32 +1,11 @@
-(function (_) {
+;(function (_) {
     var version = '1.0.0';
-
-    var _templates = {
-        compilers: {},
-        rendered: {},
-        types: {}
-    };
 
     /**
      ==============================================================
      Template Constructor
      ==============================================================
      **/
-
-
-    function getHookContent(template, contents) {
-        var result = [];
-
-        _.each(contents, function (content) {
-            if (_.isFunction(content)) {
-                result.push(content.call(template));
-            } else {
-                result.push(content.toString());
-            }
-        });
-
-        return result.join('');
-    }
 
     /**
      *
@@ -38,7 +17,7 @@
         _.M.EventEmitter.call(this);
 
         this.dataSource = null;
-
+        this.options = {};
         this._layout = '';
         this._sections = {};
 
@@ -48,8 +27,8 @@
 
         if (_.isObject(sections)) {
             _.each(sections, function (section_name, cb) {
-                self.section(section_name, cb);
-            })
+                self.setSection(section_name, cb);
+            });
         }
     }
 
@@ -59,6 +38,17 @@
         value: version
     });
 
+    /**
+     *
+     * @param {string|object} option
+     * @param {*} [value]
+     * @returns {Template}
+     */
+    Template.prototype.option = function (option, value) {
+        this.options = _.M.setup.apply(_.M, [this.options].concat(Array.prototype.slice.apply(arguments)));
+
+        return this;
+    };
 
     /**
      * Connect to data source
@@ -123,56 +113,99 @@
         return this._layout;
     };
 
-    Template.prototype.section = function (name, handler) {
-        this._sections[name] = handler;
+    Template.prototype.setSection = function (name, content) {
+        this._sections[name.toUpperCase()] = content;
+    };
+
+    Template.prototype.setSections = function (sections) {
+        _.each(sections, function (content, name) {
+            this.setSection(name, content);
+        }.bind(this));
     };
 
     Template.prototype.currentDraw = function () {
         return _.M.currentID(this.id + '_draw', false);
     };
     Template.prototype.getDOMID = function () {
-        return _.M.currentID(this.id + '_draw');
+        return this.id;
     };
+
+    function getSubSections(str) {
+        var re = new RegExp('@([A-Z0-9_\-]+)@', 'gi'),
+            result = [], tmp_match;
+
+        while ((tmp_match = re.exec(str)) !== null) {
+            result.push(tmp_match[1]);
+        }
+
+        return result;
+    }
+
+    function renderContent(content, instance, sections, data) {
+        var result = '', sub_sections = [];
+
+        if (_.isFunction(content)) {
+            result = content(instance, instance.dataSource, data);
+        } else {
+            result = content + '';
+        }
+        sub_sections = getSubSections(result);
+
+        var missing_subsections = _.difference(sub_sections, Object.keys(sections));
+        if (!_.isEmpty(missing_subsections)) {
+            console.warn('Missing subsections:', missing_subsections);
+            _.each(missing_subsections, function (missing_subsection) {
+                sections[missing_subsection] = '';
+                sub_sections[missing_subsection] = '';
+            });
+        }
+
+        sub_sections = _.object(sub_sections, _.M.repeat('', sub_sections.length, true));
+        if (!_.isEmpty(sub_sections)) {
+            _.each(sub_sections, function (sub_section_value, sub_section_name) {
+                sections[sub_section_name] = renderContent(sections[sub_section_name], instance, sections, data);
+                sub_sections[sub_section_name] = sections[sub_section_name];
+            });
+
+            _.each(sub_sections, function (sub_section_value, sub_section_name) {
+                result = result.replace(new RegExp('@' + sub_section_name.toUpperCase() + '@', 'gi'), sub_section_value);
+            });
+        }
+
+        return result;
+    }
+
+    Template.prototype.prepareData = function () {
+        return {};
+    };
+
     /**
      * Render and return template
-     * @param {Object} data External data
-     * @param {Object} sections External sections value
+     * @param {Object} [data = {}] External data
      * @returns {string}
      */
-    Template.prototype.render = function (data, sections) {
-        var self = this;
-        var _data = {};
+    Template.prototype.render = function (data) {
+        var self = this,
+            _data = _.extend({}, _.isObject(data) ? data : {}, {
+                option: this.options,
+                datasource: this.getDataSource()
+            }),
+            _sections = _.extend({}, this._sections),
+            layout;
 
         _.M.nextID(this.id + '_draw');
         _data.draw = this.currentDraw();
         _data.dom_id = this.getDOMID();
 
+        _.extend(_data, this.prepareData(_data));
 
-        if (_.isObject(data)) {
-            _.extend(_data, data);
-        }
-        if (!_.isObject(sections)) {
-            sections = {};
-        }
-        _.each(this._sections, function (section_cb, section_name) {
-            if (!sections.hasOwnProperty(section_name)) {
-                if (_.isFunction(section_cb)) {
-                    _data[section_name] = section_cb(self, self.dataSource, _data);
-                } else {
-                    _data[section_name] = section_cb;
-                }
-            }
-        });
-
-        _.extend(_data, sections);
-
-        var layout = '';
         if (_.isFunction(this._layout)) {
             layout = this._layout(self, this.dataSource, _data);
         } else {
-            layout = this._layout.toString();
+            layout = this._layout + '';
         }
 
+        layout = renderContent(layout, this, _sections, _data);
 
         return _.template(layout)(_data);
     };
@@ -183,15 +216,14 @@
      * - redraw
      * - drawn(new_content)
      *
-     * @param {Object} data External data
-     * @param {Object} sections External sections value
+     * @param {Object} [data] External data
      * @returns {boolean}
      */
-    Template.prototype.reDraw = function (data, sections) {
+    Template.prototype.reDraw = function (data) {
         var dom = this.getDOM();
 
         if (dom) {
-            var new_content = this.render(data, sections);
+            var new_content = this.render(data);
 
             this.emitEvent('redraw');
             dom.first().replaceWith(new_content);
@@ -207,21 +239,6 @@
         return $('#' + this.getDOMID());
     };
 
-    /**
-     * Return new Template instance with this layout, sections
-     * @returns {Template|*}
-     */
-    Template.prototype.extend = function () {
-        var target = new this.constructor;
-
-        target.setLayout(this._layout);
-        _.each(this._sections, function (section_cb, section) {
-            target.section(section, section_cb);
-        });
-
-        return target;
-    };
-
 
     /**
      ==============================================================
@@ -229,6 +246,10 @@
      ==============================================================
      **/
 
+    var _templates = {
+        compilers: {},
+        types: {}
+    };
 
     /**
      * Check if a compiler is exists
@@ -239,18 +260,12 @@
     };
 
     /**
-     * Get compiler list | Get compiler by name | add compiler
+     * Add compiler
      * @param {string} name
      * @param {function} compiler
      * @returns {*}
      */
     Template.compiler = function (name, compiler) {
-        if (arguments.length == 0) {
-            return Object.keys(_templates.compilers);
-        }
-        if (_.isUndefined(compiler)) {
-            return this.hasCompiler(name) ? _templates.compilers[name] : null;
-        }
         _templates.compilers[name] = compiler;
     };
     /**
@@ -268,33 +283,12 @@
      */
     Template.render = function (name, data) {
         if (this.hasCompiler(name)) {
-            return _.M.callFunc(_templates.compilers[name], [data], this);
+            if (arguments.length == 1) {
+                data = {};
+            }
+            return _templates.compilers[name](data);
         }
         return false;
-    };
-
-    /**
-     * Check if rendered content is exists
-     * @param {string} name
-     */
-    Template.hasRendered = function (name) {
-        return _.has(_templates.rendered, name);
-    };
-
-    /**
-     * Add rendered content | Get list of rendered contents | Get rendered content
-     * @param {string} name
-     * @param {string} [content]
-     * @returns {(String[]|string)}
-     */
-    Template.rendered = function (name, content) {
-        if (arguments.length == 0) {
-            return Object.keys(_templates.rendered);
-        }
-        if (_.isUndefined(content)) {
-            return this.hasRendered(name) ? _templates.rendered[name] : null;
-        }
-        _templates.rendered[name] = content;
     };
 
     /**
@@ -405,20 +399,6 @@
 
         throw new Error('Template with name isn\'t exists or invalid type');
     };
-
-
-    /**
-     * Extend a template constructor
-     * @param {string} type
-     * @param {string} name Name of template constructor, if missing then return first constructor of type's templates
-     * @returns {Template|*|void|*}
-     */
-    Template.extend = function (type, name) {
-        var instance = this.templateInstance.apply(this, _.toArray(arguments));
-
-        return instance.extend();
-    };
-
 
     _.M.isTemplateInstance = function (template) {
         return template instanceof Template;

@@ -11,7 +11,7 @@
      */
     function BaseClass() {
         if (!this.type_prefix) {
-            this.type_prefix = this.constructor.name;
+            this.type_prefix = (_.M.className(this, true) + '').toLowerCase();
         }
 
         if (!this.id) {
