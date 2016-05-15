@@ -104,6 +104,7 @@
 
         this.getDOM().on('show.bs.modal', function (event) {
             if ($(event.target).is(this.getDOM())) {
+                dialog_opening++;
                 this.emitEvent('show');
             }
         }.bind(this));
@@ -164,16 +165,15 @@
             if (!dialog_opening) {
                 $('body .modal-backdrop').remove();
             }
-            $('body ' + '.modal-backdrop_' + this.id).remove();
+            $('#modal-backdrop_' + this.id).remove();
         });
         this.on('hide', function () {
             this.getDOM().hide();
-            $('body ' + '.modal-backdrop_' + this.id).hide();
+            $('#modal-backdrop_' + this.id).hide();
         });
         this.on('show', function () {
-            dialog_opening++;
             this.getDOM().show();
-            $('body ' + '.modal-backdrop_' + this.id).show();
+            $('#modal-backdrop_' + this.id).show();
         });
         this.on('update_content', function (new_content) {
             if (this.getDialog().isOpened()) {
