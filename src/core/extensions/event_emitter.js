@@ -528,16 +528,16 @@
 
                 var notices = [
                     info.id + '.' + eventName,
-                    info.type_prefix + '.' + eventName,
+                    info.type + '.' + eventName,
                     'noticed.' + info.id + '.' + eventName,
                     'noticed.' + info.id,
-                    'noticed.' + info.type_prefix + '.' + eventName,
-                    'noticed.' + info.type_prefix,
+                    'noticed.' + info.type + '.' + eventName,
+                    'noticed.' + info.type,
                     'noticed'
                 ];
 
                 var mimic = null;
-                _.M.loop([eventName, info.type_prefix + '.*', info.type_prefix + '.' + eventName], function (mimic_event_name) {
+                _.M.loop([eventName, info.type + '.*', info.type + '.' + eventName], function (mimic_event_name) {
                     if (-1 != self._event_mimics.indexOf(mimic_event_name)) {
                         mimic = mimic_event_name;
                         self.emitEvent(eventName, data);

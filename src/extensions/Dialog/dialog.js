@@ -2,6 +2,7 @@
     var version = '1.0.0';
 
     _.M.defineConstant({
+        DIALOG_PRE_OPTIONS_NAME: '_.M.Dialog',
         DIALOG_TEMPLATE_TYPE: 'Dialog',
         DIALOG_STATUS_INITIAL: 'initial',
         DIALOG_STATUS_OPENED: 'opened',
@@ -19,9 +20,24 @@
     });
 
     var _dialogs = {};
-    var default_options = {
-        template: ''
-    };
+
+    function _default_removable_func(dialog_instance) {
+        return dialog_instance.isEnable();
+    }
+    function _default_clickable_func(dialog_instance) {
+        return dialog_instance.isEnable() && !dialog_instance.isPending();
+    }
+
+    _.M.PreOptions.define(_.M.DIALOG_PRE_OPTIONS_NAME, {
+        title: 'Dialog',
+        type: _.M.DIALOG_INFO,
+        content: '',
+        contentHandler: null,
+        template: '',
+        size: _.M.DIALOG_SIZE_NORMAL,
+        removable: _default_removable_func,
+        clickable: _default_clickable_func
+    });
 
     function resetDialog(id) {
         var data = {
@@ -51,19 +67,7 @@
         var self = this;
         _.M.EventEmitter.call(this);
 
-        this.options = _.extend({}, default_options, {
-            title: 'Dialog',
-            type: _.M.DIALOG_INFO,
-            content: '',
-            contentHandler: null,
-            size: _.M.DIALOG_SIZE_NORMAL,
-            removable: function (dialog_instance) {
-                return dialog_instance.isEnable();
-            },
-            clickable: function (dialog_instance) {
-                return dialog_instance.isEnable() && !dialog_instance.isPending();
-            }
-        });
+        this.options = _.M.PreOptions.get(_.M.DIALOG_PRE_OPTIONS_NAME);
 
         this.closed_by = '';
         this.data = {};
@@ -98,11 +102,10 @@
 
     /**
      * Setup default options
-     * @param option
-     * @param value
+     * @param {{}} options
      */
-    Dialog.defaultOption = function (option, value) {
-        default_options = _.M.setup.apply(_.M, [default_options].concat(_.toArray(arguments)));
+    Dialog.globalOption = function (options) {
+        _.M.PreOptions.update(_.M.DIALOG_PRE_OPTIONS_NAME, options);
     };
 
     function updateDialogContentCallback(content) {
@@ -154,6 +157,8 @@
     Dialog.prototype.getTemplate = function () {
         if (!_dialogs[this.id].template_instance) {
             if (!this.options.template) {
+                var default_options = _.M.PreOptions.get(_.M.DIALOG_PRE_OPTIONS_NAME);
+
                 if (default_options.template && _.M.Template.hasTemplate(_.M.DIALOG_TEMPLATE_TYPE, default_options.template)) {
                     this.options.template = default_options.template;
                 } else {
@@ -392,8 +397,8 @@
     Dialog.prototype.click = function (button_name) {
         if (this.isClickable() && this.hasButton(button_name)) {
             var button = this.getButton(button_name);
-            button.click();
 
+            button.click();
             this.emitEvent('clicked', button_name);
         }
         return false;
@@ -409,6 +414,7 @@
                 if (_.isFunction(this.options.removable)) {
                     return this.options.removable(this);
                 }
+
                 return Boolean(this.options.removable);
             }
 

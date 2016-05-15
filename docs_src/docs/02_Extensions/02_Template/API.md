@@ -311,7 +311,18 @@ template.option({type: 'success', active: true});</code></pre>
                     <td><code>content</code></td>
                     <td>string|function</td>
                     <td>Bỏ qua nếu parameter <strong>name</strong> là object</td>
-                    <td>Nội dung của section</td>
+                    <td>
+                        <p>Nội dung của section</p>
+                        <p>Nếu là function thì func đó sẽ có các parameters:</p>
+                        <dl class="dl-horizontal">
+                            <dt>instance</dt>
+                            <dd>Template instance</dd>
+                            <dt>dataSource</dt>
+                            <dd>Đối tượng cần thể hiện</dd>
+                            <dt>data</dt>
+                            <dd>Data của quá trình render. Xem method <code>render</code></dd>
+                        </dl>
+                    </td>
                 </tr>
                 </tbody>
             </table>

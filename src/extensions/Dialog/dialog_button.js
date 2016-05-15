@@ -2,7 +2,8 @@
     var version = '1.0.0';
 
     _.M.defineConstant({
-        BUTTON_TEMPLATE_TYPE: 'DialogButton',
+        DIALOG_BUTTON_PRE_OPTIONS_NAME: '_.M.DialogButton',
+        DIALOG_BUTTON_TEMPLATE_TYPE: 'DialogButton',
         BUTTON_INFO: 'info',
         BUTTON_PRIMARY: 'primary',
         BUTTON_SUCCESS: 'success',
@@ -29,6 +30,32 @@
     var default_options = {
         template: ''
     };
+    function _default_clickable_cb(button) {
+        return button.isVisible() && button.isEnable() && button.getDialog().isClickable();
+    }
+    _.M.PreOptions.define(_.M.DIALOG_BUTTON_PRE_OPTIONS_NAME, {
+        label: 'Untitled',
+        icon: '',
+        type: _.M.BUTTON_INFO,
+        size: 0,
+        handler: null,
+        clickable: _default_clickable_cb
+    });
+
+    function _btn_event_attached(dialog) {
+        if (dialog instanceof _.M.Dialog) {
+            _buttons[this.id].dialog = dialog;
+        }
+    }
+    function _btn_event_detached(dialog) {
+        if (dialog instanceof _.M.Dialog) {
+            _buttons[this.id].dialog = null;
+        }
+    }
+    function _btn_event_dialog_toggle_enable(notice_data) {
+        this.toggleEnable(notice_data.data);
+    }
+
 
     function DialogButton(option) {
         this.type_prefix = 'dialog_button';
@@ -36,17 +63,9 @@
 
         this._event_mimics = ['Dialog.toggle_enable'];
 
-        this.options = _.extend({}, {
-            name: this.id,
-            label: 'Untitled',
-            icon: '',
-            type: _.M.BUTTON_INFO,
-            size: 0,
-            handler: null,
-            clickable: function (button) {
-                return button.isVisible() && button.isEnable() && button.getDialog().isClickable();
-            }
-        }, default_options);
+        this.options = _.M.PreOptions.get(_.M.DIALOG_BUTTON_PRE_OPTIONS_NAME, {
+            name: this.id
+        });
 
         _buttons[this.id] = {
             dialog: null,
@@ -66,20 +85,9 @@
             this.option(option);
         }
 
-        this.on('attached', function (dialog) {
-            if (dialog instanceof _.M.Dialog) {
-                _buttons[this.id].dialog = dialog;
-            }
-        });
-        this.on('detached', function (dialog) {
-            if (dialog instanceof _.M.Dialog) {
-                _buttons[this.id].dialog = null;
-            }
-        });
-
-        this.on('Dialog.toggle_enable', function (notice_data) {
-            this.toggleEnable(notice_data.data);
-        });
+        this.on('attached', _btn_event_attached);
+        this.on('detached', _btn_event_detached);
+        this.on('dialog.toggle_enable', _btn_event_dialog_toggle_enable);
 
     }
 
@@ -90,12 +98,11 @@
     });
 
     /**
-     * Setup default options
-     * @param option
-     * @param value
+     *
+     * @param {{}} options
      */
-    DialogButton.defaultOption = function (option, value) {
-        default_options = _.M.setup.apply(_.M, [default_options].concat(_.toArray(arguments)));
+    DialogButton.globalOption = function (options) {
+        _.M.PreOptions.update(_.M.DIALOG_BUTTON_PRE_OPTIONS_NAME, options);
     };
 
     DialogButton.prototype.setTemplate = function (template_instance) {
@@ -118,10 +125,12 @@
     DialogButton.prototype.getTemplate = function () {
         if (!_buttons[this.id].template_instance) {
             if (!this.options.template) {
-                if (default_options.template && _.M.Template.hasTemplate(_.M.BUTTON_TEMPLATE_TYPE, default_options.template)) {
+                var default_options = _.M.PreOptions.get(_.M.DIALOG_BUTTON_PRE_OPTIONS_NAME);
+                
+                if (default_options.template && _.M.Template.hasTemplate(_.M.DIALOG_BUTTON_TEMPLATE_TYPE, default_options.template)) {
                     this.options.template = default_options.template;
                 } else {
-                    var default_template = _.M.Template.defaultTemplate(_.M.BUTTON_TEMPLATE_TYPE);
+                    var default_template = _.M.Template.defaultTemplate(_.M.DIALOG_BUTTON_TEMPLATE_TYPE);
 
                     if (false !== default_template) {
                         this.options.template = default_template;
@@ -133,7 +142,7 @@
             }
 
 
-            this.setTemplate(_.M.Template.templateInstance(_.M.BUTTON_TEMPLATE_TYPE, this.options.template));
+            this.setTemplate(_.M.Template.templateInstance(_.M.DIALOG_BUTTON_TEMPLATE_TYPE, this.options.template));
         }
 
         return _buttons[this.id].template_instance;
@@ -143,7 +152,7 @@
         var option = _.M.asObject.apply(_.M, _.toArray(arguments));
 
         if (option.hasOwnProperty('template') && option.template) {
-            this.setTemplate(_.M.Template.templateInstance(_.M.BUTTON_TEMPLATE_TYPE, option.template));
+            this.setTemplate(_.M.Template.templateInstance(_.M.DIALOG_BUTTON_TEMPLATE_TYPE, option.template));
         }
 
         _.extend(this.options, _.omit(option, ['template']));
@@ -369,7 +378,6 @@
 
             if (!DialogButton.has(type)) {
                 throw new Error('Invalid DialogButton type');
-                return;
             }
 
             type_options = button_pre_options[type];

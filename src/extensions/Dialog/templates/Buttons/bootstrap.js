@@ -1,51 +1,42 @@
 (function (_) {
     var version = '1.0.0';
-    var default_options = {
+
+    _.M.defineConstant({
+        DIALOG_BUTTON_TEMPLATE_BOOTSTRAP_PRE_OPTIONS_NAME: '_.M.DialogButton.Template.Bootstrap'
+    });
+
+    _.M.PreOptions.define(_.M.DIALOG_BUTTON_TEMPLATE_BOOTSTRAP_PRE_OPTIONS_NAME, {
         icon_class: 'dialog_button_icon',
         label_class: 'dialog_button_label'
-    };
+    });
 
-    function getButtonOption(button) {
-        return _.extend({}, default_options, button.options);
-    }
-
-
-    function _section_icon(self, button, render_data) {
-        var options = getButtonOption(button);
-
-        if (options.icon) {
-            return '<span class="' + options.icon_class + '"><i class="' + options.icon + '"></i></span>&nbsp;&nbsp;';
+    function _section_icon(instance, data_source, data) {
+        if (data_source.icon) {
+            return '<span class="<%= option.icon_class %>"><i class="<%= data_source.icon %>"></i></span>&nbsp;&nbsp;';
         }
         return '';
     }
 
-    function _section_label(self, button, render_data) {
-        var options = getButtonOption(button);
-
-        return '<span class="' + options.label_class + '">' + options.label + '</span>';
-    }
-
-    function _layout(self, button, render_data) {
-        var options = getButtonOption(button);
-        var padding_space = _.M.repeat('&nbsp;', _.M.minMax(options.size, 0, 10)),
+    function _layout(instance, data_source, data) {
+        var padding_space = _.M.repeat('&nbsp;', _.M.minMax(data_source.options.size, 0, 10)),
             template = '',
             style = [];
 
-        if (!button.isVisible()) {
+        if (!data_source.isVisible()) {
             style.push('display: none');
         }
 
-        template += '<button type="button" id="<%= dom_id %>" data-button-id="' + button.id + '"';
-        template += 'data-draw="<%- draw %>" data-template-id="' + self.id + '" style="' + style.join('; ') + '"';
-        template += 'class="btn btn-' + options.type + '" data-name="' + options.name + '" ';
-        template += 'onclick="' + self.click_key + '()"';
+        template += '<button type="button" id="<%= dom_id %>" data-button-id="<%= data_source.id %>"';
+        template += 'data-draw="<%- draw %>" style="' + style.join('; ') + '"';
+        template += 'class="btn btn-<%= data_source.options.type %>" data-name="<%= data_source.options.name %>" ';
+        template += 'onclick="' + instance.click_key + '()"';
 
-        if (!button.isEnable()) {
+        if (!data_source.isEnable()) {
             template += ' disabled="disabled"';
         }
 
         template += '>';
-        template += padding_space + '<%= icon %><%= label %>' + padding_space + '</button>';
+        template += padding_space + '@ICON@@LABEL@' + padding_space + '</button>';
 
         return template;
     }
@@ -55,22 +46,24 @@
         this.type_prefix = 'template_dialog_button_bootstrap';
         _.M.Template.call(this);
 
+        this.options =  _.M.PreOptions.get(_.M.DIALOG_BUTTON_TEMPLATE_BOOTSTRAP_PRE_OPTIONS_NAME);
+        
         var self = this;
 
-        this.setSection('icon', _section_icon);
-        this.setSection('label', _section_label);
-
         this.setLayout(_layout);
+        this.setSection('ICON', _section_icon.bind(this));
+        this.setSection('LABEL', '<span class="<%= option.label_class %>"><%= data_source.options.label %></span>');
 
         this.click_key = _.M.WAITER.createFunc(function () {
             self.getButton().click();
         }, false);
 
+        this.mimic('toggle', 'toggle_enable');
 
-        this.on('DialogButton.toggle', function (noticed_data) {
+        this.on('toggle', function (noticed_data) {
             this.getDOM().toggle(noticed_data.data);
         });
-        this.on('DialogButton.toggle_enable', function (noticed_data) {
+        this.on('toggle_enable', function (noticed_data) {
             if (noticed_data.data) {
                 this.getDOM().removeAttr('disabled');
             } else {
@@ -81,8 +74,8 @@
 
     }
 
-    Bootstrap.prototype = Object.create(_.M.Template.prototype);
-    Bootstrap.prototype.constructor = Bootstrap;
+    _.M.inherit(Bootstrap, _.M.Template);
+
     Object.defineProperty(Bootstrap, 'version', {
         value: version
     });
@@ -96,17 +89,14 @@
     };
 
     Bootstrap.prototype.updateLabel = function (label) {
-        var options = getButtonOption(this.getButton());
-
-        this.getDOM().find('.' + options.label_class).html(label);
+        this.getDOM().find('.' + this.options.label_class).html(label);
     };
 
     Bootstrap.prototype.updateIcon = function (icon) {
-        var options = getButtonOption(this.getButton());
 
-        this.getDOM().find('.' + options.icon_class).html('<i class="' + icon + '"></i>');
+        this.getDOM().find('.' + this.options.icon_class).html('<i class="' + icon + '"></i>');
     };
 
 
-    _.M.Template.register(_.M.BUTTON_TEMPLATE_TYPE, 'Bootstrap', Bootstrap);
+    _.M.Template.register(_.M.DIALOG_BUTTON_TEMPLATE_TYPE, 'Bootstrap', Bootstrap);
 })(_);

@@ -148,6 +148,10 @@
 
     _.M.inherit(AJAX, _.M.EventEmitter);
 
+    /**
+     *
+     * @param {{}} options
+     */
     AJAX.globalOption = function (options) {
         _.M.PreOptions.update(_.M.AJAX_PRE_OPTIONS_NAME, options);
     };

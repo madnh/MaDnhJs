@@ -32,13 +32,6 @@ module.exports = function (grunt) {
                     'src/core/extensions/ajax.js'],
                 dest: 'dist/madnh.js'
             },
-            madnhjs_extensions: {
-                src: [
-                    'src/extensions/app_dom_plugin.js',
-                    'src/extensions/template.js'
-                ],
-                dest: 'dist/madnh_extensions.js'
-            },
             madnh_with_underscore: {
                 src: ['src/underscore.js', 'dist/madnh.js'],
                 dest: 'dist/underscore_madnh.js'
@@ -51,6 +44,14 @@ module.exports = function (grunt) {
                     'src/extensions/Dialog/templates/Buttons/bootstrap.js'
                 ],
                 dest: 'dist/extensions/dialog.js'
+            },
+            madnhjs_extensions: {
+                src: [
+                    'src/extensions/app_dom_plugin.js',
+                    'src/extensions/template.js',
+                    'dist/extensions/dialog.js'
+                ],
+                dest: 'dist/madnh_extensions.js'
             }
         },
         uglify: {

@@ -1,5 +1,10 @@
 ;(function (_) {
-
+    _.M.defineConstant({
+        DIALOG_DYNAMIC_CONTENT_PRE_OPTIONS_NAME: '_.M.Dialog.dynamicContent'
+    });
+    _.M.PreOptions.define(_.M.DIALOG_DYNAMIC_CONTENT_PRE_OPTIONS_NAME, {
+        loading: 'Loading content...'
+    });
     /**
      * Return content as function which provide dynamic content via AJAX.
      * Change dialog's pending status on start complete request
@@ -17,9 +22,7 @@
     _.M.Dialog.dynamicContent = function (options) {
         var content = null;
 
-        options = _.extend({
-            loading: 'Loading content...'
-        }, _.isObject(options) ? options : {});
+        options = _.M.PreOptions.get(_.M.DIALOG_DYNAMIC_CONTENT_PRE_OPTIONS_NAME, options);
 
         return function (update_content_cb, dialog) {
             if (!_.isNull(content)) {
@@ -27,12 +30,12 @@
             }
             var aw = new _.M.AJAX(options);
 
-            aw.then(function (data) {
-                content = data + '';
-                update_content_cb(data + '');
+            aw.done(function (response) {
+                content = response + '';
+                update_content_cb(content);
             });
 
-            aw.catch(function () {
+            aw.fail(function () {
                 dialog.emitEvent('load_content_failed');
                 update_content_cb(options.error_content || 'Get dynamic content failed');
             });
@@ -44,7 +47,7 @@
                 return true;
             });
 
-            aw.finally(function () {
+            aw.always(function () {
                 dialog.emitEvent('load_content_complete');
                 dialog.resolved();
             });
@@ -81,7 +84,6 @@
      |
      |
      */
-
     /**
      *
      * @param message
@@ -116,7 +118,13 @@
      |
      |
      */
-
+    _.M.defineConstant({
+        DIALOG_CONFIRM_PRE_OPTIONS_NAME: '_.M.Dialog.confirm'
+    });
+    _.M.PreOptions.define(_.M.DIALOG_CONFIRM_PRE_OPTIONS_NAME, {
+        title: 'Confirm',
+        default_button: null
+    });
     /**
      *
      * @param message
@@ -133,10 +141,7 @@
                 _.M.callFunc(callback, btn.options.name, null);
             };
 
-        options = _.extend({
-            title: 'Confirm',
-            default_button: null
-        }, _.isObject(options) ? options : {}, {
+        options = _.extend(_.M.PreOptions.get(_.M.DIALOG_CONFIRM_PRE_OPTIONS_NAME, options), {
             content: message
         });
 
@@ -174,6 +179,13 @@
      |
      |
      */
+    _.M.defineConstant({
+        DIALOG_IFRAME_PRE_OPTIONS_NAME: '_.M.Dialog.iFrame'
+    });
+    _.M.PreOptions.define(_.M.DIALOG_IFRAME_PRE_OPTIONS_NAME, {
+        title: 'iFrame',
+        attributes: {}
+    });
     /**
      *
      * @param url
@@ -186,10 +198,7 @@
             attrs = [],
             template = [];
 
-        options = _.extend({
-            title: 'iFrame',
-            attributes: {}
-        }, _.isObject(options) ? options : {});
+        options = _.M.PreOptions.get(_.M.DIALOG_IFRAME_PRE_OPTIONS_NAME, options);
 
         _.each(options.attributes, function (val, key) {
             if (_.isBoolean(val)) {
@@ -254,6 +263,19 @@
      |
      |
      */
+    _.M.defineConstant({
+        DIALOG_FORM_PRE_OPTIONS_NAME: '_.M.Dialog.form'
+    });
+    _.M.PreOptions.define(_.M.DIALOG_FORM_PRE_OPTIONS_NAME, {
+        title: 'Form',
+        form_classes: '',
+        message_classes: 'dialog_form_message',
+        validator: null,
+        submit_button: 'submit',
+        close_button: 'close',
+        buttons_option: {}
+    });
+
     function dialogFormContentHandler(content, dialog) {
         return ['<form><div class="dialog_form_message"></div>', content, '<input type="submit" style="display: none;"/></form>'].join('');
     }
@@ -285,15 +307,7 @@
             btn_submit, btn_close,
             dialog_dom_id, form_selector, form_message_selector;
 
-        options = _.extend({
-            title: 'Form',
-            form_classes: '',
-            message_classes: 'dialog_form_message',
-            validator: null,
-            submit_button: 'submit',
-            close_button: 'close',
-            buttons_option: {}
-        }, _.isObject(options) ? options : {}, {
+        options = _.extend(_.M.PreOptions.get(_.M.DIALOG_FORM_PRE_OPTIONS_NAME, options), {
             content: content,
             contentHandler: dialogFormContentHandler
         });
@@ -422,21 +436,24 @@
      | - callback: callback have 1 argument is value of prompt
      |
      */
-
+    _.M.defineConstant({
+        DIALOG_PROMPT_PRE_OPTIONS_NAME: '_.M.Dialog.prompt'
+    });
+    _.M.PreOptions.define(_.M.DIALOG_FORM_PRE_OPTIONS_NAME, {
+        value: '',
+        input_type: 'text',
+        input_classes: '',
+        buttons_option: {
+            submit: {
+                label: 'Ok'
+            }
+        }
+    });
     _.M.Dialog.prompt = function (message, callback, options) {
         var content = [],
             dialog;
 
-        options = _.extend({
-            value: '',
-            input_type: 'text',
-            input_classes: '',
-            buttons_option: {
-                submit: {
-                    label: 'Ok'
-                }
-            }
-        }, _.isObject(options) ? options : {});
+        options = _.M.PreOptions.get(_.M.DIALOG_FORM_PRE_OPTIONS_NAME, options);
 
         content.push('<p>', message, '</p>');
         content.push('<input name="prompt_data" type="', options.input_type + '', '" class="', options.input_classes + '', '" value="', options.value + '', '"/>');

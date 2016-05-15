@@ -42,7 +42,7 @@
          * Similar to "add" but add waiter key to window as function
          * @param {(string|function)} callback Callback
          * @param {boolean} [once = true] Waiter is run only one time
-         * @param {string} description Waiter description
+         * @param {string} [description] Waiter description
          * @returns {(string|number)} Waiter key/function name
          */
         createFunc: function (callback, once, description) {
