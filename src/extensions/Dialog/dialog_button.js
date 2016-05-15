@@ -27,13 +27,13 @@
 
     var _buttons = {};
 
-    var default_options = {
-        template: ''
-    };
     function _default_clickable_cb(button) {
         return button.isVisible() && button.isEnable() && button.getDialog().isClickable();
     }
+
     _.M.PreOptions.define(_.M.DIALOG_BUTTON_PRE_OPTIONS_NAME, {
+        template_name: '',
+        template: {},
         label: 'Untitled',
         icon: '',
         type: _.M.BUTTON_INFO,
@@ -47,11 +47,13 @@
             _buttons[this.id].dialog = dialog;
         }
     }
+
     function _btn_event_detached(dialog) {
         if (dialog instanceof _.M.Dialog) {
             _buttons[this.id].dialog = null;
         }
     }
+
     function _btn_event_dialog_toggle_enable(notice_data) {
         this.toggleEnable(notice_data.data);
     }
@@ -114,6 +116,7 @@
             _buttons[this.id].template_instance.disconnect();
             _buttons[this.id].template_instance = null;
         }
+        template_instance.option(this.options.template);
         _buttons[this.id].template_instance = template_instance;
         template_instance.connect(this);
     };
@@ -124,17 +127,19 @@
      */
     DialogButton.prototype.getTemplate = function () {
         if (!_buttons[this.id].template_instance) {
-            if (!this.options.template) {
+            if (!this.options.template_name) {
                 var default_options = _.M.PreOptions.get(_.M.DIALOG_BUTTON_PRE_OPTIONS_NAME);
-                
-                if (default_options.template && _.M.Template.hasTemplate(_.M.DIALOG_BUTTON_TEMPLATE_TYPE, default_options.template)) {
-                    this.options.template = default_options.template;
+
+                if (default_options.template_name && _.M.Template.hasTemplate(_.M.DIALOG_BUTTON_TEMPLATE_TYPE, default_options.template_name)) {
+                    this.options.template_name = default_options.template_name;
                 } else {
                     var default_template = _.M.Template.defaultTemplate(_.M.DIALOG_BUTTON_TEMPLATE_TYPE);
 
                     if (false !== default_template) {
-                        this.options.template = default_template;
-                        default_options.template = default_template;
+                        this.options.template_name = default_template;
+                        _.M.PreOptions.update(_.M.DIALOG_BUTTON_PRE_OPTIONS_NAME, {
+                            template_name: default_template
+                        });
                     } else {
                         throw new Error('Dialog button default template not found');
                     }
@@ -142,7 +147,7 @@
             }
 
 
-            this.setTemplate(_.M.Template.templateInstance(_.M.DIALOG_BUTTON_TEMPLATE_TYPE, this.options.template));
+            this.setTemplate(_.M.Template.templateInstance(_.M.DIALOG_BUTTON_TEMPLATE_TYPE, this.options.template_name));
         }
 
         return _buttons[this.id].template_instance;
@@ -151,11 +156,14 @@
     DialogButton.prototype.option = function (name, value) {
         var option = _.M.asObject.apply(_.M, _.toArray(arguments));
 
-        if (option.hasOwnProperty('template') && option.template) {
-            this.setTemplate(_.M.Template.templateInstance(_.M.DIALOG_BUTTON_TEMPLATE_TYPE, option.template));
+        if (option.template_name) {
+            this.setTemplate(_.M.Template.templateInstance(_.M.DIALOG_BUTTON_TEMPLATE_TYPE, option.template_name));
+        }
+        if (option.template) {
+            this.getTemplate().option(option.template);
         }
 
-        _.extend(this.options, _.omit(option, ['template']));
+        _.extend(this.options, _.omit(option, ['template_name']));
 
         return this;
     };

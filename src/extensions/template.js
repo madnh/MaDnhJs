@@ -14,6 +14,7 @@
      * @constructor
      */
     function Template(sections, layout) {
+        this.type_prefix = 'template';
         _.M.EventEmitter.call(this);
 
         this.dataSource = null;

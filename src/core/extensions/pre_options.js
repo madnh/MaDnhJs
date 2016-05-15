@@ -102,7 +102,7 @@
             _.each(_.M.asArray(_pre_options[name].base), function (base) {
                 _.extend(result, _.M.PreOptions.get(base));
             });
-            _.extend(result, _pre_options[name].options, _.isObject(custom) ? custom : {});
+            _.extend(result, _.clone(_pre_options[name].options), _.isObject(custom) ? custom : {});
 
             return result;
         },

@@ -46,9 +46,9 @@
         this.type_prefix = 'template_dialog_button_bootstrap';
         _.M.Template.call(this);
 
-        this.options =  _.M.PreOptions.get(_.M.DIALOG_BUTTON_TEMPLATE_BOOTSTRAP_PRE_OPTIONS_NAME);
-        
         var self = this;
+
+        this.options =  _.M.PreOptions.get(_.M.DIALOG_BUTTON_TEMPLATE_BOOTSTRAP_PRE_OPTIONS_NAME);
 
         this.setLayout(_layout);
         this.setSection('ICON', _section_icon.bind(this));

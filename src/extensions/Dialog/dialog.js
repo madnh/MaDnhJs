@@ -24,6 +24,7 @@
     function _default_removable_func(dialog_instance) {
         return dialog_instance.isEnable();
     }
+
     function _default_clickable_func(dialog_instance) {
         return dialog_instance.isEnable() && !dialog_instance.isPending();
     }
@@ -33,7 +34,8 @@
         type: _.M.DIALOG_INFO,
         content: '',
         contentHandler: null,
-        template: '',
+        template_name: '',
+        template: {},
         size: _.M.DIALOG_SIZE_NORMAL,
         removable: _default_removable_func,
         clickable: _default_clickable_func
@@ -64,6 +66,7 @@
      * @extend _.M.EventEmitter
      */
     function Dialog(options) {
+        this.type_prefix = 'dialog';
         var self = this;
         _.M.EventEmitter.call(this);
 
@@ -146,6 +149,8 @@
             _dialogs[this.id].template_instance.disconnect();
             _dialogs[this.id].template_instance = null;
         }
+
+        template_instance.option(this.options.template);
         _dialogs[this.id].template_instance = template_instance;
         template_instance.connect(this);
     };
@@ -156,17 +161,19 @@
      */
     Dialog.prototype.getTemplate = function () {
         if (!_dialogs[this.id].template_instance) {
-            if (!this.options.template) {
+            if (!this.options.template_name) {
                 var default_options = _.M.PreOptions.get(_.M.DIALOG_PRE_OPTIONS_NAME);
 
-                if (default_options.template && _.M.Template.hasTemplate(_.M.DIALOG_TEMPLATE_TYPE, default_options.template)) {
-                    this.options.template = default_options.template;
+                if (default_options.template_name && _.M.Template.hasTemplate(_.M.DIALOG_TEMPLATE_TYPE, default_options.template_name)) {
+                    this.options.template_name = default_options.template_name;
                 } else {
                     var default_template = _.M.Template.defaultTemplate(_.M.DIALOG_TEMPLATE_TYPE);
 
                     if (false !== default_template) {
-                        this.options.template = default_template;
-                        default_options.template = default_template;
+                        this.options.template_name = default_template;
+                        _.M.PreOptions.update(_.M.DIALOG_PRE_OPTIONS_NAME, {
+                            template_name: default_template
+                        });
                     } else {
                         throw new Error('Dialog default template not found');
                     }
@@ -174,7 +181,7 @@
             }
 
 
-            this.setTemplate(_.M.Template.templateInstance(_.M.DIALOG_TEMPLATE_TYPE, this.options.template));
+            this.setTemplate(_.M.Template.templateInstance(_.M.DIALOG_TEMPLATE_TYPE, this.options.template_name));
         }
 
         return _dialogs[this.id].template_instance;
@@ -183,11 +190,14 @@
     Dialog.prototype.option = function (name, value) {
         var option = _.M.asObject.apply(_.M, _.toArray(arguments));
 
-        if (option.hasOwnProperty('template') && option.template) {
-            this.setTemplate(_.M.Template.templateInstance(_.M.DIALOG_TEMPLATE_TYPE, option.template));
+        if (option.template_name) {
+            this.setTemplate(_.M.Template.templateInstance(_.M.DIALOG_TEMPLATE_TYPE, option.template_name));
+        }
+        if(option.template){
+            this.getTemplate().option(option.template);
         }
 
-        _.extend(this.options, _.omit(option, ['template']));
+        _.extend(this.options, option);
 
         return this;
     };
