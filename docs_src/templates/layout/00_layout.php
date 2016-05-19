@@ -61,5 +61,6 @@
     <script src="/dist/underscore.js"></script>
     <script src="/dist/madnh.js"></script>
     <script src="/dist/madnh_extensions.js"></script>
+    <script src="/dist/extensions/dialog.js"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-(function (_) {
+;(function (_) {
     var version = '1.0.0';
 
     _.M.defineConstant({

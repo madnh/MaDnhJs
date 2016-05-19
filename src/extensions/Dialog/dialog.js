@@ -1,4 +1,4 @@
-(function (_) {
+;(function (_) {
     var version = '1.0.0';
 
     _.M.defineConstant({
@@ -7,10 +7,11 @@
         DIALOG_STATUS_INITIAL: 'initial',
         DIALOG_STATUS_OPENED: 'opened',
         DIALOG_STATUS_HIDING: 'hiding',
-        DIALOG_STATUS_REMOVED: 'removed',
+        DIALOG_STATUS_CLOSED: 'removed',
 
         DIALOG_INFO: 'info',
         DIALOG_SUCCESS: 'success',
+        DIALOG_PRIMARY: 'primary',
         DIALOG_WARNING: 'warning',
         DIALOG_DANGER: 'danger',
 
@@ -21,7 +22,7 @@
 
     var _dialogs = {};
 
-    function _default_removable_func(dialog_instance) {
+    function _default_closable_func(dialog_instance) {
         return dialog_instance.isEnable();
     }
 
@@ -33,11 +34,11 @@
         title: 'Dialog',
         type: _.M.DIALOG_INFO,
         content: '',
-        contentHandler: null,
+        content_handler: null,
         template_name: '',
         template: {},
         size: _.M.DIALOG_SIZE_NORMAL,
-        removable: _default_removable_func,
+        closable: _default_closable_func,
         clickable: _default_clickable_func
     });
 
@@ -97,8 +98,7 @@
         }
     }
 
-    Dialog.prototype = Object.create(_.M.EventEmitter.prototype);
-    Dialog.prototype.constructor = Dialog;
+    _.M.inherit(Dialog, _.M.EventEmitter);
     Object.defineProperty(Dialog, 'version', {
         value: version
     });
@@ -112,8 +112,8 @@
     };
 
     function updateDialogContentCallback(content) {
-        if (_.isFunction(this.options.contentHandler)) {
-            content = this.options.contentHandler(content, this);
+        if (_.isFunction(this.options.content_handler)) {
+            content = this.options.content_handler(content, this);
         }
         this.emitEvent('content_loaded', content);
         this.updateContent(content);
@@ -125,8 +125,8 @@
             this.options.content = this.options.content(updateDialogContentCallback.bind(this), this);
         }
 
-        if (_.isFunction(this.options.contentHandler)) {
-            return this.options.contentHandler(this.options.content, this);
+        if (_.isFunction(this.options.content_handler)) {
+            return this.options.content_handler(this.options.content, this);
         }
 
         return this.options.content;
@@ -141,6 +141,9 @@
     };
 
     Dialog.prototype.setTemplate = function (template_instance) {
+        if (!this.isIniting()) {
+            throw new Error('Dialog is opened');
+        }
         if (!_.M.isTemplateInstance(template_instance)) {
             throw new Error('Invalid Template instance');
         }
@@ -193,7 +196,7 @@
         if (option.template_name) {
             this.setTemplate(_.M.Template.templateInstance(_.M.DIALOG_TEMPLATE_TYPE, option.template_name));
         }
-        if(option.template){
+        if (option.template) {
             this.getTemplate().option(option.template);
         }
 
@@ -214,14 +217,16 @@
         return false;
     };
 
+    Dialog.prototype.isIniting = function () {
+        return this.status() === _.M.DIALOG_STATUS_INITIAL;
+    };
 
     /**
      * Check if dialog status is: opened, showing or hiding
      * @returns {boolean}
      */
     Dialog.prototype.isOpened = function () {
-        var status = this.status();
-        return -1 !== [_.M.DIALOG_STATUS_OPENED, _.M.DIALOG_STATUS_HIDING].indexOf(status);
+        return -1 !== [_.M.DIALOG_STATUS_OPENED, _.M.DIALOG_STATUS_HIDING].indexOf(this.status());
     };
 
     /**
@@ -241,11 +246,11 @@
     };
 
     /**
-     * Check if dialog is removed
+     * Check if dialog is closed
      * @returns {boolean}
      */
-    Dialog.prototype.isRemoved = function () {
-        return this.status() === _.M.DIALOG_STATUS_REMOVED;
+    Dialog.prototype.isClosed = function () {
+        return this.status() === _.M.DIALOG_STATUS_CLOSED;
     };
 
     /**
@@ -372,18 +377,20 @@
     /**
      * Get button instance
      * @param {string} name Button name
-     * @returns {(_.M.DialogButton|Boolean)} False when button is not found
+     * @returns {_.M.DialogButton}
+     * @throw Get unattached button
      */
     Dialog.prototype.getButton = function (name) {
-        if (this.hasButton(name)) {
-            return this.buttons[name];
+        if (!this.hasButton(name)) {
+            throw new Error('Get unattached button');
         }
-        return false;
+
+        return this.buttons[name];
     };
 
     Dialog.prototype.removeButton = function (name) {
         if (!this.hasButton(name)) {
-            throw new Error('Remove not exists button');
+            throw new Error('Remove unattached button');
         }
         this.detach(this.buttons[name]);
         delete this.buttons[name];
@@ -415,17 +422,17 @@
     };
 
     /**
-     * Check if dialog is removable
+     * Check if dialog is closeable
      * @returns {boolean}
      */
     Dialog.prototype.isCloseable = function () {
         if (this.isOpened()) {
-            if (this.options.removable) {
-                if (_.isFunction(this.options.removable)) {
-                    return this.options.removable(this);
+            if (this.options.closable) {
+                if (_.isFunction(this.options.closable)) {
+                    return this.options.closable(this);
                 }
 
-                return Boolean(this.options.removable);
+                return Boolean(this.options.closable);
             }
 
             return true;
@@ -451,23 +458,33 @@
     };
 
     /**
-     * Show dialog
+     * Hide dialog
+     * @returns {boolean}
      */
     Dialog.prototype.hide = function () {
         if (this.isVisibling()) {
             this.emitEvent('hide');
             _dialogs[this.id].status = _.M.DIALOG_STATUS_HIDING;
+
+            return true;
         }
+
+        return false;
     };
 
     /**
      * Show dialog
+     * @returns {boolean}
      */
     Dialog.prototype.show = function () {
         if (this.isHiding()) {
             this.emitEvent('show');
             _dialogs[this.id].status = _.M.DIALOG_STATUS_OPENED;
+
+            return true;
         }
+
+        return false;
     };
 
 
@@ -479,17 +496,54 @@
      * @param {string} by close caller
      */
     Dialog.prototype.close = function (force, by) {
-        if (!this.isRemoved() && (force || this.isCloseable())) {
+        if (!this.isClosed() && (force || this.isCloseable())) {
+            by = by || '';
             resetDialog(this.id);
-            _dialogs[this.id].status = _.M.DIALOG_STATUS_REMOVED;
+            _dialogs[this.id].status = _.M.DIALOG_STATUS_CLOSED;
             this.closed_by = by;
             this.emitEvent('close', [force, by]);
             this.resetEvents();
+
+            return true;
         }
+
+        return false;
     };
 
+    /**
+     * Update closed by value
+     * @param {string|_.M.DialogButton} button
+     * @returns {boolean}
+     */
     Dialog.prototype.closedBy = function (button) {
-        if (this.isRemoved()) {
+        if (this.isClosed()) {
+            if (!button) {
+                button = '';
+            }
+
+            if (_.M.isDialogButton(button)) {
+                button = button.closeKey();
+            }
+
+            if (!_.isString(button)) {
+                button += '';
+            }
+
+            this.closed_by = button;
+
+            return true;
+        }
+
+        return false;
+    };
+
+    /**
+     * Check if a button was close dialog
+     * @param {string|_.M.DialogButton} button
+     * @returns {boolean}
+     */
+    Dialog.prototype.isClosedBy = function (button) {
+        if (this.isClosed()) {
             if (!button) {
                 button = '';
             }
@@ -507,6 +561,7 @@
 
         return false;
     };
+
 
     Dialog.prototype.getDOM = function () {
         if (_dialogs[this.id].template_instance && _.M.isTemplateInstance(_dialogs[this.id].template_instance)) {

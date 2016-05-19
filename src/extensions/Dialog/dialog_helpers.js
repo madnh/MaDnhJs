@@ -70,7 +70,7 @@
     _.M.DialogButton.register('close', {
         label: 'Close',
         name: 'close',
-        type: 'default',
+        type: 'info',
         force: false
     }, {
         handler: _close_dialog_handler
@@ -439,24 +439,31 @@
     _.M.defineConstant({
         DIALOG_PROMPT_PRE_OPTIONS_NAME: '_.M.Dialog.prompt'
     });
-    _.M.PreOptions.define(_.M.DIALOG_FORM_PRE_OPTIONS_NAME, {
+    _.M.PreOptions.define(_.M.DIALOG_PROMPT_PRE_OPTIONS_NAME, {
+        title: 'Prompt',
         value: '',
+        placeholder: '',
         input_type: 'text',
-        input_classes: '',
+        input_classes: 'form-control',
         buttons_option: {
             submit: {
                 label: 'Ok'
             }
         }
     });
+
     _.M.Dialog.prompt = function (message, callback, options) {
         var content = [],
             dialog;
 
-        options = _.M.PreOptions.get(_.M.DIALOG_FORM_PRE_OPTIONS_NAME, options);
+        options = _.M.PreOptions.get(_.M.DIALOG_PROMPT_PRE_OPTIONS_NAME, options);
 
         content.push('<p>', message, '</p>');
-        content.push('<input name="prompt_data" type="', options.input_type + '', '" class="', options.input_classes + '', '" value="', options.value + '', '"/>');
+        content.push('<input name="prompt_data" type="', options.input_type + '" ',
+            'class="', options.input_classes + '" ',
+            'value="', options.value + '"',
+            'placeholder="',options.placeholder + '"',
+            '/>');
 
         function prompt_cb(btn_name, form, btn, dialog) {
             var value = options.value;
@@ -470,7 +477,7 @@
         }
 
 
-        dialog = _.M.Dialog.form(content.join(''), prompt_cb, options);
+        dialog = _.M.Dialog.form(content.join(''), prompt_cb, _.omit(options, 'value', 'placeholder', 'input_type', 'input_classes'));
 
         dialog.open();
     }
