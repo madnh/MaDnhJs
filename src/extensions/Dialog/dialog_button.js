@@ -8,7 +8,7 @@
         BUTTON_PRIMARY: 'primary',
         BUTTON_SUCCESS: 'success',
         BUTTON_WARNING: 'warning',
-        BUTTON_ERROR: 'error'
+        BUTTON_DANGER: 'danger'
     });
     _.M.defineConstant({
         BUTTON_OK: 'ok',
@@ -32,14 +32,14 @@
     }
 
     _.M.PreOptions.define(_.M.DIALOG_BUTTON_PRE_OPTIONS_NAME, {
-        template_name: '',
-        template: {},
         label: 'Untitled',
         icon: '',
         type: _.M.BUTTON_INFO,
         size: 0,
         handler: null,
-        clickable: _default_clickable_cb
+        clickable: _default_clickable_cb,
+        template_name: '',
+        template: {}
     });
 
     function _btn_event_attached(dialog) {
@@ -90,11 +90,9 @@
         this.on('attached', _btn_event_attached);
         this.on('detached', _btn_event_detached);
         this.on('dialog.toggle_enable', _btn_event_dialog_toggle_enable);
-
     }
 
-    DialogButton.prototype = Object.create(_.M.EventEmitter.prototype);
-    DialogButton.prototype.constructor = DialogButton;
+    _.M.inherit(DialogButton, _.M.EventEmitter);
     Object.defineProperty(DialogButton, 'version', {
         value: version
     });

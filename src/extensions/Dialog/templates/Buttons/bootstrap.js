@@ -11,8 +11,8 @@
     });
 
     function _section_icon(instance, data_source, data) {
-        if (data_source.icon) {
-            return '<span class="<%= option.icon_class %>"><i class="<%= data_source.icon %>"></i></span>&nbsp;&nbsp;';
+        if (data_source.options.icon) {
+            return '<span class="<%= option.icon_class %>"><i class="<%= data_source.options.icon %>"></i></span>&nbsp;&nbsp;';
         }
         return '';
     }
@@ -64,12 +64,13 @@
             this.getDOM().toggle(noticed_data.data);
         });
         this.on('toggle_enable', function (noticed_data) {
-            if (noticed_data.data) {
+            if (noticed_data) {
                 this.getDOM().removeAttr('disabled');
             } else {
                 this.getDOM().attr('disabled', 'disabled');
             }
-            this.getDOM().prop('disabled', !noticed_data.data);
+
+            this.getDOM().prop('disabled', !noticed_data);
         });
 
     }

@@ -1,5 +1,4 @@
 <div class="alert alert-info">
-    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
     <strong>Chú ý!</strong> _.M.Dialog kế thừa class <code>_.M.EventEmitter</code>
 </div>
 
@@ -232,7 +231,6 @@ Các option của dialog
     <div class="panel-body">
         Trả về nội dung của dialog, là giá trị của property <code>options.content</code> sau khi đã qua xử lý của <code>options.content_handler</code>
         <div class="alert alert-info">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
             <strong>Chú ý</strong> Nếu <code>options.content</code> là function thì sẽ phát sinh event <code>load_content</code>
             trước khi bắt đầu load content
         </div>
@@ -253,7 +251,6 @@ Các option của dialog
     <div class="panel-body">
         Cập nhật content của dialog. Giá trị sẽ được gán vào <code>options.content</code>
         <div class="alert alert-info">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
             <strong>Chú ý!</strong> Nếu dialog đang được mở thì ngoài việc cập nhật content mới sẽ phát sinh sự kiện
             <code>update_content</code>. Các template dựa vào event này để update content của dialog trên DOM
         </div>
@@ -287,7 +284,6 @@ Các option của dialog
     <div class="panel-body">
         Đặt template cho dialog
         <div class="alert alert-info">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
             <strong>Chú ý!</strong> Nếu dialog đã connect với một template nào đó rồi thì sẽ thực hiện disconnect trước
             khi kết nối với template mới.
         </div>
@@ -392,7 +388,6 @@ Các option của dialog
     <div class="panel-body">
         Trả về tình trạng của dialog
         <div class="alert alert-info">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
             <strong>Chú ý!</strong> Khi cần kiểm tra tình trạng của dialog, nên dùng các constant như <code>_.M.DIALOG_STATUS_INITIAL</code>,
             <code>_.M.DIALOG_STATUS_OPENED</code>, <code>DIALOG_STATUS_REMOVED</code>
         </div>
@@ -457,7 +452,6 @@ Các option của dialog
     <div class="panel-body">
         Đặt tình trạng của dialog là đang khóa, điều này có thể ngăn các click vào các button hoặc các tác vụ khác
         <div class="alert alert-info">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
             <strong>Chú ý!</strong> Nếu dialog có thể khóa thì sẽ phát sinh các event: <code>disabled</code>, <code>toggle_enable</code>
         </div>
     </div>
@@ -473,7 +467,6 @@ Các option của dialog
     <div class="panel-body">
         Mở khóa nếu dialgo đang trong tình trạng khóa
         <div class="alert alert-info">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
             <strong>Chú ý!</strong> Nếu dialog có mở khóa thì sẽ phát sinh các event: <code>enabled</code>, <code>toggle_enable</code>
         </div>
     </div>
@@ -489,7 +482,6 @@ Các option của dialog
     <div class="panel-body">
         Dialog đang trong quá trình xử lý
         <div class="alert alert-info">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
             <strong>Chú ý!</strong> Việc chuyển tình trạng của dialog về pending sẽ phát sinh các event:
             <code>pending</code>, <code>toggle_pending</code>
         </div>
@@ -506,7 +498,6 @@ Các option của dialog
     <div class="panel-body">
         Quá trình xử lý đã hoàn tất
         <div class="alert alert-info">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
             <strong>Chú ý!</strong> Method này sẽ phát sinh các event: <code>resolved</code>,
             <code>toggle_pending</code>
         </div>
@@ -703,7 +694,6 @@ Các option của dialog
     <div class="panel-body">
         Mở dialog
         <div class="alert alert-info">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
             <strong>Chú ý!</strong> Khi dialog mở sẽ phát sinh event: <code>open</code>
         </div>
     </div>
@@ -719,7 +709,6 @@ Các option của dialog
     <div class="panel-body">
         Ẩn dialog nếu đang mở
         <div class="alert alert-info">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
             <strong>Chú ý!</strong> Khi dialog mở sẽ phát sinh event: <code>hide</code>
         </div>
     </div>
@@ -735,7 +724,6 @@ Các option của dialog
     <div class="panel-body">
         Hiện dialog nếu đang ẩn
         <div class="alert alert-info">
-            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
             <strong>Chú ý!</strong> Khi dialog mở sẽ phát sinh event: <code>show</code>
         </div>
     </div>
