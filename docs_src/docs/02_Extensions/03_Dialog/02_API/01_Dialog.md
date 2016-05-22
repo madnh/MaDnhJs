@@ -737,7 +737,8 @@ Các option của dialog
 <div class="panel panel-info">
     <div class="panel-heading"><strong>close</strong></div>
     <div class="panel-body">
-        Đóng dialog nếu đang mở (dù đang bị ẩn)
+        <p>Đóng dialog nếu đang mở (dù đang bị ẩn)
+        <p>
     </div>
     <ul class="list-group">
         <li class="list-group-item">
@@ -771,10 +772,48 @@ Các option của dialog
             <h4>Returns</h4>
             boolean
         </li>
+        <li class="list-group-item">
+            <h4>Events</h4>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Tên</th>
+                    <th>Parameters</th>
+                    <th>Mô tả</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td><strong><i>close</i></strong></td>
+                    <td>
+                        <dl class="dl-horizontal">
+                            <dt>force</dt>
+                            <dd>Force close?</dd>
+                            <dt>by</dt>
+                            <dd>Closed source name</dd>
+                        </dl>
+                    </td>
+                    <td>Đóng dialog</td>
+                </tr>
+                <tr>
+                    <td><strong><i>closed</i></strong></td>
+                    <td>
+                        <dl class="dl-horizontal">
+                            <dt>force</dt>
+                            <dd>Force close?</dd>
+                            <dt>by</dt>
+                            <dd>Closed source name</dd>
+                        </dl>
+                    </td>
+                    <td>Sau khi dialog đã đóng</td>
+                </tr>
+                </tbody>
+            </table>
+        </li>
     </ul>
 </div>
 <div class="panel panel-info">
-    <div class="panel-heading"><strong>closedBy</strong></div>
+    <div class="panel-heading"><strong>setClosedBy</strong></div>
     <div class="panel-body">
         Cập nhật tên button đã đóng dialog
     </div>

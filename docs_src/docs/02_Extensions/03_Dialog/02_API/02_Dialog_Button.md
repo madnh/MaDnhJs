@@ -160,8 +160,8 @@ Mỗi dialog có thể bao gồm các button, class `_.M.DialogButton` chính l�
     <tr>
         <td><code>size</code></td>
         <td>number</td>
-        <td>0</td>
-        <td>Kích thước của button, dùng để xác định các khoảng trắng thêm vào trước và sau label của button</td>
+        <td>1</td>
+        <td>Kích thước của button: <code><strong>1 <= number <= 5</strong></code>, dùng để xác định các khoảng trắng thêm vào trước và sau label của button</td>
     </tr>
     <tr>
         <td><code>handler</code></td>
@@ -315,6 +315,35 @@ Mỗi dialog có thể bao gồm các button, class `_.M.DialogButton` chính l�
         <li class="list-group-item">
             <h4>Returns</h4>
             instance
+        </li>
+    </ul>
+</div>
+<div class="panel panel-info">
+    <div class="panel-heading"><strong>setHandler</strong></div>
+    <div class="panel-body">
+        Đặt click handler cho button
+    </div>
+    <ul class="list-group">
+        <li class="list-group-item">
+            <h4>Parameters</h4>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Tên</th>
+                    <th>Kiểu dữ liệu</th>
+                    <th>Tham số tùy chọn và giá trị mặc định</th>
+                    <th>Mô tả</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td><code>callback</code></td>
+                    <td>function</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                </tbody>
+            </table>
         </li>
     </ul>
 </div>
@@ -568,7 +597,40 @@ Mỗi dialog có thể bao gồm các button, class `_.M.DialogButton` chính l�
     </ul>
 </div>
 <div class="panel panel-info">
-    <div class="panel-heading"><strong>closeKey</strong></div>
+    <div class="panel-heading"><strong>getOtherButton</strong></div>
+    <div class="panel-body">
+        Lấy button khác của dialog
+    </div>
+    <ul class="list-group">
+        <li class="list-group-item">
+            <h4>Parameters</h4>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Tên</th>
+                    <th>Kiểu dữ liệu</th>
+                    <th>Tham số tùy chọn và giá trị mặc định</th>
+                    <th>Mô tả</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td><code>name</code></td>
+                    <td>string</td>
+                    <td></td>
+                    <td>Tên button cần lấy</td>
+                </tr>
+                </tbody>
+            </table>
+        </li>
+        <li class="list-group-item">
+            <h4>Returns</h4>
+            <code>_.M.DialogButton</code>
+        </li>
+    </ul>
+</div>
+<div class="panel panel-info">
+    <div class="panel-heading"><strong>getCloseKey</strong></div>
     <div class="panel-body">
         Trả về key dùng khi close dialog
     </div>

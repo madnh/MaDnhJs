@@ -27,43 +27,24 @@
 
     var _buttons = {};
 
-    function _default_clickable_cb(button) {
-        return button.isVisible() && button.isEnable() && button.getDialog().isClickable();
-    }
-
     _.M.PreOptions.define(_.M.DIALOG_BUTTON_PRE_OPTIONS_NAME, {
         label: 'Untitled',
         icon: '',
         type: _.M.BUTTON_INFO,
-        size: 0,
+        size: 1,
         handler: null,
+        disable_on_pending: true,
         clickable: _default_clickable_cb,
         template_name: '',
         template: {}
     });
-
-    function _btn_event_attached(dialog) {
-        if (dialog instanceof _.M.Dialog) {
-            _buttons[this.id].dialog = dialog;
-        }
+    function _default_clickable_cb(button) {
+        return button.isVisible() && button.isEnable() && button.getDialog().isClickable();
     }
-
-    function _btn_event_detached(dialog) {
-        if (dialog instanceof _.M.Dialog) {
-            _buttons[this.id].dialog = null;
-        }
-    }
-
-    function _btn_event_dialog_toggle_enable(notice_data) {
-        this.toggleEnable(notice_data.data);
-    }
-
 
     function DialogButton(option) {
         this.type_prefix = 'dialog_button';
         _.M.EventEmitter.call(this);
-
-        this._event_mimics = ['Dialog.toggle_enable'];
 
         this.options = _.M.PreOptions.get(_.M.DIALOG_BUTTON_PRE_OPTIONS_NAME, {
             name: this.id
@@ -87,9 +68,41 @@
             this.option(option);
         }
 
-        this.on('attached', _btn_event_attached);
-        this.on('detached', _btn_event_detached);
-        this.on('dialog.toggle_enable', _btn_event_dialog_toggle_enable);
+        _init_btn(this);
+    }
+
+    function _init_btn(instance) {
+        instance.on('attached', _btn_event_attached);
+        instance.on('detached', _btn_event_detached);
+        instance.on('dialog.toggle_enable', _btn_event_dialog_toggle_enable);
+        instance.on('dialog.toggle_pending', _btn_event_dialog_toggle_pending);
+    }
+
+    function _btn_event_attached(dialog) {
+        if (dialog instanceof _.M.Dialog) {
+            _buttons[this.id].dialog = dialog;
+        }
+    }
+
+    function _btn_event_detached(dialog) {
+        if (dialog instanceof _.M.Dialog) {
+            _buttons[this.id].dialog = null;
+        }
+    }
+
+    function _btn_event_dialog_toggle_enable(notice_data) {
+        this.toggleEnable(notice_data.data);
+    }
+
+    function _btn_event_dialog_toggle_pending(notice_data) {
+        if (notice_data.data) {
+            if (this.options.disable_on_pending) {
+                this.toggleEnable(false);
+            }
+        } else {
+            this.toggleEnable(true);
+        }
+
     }
 
     _.M.inherit(DialogButton, _.M.EventEmitter);
@@ -166,6 +179,9 @@
         return this;
     };
 
+    DialogButton.prototype.setHandler = function (callback) {
+        this.option('handler', callback);
+    };
 
     /**
      * Get dialog instance
@@ -181,7 +197,7 @@
 
     DialogButton.prototype.isClickable = function () {
         if (_.isFunction(this.options.clickable)) {
-            return this.options.clickable.apply(this, [this]);
+            return this.options.clickable.call(this, this);
         }
 
         return Boolean(this.options.clickable);
@@ -260,11 +276,7 @@
 
         if (_buttons[this.id].enabled !== is_enable) {
             _buttons[this.id].enabled = is_enable;
-            if (is_enable) {
-                this.emitEvent('enabled');
-            } else {
-                this.emitEvent('disabled');
-            }
+            this.emitEvent(is_enable ? 'enabled' : 'disabled');
             this.emitEvent('toggle_enable', is_enable);
         }
     };
@@ -306,11 +318,20 @@
     };
 
     /**
+     * 
+     * @param name
+     * @returns {_.M.DialogButton|null|*|Object|_.M.EventEmitter|_.M.Dialog}
+     */
+    DialogButton.prototype.getOtherButton = function (name) {
+        return this.getDialog().getButton(name);
+    };
+
+    /**
      * Dialog close "by" key
      * @returns {string}
      */
-    DialogButton.prototype.closeKey = function () {
-        return 'button_' + this.options.name;
+    DialogButton.prototype.getCloseKey = function () {
+        return this.options.name;
     };
 
     /**
@@ -322,7 +343,7 @@
         var dialog = this.getDialog();
 
         if (dialog) {
-            dialog.close(force, this.closeKey());
+            dialog.close(force, this.getCloseKey());
             return true;
         }
 
@@ -337,7 +358,7 @@
         var dialog = this.getDialog();
 
         if (dialog) {
-            return dialog.closedBy(this);
+            return dialog.setClosedBy(this);
         }
 
         return false;
@@ -365,10 +386,15 @@
         return false;
     };
 
-    _.each(['Ok', 'Cancel', 'Yes', 'No', 'Retry', 'Ignore'], function (label) {
+    _.each(['Ok', 'Yes', 'No', 'Retry', 'Ignore'], function (label) {
         DialogButton.register(label.toLowerCase(), {
             label: label
         });
+    });
+
+    DialogButton.register('cancel', {
+        label: 'Cancel',
+        disable_on_pending: false
     });
 
     DialogButton.factory = function (types, all_button_options, button_options) {
@@ -404,6 +430,7 @@
         return buttons;
     };
 
+    DialogButton.defaultClickable = _default_clickable_cb;
 
     _.M.DialogButton = DialogButton;
 

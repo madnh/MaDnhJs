@@ -27,7 +27,7 @@
     }
 
     function _default_clickable_func(dialog_instance) {
-        return dialog_instance.isEnable() && !dialog_instance.isPending();
+        return dialog_instance.isEnable();
     }
 
     _.M.PreOptions.define(_.M.DIALOG_PRE_OPTIONS_NAME, {
@@ -360,7 +360,7 @@
         }
 
         this.buttons[button.options.name] = button;
-        this.attach(button);
+        this.attachHard(button);
 
         return button;
     };
@@ -498,10 +498,11 @@
     Dialog.prototype.close = function (force, by) {
         if (!this.isClosed() && (force || this.isCloseable())) {
             by = by || '';
+            this.emitEvent('close', [force, by]);
             resetDialog(this.id);
             _dialogs[this.id].status = _.M.DIALOG_STATUS_CLOSED;
             this.closed_by = by;
-            this.emitEvent('close', [force, by]);
+            this.emitEvent('closed', [force, by]);
             this.resetEvents();
 
             return true;
@@ -515,14 +516,14 @@
      * @param {string|_.M.DialogButton} button
      * @returns {boolean}
      */
-    Dialog.prototype.closedBy = function (button) {
+    Dialog.prototype.setClosedBy = function (button) {
         if (this.isClosed()) {
             if (!button) {
                 button = '';
             }
 
             if (_.M.isDialogButton(button)) {
-                button = button.closeKey();
+                button = button.getCloseKey();
             }
 
             if (!_.isString(button)) {
@@ -549,7 +550,7 @@
             }
 
             if (_.M.isDialogButton(button)) {
-                button = button.closeKey();
+                button = button.getCloseKey();
             }
 
             if (!_.isString(button)) {

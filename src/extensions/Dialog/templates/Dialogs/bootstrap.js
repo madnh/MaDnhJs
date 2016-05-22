@@ -89,7 +89,8 @@
     function _open_dialog() {
         var modal_options = getModalOption(this.options.close_manual),
             dialog = this.getDialog(),
-            data = {};
+            data = {},
+            template;
 
         data['close_func'] = _.M.WAITER.createFunc(function () {
             this.getDialog().close();
@@ -97,36 +98,42 @@
 
         this.waiter_keys.push(data['close_func']);
 
-        var template = this.render(data);
+        template = this.render(data);
 
         $('body').append(template);
-        console.log('Template dialog open');
-
-        this.getDOM().on('show.bs.modal', function (event) {
-            if ($(event.target).is(this.getDOM())) {
-                dialog_opening++;
-                this.emitEvent('show');
-            }
-        }.bind(this));
-        this.getDOM().on('shown.bs.modal', function (event) {
-            if ($(event.target).is(this.getDOM())) {
-                $('body .modal-backdrop').last().attr('id', 'modal-backdrop_' + this.id);
-                this.emitEvent('shown');
-            }
-        }.bind(this));
-        this.getDOM().on('hide.bs.modal', function (event) {
-            if ($(event.target).is(this.getDOM())) {
-                this.emitEvent('hide');
-            }
-        }.bind(this));
-        this.getDOM().on('hidden.bs.modal', function (event) {
-            if ($(event.target).is(this.getDOM())) {
-                this.emitEvent('hidden');
-                this.getDialog().close();
-            }
-        }.bind(this));
-
+        _setDialogDOMEvents(this);
         this.getDOM().modal(modal_options);
+    }
+
+    function _setDialogDOMEvents(instance) {
+        var dom = instance.getDOM();
+
+        dom.on('show.bs.modal', function (event) {
+            if ($(event.target).is(dom)) {
+                dialog_opening++;
+                instance.emitEvent('show');
+            }
+        });
+
+        dom.on('shown.bs.modal', function (event) {
+            if ($(event.target).is(dom)) {
+                $('body .modal-backdrop').last().attr('id', 'modal-backdrop_' + instance.id);
+                instance.emitEvent('shown');
+            }
+        });
+
+        dom.on('hide.bs.modal', function (event) {
+            if ($(event.target).is(dom)) {
+                instance.emitEvent('hide');
+            }
+        });
+
+        dom.on('hidden.bs.modal', function (event) {
+            if ($(event.target).is(dom)) {
+                instance.emitEvent('hidden');
+                instance.getDialog().close();
+            }
+        });
     }
 
     function update_dialog_close_status() {

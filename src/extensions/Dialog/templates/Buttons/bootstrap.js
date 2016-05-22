@@ -18,7 +18,8 @@
     }
 
     function _layout(instance, data_source, data) {
-        var padding_space = _.M.repeat('&nbsp;', _.M.minMax(data_source.options.size, 0, 10)),
+        var size = _.M.minMax(data_source.options.size - 1, 0, 4),
+            padding_space = _.M.repeat('&nbsp;&nbsp;', size * 3),
             template = '',
             style = [];
 
@@ -48,7 +49,7 @@
 
         var self = this;
 
-        this.options =  _.M.PreOptions.get(_.M.DIALOG_BUTTON_TEMPLATE_BOOTSTRAP_PRE_OPTIONS_NAME);
+        this.options = _.M.PreOptions.get(_.M.DIALOG_BUTTON_TEMPLATE_BOOTSTRAP_PRE_OPTIONS_NAME);
 
         this.setLayout(_layout);
         this.setSection('ICON', _section_icon.bind(this));

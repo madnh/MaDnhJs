@@ -403,7 +403,7 @@
         dialog.on('close', function () {
             $('body').off('submit', form_selector, form_submit_event_listener);
 
-            if (this.closedBy('')) {
+            if (this.setClosedBy('')) {
                 var default_button = options.close_button;
 
                 if (!default_button) {
