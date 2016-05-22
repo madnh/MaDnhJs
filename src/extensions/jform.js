@@ -1,70 +1,63 @@
-/***************************************************************************
- *   JFORM - UnderscoreJS extension                                         *
- *   Version: 1.0.0                                                         *
- *   Author: Do Danh Manh                                                   *
- *   Email: dodanhmanh@gmail.com                                            *
- *                                                                          *
- ***************************************************************************/
-
-
-(function (_) {
+;(function (_) {
     var version = '1.0.0';
-    var thisModule = {};
+    var jForm = {};
 
-    Object.defineProperty(thisModule, 'version', {
+    function _is_checked_value(value) {
+        return -1 !== [true, 'true', 'on', 1, '1'].indexOf(value);
+    }
+
+
+    Object.defineProperty(jForm, 'version', {
         value: version
     });
 
-    thisModule.disable = function (selector) {
+    jForm.disable = function (selector) {
         $(selector).attr('disabled', 'disabled').prop('disabled', true);
     };
 
-    thisModule.enable = function (selector) {
+    jForm.enable = function (selector) {
         $(selector).removeAttr('disabled').prop('disabled', false);
     };
 
 
-    thisModule.getSelectOptions = function (selector, values) {
-        var select = $(selector);
+    jForm.getSelectOptionTagByValue = function (name, values, container) {
+        var queries = _.map(_.M.asArray(values), function (value) {
+            return 'option[value="' + value + '"]';
+        });
 
-        if (_.isArray(values)) {
-            values = _.map(values, function (value) {
-                return 'option[value="' + value + '"]';
-            });
-            return select.find(values.join(', '));
-        }
-        return select.find('option[value="' + values + '"]');
+        return $(container || 'body').find('select[name="' + name + '"]').first().find(queries.join(', '));
     };
 
-    thisModule.setSelectValue = function (selector, values, unselectOther) {
-        if (unselectOther) {
-            $(selector + ' option').prop('selected', false).removeAttr('selected');
-        }
-        this.getSelectOptions(selector, values).prop('selected', true).attr('selected', 'selected');
+    jForm.setSelectTagValue = function (name, values, container) {
+        $(container || 'body').find('select[name="' + name + '"]').val(_.M.asArray(values));
     };
 
-    thisModule.selectRemoveOption = function (selector, values) {
-        this.getSelectOptions(selector, values).remove();
+    jForm.removeSelectOptionTags = function (selector, values) {
+        this.getSelectOptionTagByValue(selector, values).remove();
     };
 
-    thisModule.selectDisableOptions = function (selector, values) {
-        this.getSelectOptions(selector, values).attr('disabled', 'disabled').prop('disabled', true);
+    jForm.disableSelectOptionTags = function (selector, values) {
+        this.getSelectOptionTagByValue(selector, values).attr('disabled', 'disabled').prop('disabled', true);
     };
-    thisModule.selectEnableOption = function (selector, values) {
-        this.getSelectOptions(selector, values).removeAttr('disabled', 'disabled').prop('disabled', false);
+    jForm.enableSelectOptionTags = function (selector, values) {
+        this.getSelectOptionTagByValue(selector, values).removeAttr('disabled', 'disabled').prop('disabled', false);
     };
-    thisModule.checkRadio = function (radio_name, value) {
-        $("input:radio[name='" + radio_name + "']:checked").prop('checked', false).removeAttr('checked');
-        $("input:radio[name='" + radio_name + "'][value=" + value + "]").prop('checked', true).attr('checked', 'checked');
+    jForm.setRadioTagValue = function (name, value, container) {
+        container = $(container || 'body');
+
+        container.find("input:radio[name='" + name + "']:checked").prop('checked', false).removeAttr('checked');
+        container.find("input:radio[name='" + name + "'][value=" + value + "]").prop('checked', true).attr('checked', 'checked');
     };
-    thisModule.getRadioValue = function (radio_name) {
-        return $("input:radio[name ='" + radio_name + "']:checked").val();
+
+    jForm.getRadioTagValue = function (radio_name, container) {
+        return $(container || 'body').find("input:radio[name ='" + radio_name + "']:checked").first().val();
     };
 
 
-    thisModule.setCheckBoxStatus = function (selector, status) {
+    jForm.setCheckBoxStatus = function (selector, status) {
         var checkbox = $(selector);
         checkbox.prop('checked', status);
+
         if (status) {
             checkbox.attr('checked', 'checked');
         } else {
@@ -72,7 +65,40 @@
         }
     };
 
+    jForm.getCheckboxTagsByValue = function (name, values, container) {
+        var queries = _.map(_.M.asArray(values), function (value) {
+            return 'input[type="checkbox"][name="' + name + '"][value="' + value + '"]';
+        });
+
+        return $(container || 'body').find(queries.join(', '));
+    };
+
+    jForm.setCheckBoxValue = function (name, values, container) {
+        container = $(container || 'body');
+
+        var checkboxes = container.find('input[type="checkbox"][name="' + name + '"]');
+
+
+        if (checkboxes.length === 1 && (_.M.isLikeString(values) || _.isBoolean(values))) {
+            if (_is_checked_value(values)) {
+                checkboxes.attr('checked', 'checked').prop('checked', true);
+            } else {
+                checkboxes.removeAttr('checked').prop('checked', false);
+            }
+
+            return;
+        }
+
+        checkboxes.removeAttr('checked').prop('checked', false);
+        jForm.getCheckboxTagsByValue(name, values, container).attr('checked', 'checked').prop('checked', true);
+
+    };
+
     function parser_element_value(element, container, result) {
+        if (!element.attr('name')) {
+            return;
+        }
+
         if (element.attr('type') === 'checkbox') {
             var checkbox_name = element.attr('name');
             var checkbox_value = element.is(':checked') ? (element.val() ? element.val() : true) : false;
@@ -88,9 +114,7 @@
                 result[checkbox_name] = checkbox_value;
             }
         } else {
-            if (element.attr('name')) {
-                result[element.attr('name')] = element.val();
-            }
+            result[element.attr('name')] = element.val();
         }
     }
 
@@ -99,7 +123,7 @@
      * @param {string} form_selector
      * @returns {{}}
      */
-    thisModule.getFormInputValue = function (form_selector) {
+    jForm.getFormInputValue = function (form_selector) {
         var form = $(form_selector);
         var elements = form.find('input:not(input[type="radio"]), textarea, select, input[type="radio"]:checked');
         var result = {};
@@ -111,31 +135,6 @@
         return result;
     };
 
-    /**
-     * Get form value
-     * @param form_selector
-     * @returns {*}
-     */
-    thisModule.formSerialize = function (form_selector) {
-        var form = $(form_selector).first();
-        var result = {};
-        if (form) {
-            var serialized = form.serializeArray();
-            _.each(serialized, function (obj) {
-                if (result.hasOwnProperty(obj['name'])) {
-                    if (_.isArray(result[obj['name']])) {
-                        result[obj['name']].push(obj['value']);
-                    } else {
-                        result[obj['name']] = [result[obj['name']], obj['value']];
-                    }
-                } else {
-                    result[obj['name']] = obj['value'];
-                }
-            });
-            return result;
-        }
-        return false;
-    };
 
     /**
      * Assign data to form
@@ -144,42 +143,35 @@
      * @param prefix
      * @returns {boolean}
      */
-    thisModule.assignFormData = function (form, data, prefix) {
-        if (_.isString(form)) {
-            form = $(form);
-        }
+    jForm.assignFormData = function (form, data, prefix) {
+        form = $(form);
 
-        if (form.length < 1) {
+        if (!form.length) {
             return false;
         }
+
         if (!_.isString(prefix) || _.isEmpty(prefix)) {
             prefix = "";
         }
         _.each(data, function (value, key) {
-            if (form.find('*[name="' + prefix + key + '"]').length) {
-                var $this = form.find('*[name="' + prefix + key + '"]').first();
-                if ($this.is('input') || $this.is('textarea')) {
-                    if ($this.is(':radio') && [false, 'off', '', 0, '0'].indexOf(value) == -1) {
-                        form.find('*[name="' + prefix + key + '"][value="' + value + '"]').first().prop('checked', true);
-                    } else if ($this.is(':checkbox') && [false, 'off', '', 0, '0'].indexOf(value) == -1) {
-                        value = _.M.asArray(value);
-                        _.each(value, function (tmpValue) {
-                            form.find('*[name="' + prefix + key + '"][value="' + tmpValue + '"]').prop('checked', true);
-                        });
+            var key_with_prefix = prefix + key;
+            var elements = form.find('*[name="' + key_with_prefix + '"]');
+
+            if (elements.length) {
+                var first_element = elements.first();
+
+                if (first_element.is('input') || first_element.is('textarea')) {
+                    if (first_element.is(':radio')) {
+                        jForm.setRadioTagValue(key_with_prefix, value, form);
+                    } else if (first_element.is(':checkbox')) {
+                        jForm.setCheckBoxValue(key_with_prefix, value, form);
                     } else {
-                        $this.val(value);
+                        first_element.val(value);
                     }
-                } else if ($this.is('select')) {
-                    $this.find('option').prop('selected', false);
-                    if (_.isArray(value)) {
-                        $this.find(_.map(value, function (tmp_value) {
-                            return 'option[value="' + tmp_value + '"]';
-                        }).join(', ')).prop('selected', true).attr('selected', 'selected');
-                    } else {
-                        $this.find('option[value="' + value + '"]').first().prop('selected', true).attr('selected', 'selected');
-                    }
-                } else if ($this.is('a, button')) {
-                    $this.html(value);
+                } else if (first_element.is('select')) {
+                    jForm.setSelectTagValue(key_with_prefix, value, form);
+                } else if (first_element.is('a, button')) {
+                    first_element.html(value);
                 }
             }
         });
@@ -187,6 +179,5 @@
         return true;
     };
 
-
-    _.module('JFORM', thisModule);
+    _.M.jForm = jForm;
 })(_);

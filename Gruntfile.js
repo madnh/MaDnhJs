@@ -49,6 +49,7 @@ module.exports = function (grunt) {
                 src: [
                     'src/extensions/app_dom_plugin.js',
                     'src/extensions/template.js',
+                    'src/extensions/jform.js',
                     'dist/extensions/dialog.js'
                 ],
                 dest: 'dist/madnh_extensions.js'
