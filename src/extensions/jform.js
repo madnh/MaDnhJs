@@ -72,6 +72,27 @@
         }
     };
 
+    function parser_element_value(element, container, result) {
+        if (element.attr('type') === 'checkbox') {
+            var checkbox_name = element.attr('name');
+            var checkbox_value = element.is(':checked') ? (element.val() ? element.val() : true) : false;
+
+            if (container.find('input[type="checkbox"][name="' + checkbox_name + '"]').length > 1) {
+                if (element.is(':checked')) {
+                    if (_.isUndefined(result[checkbox_name])) {
+                        result[checkbox_name] = [];
+                    }
+                    result[checkbox_name].push(checkbox_value);
+                }
+            } else {
+                result[checkbox_name] = checkbox_value;
+            }
+        } else {
+            if (element.attr('name')) {
+                result[element.attr('name')] = element.val();
+            }
+        }
+    }
 
     /**
      * Get form value
@@ -82,26 +103,9 @@
         var form = $(form_selector);
         var elements = form.find('input:not(input[type="radio"]), textarea, select, input[type="radio"]:checked');
         var result = {};
+
         elements.each(function () {
-            var element = $(this);
-            if (element.attr('type') === 'checkbox') {
-                var checkboxName = element.attr('name');
-                var checkBoxValue = element.is(':checked') ? (element.val() ? element.val() : true) : false;
-                if (form.find('input[type="checkbox"][name="' + checkboxName + '"]').length > 1) {
-                    if (element.is(':checked')) {
-                        if (_.isUndefined(result[checkboxName])) {
-                            result[checkboxName] = [];
-                        }
-                        result[checkboxName].push(checkBoxValue);
-                    }
-                } else {
-                    result[checkboxName] = checkBoxValue;
-                }
-            } else {
-                if (element.attr('name')) {
-                    result[element.attr('name')] = element.val();
-                }
-            }
+            parser_element_value($(this), form, result);
         });
 
         return result;
@@ -118,7 +122,7 @@
         if (form) {
             var serialized = form.serializeArray();
             _.each(serialized, function (obj) {
-                if (_.has(result, obj['name'])) {
+                if (result.hasOwnProperty(obj['name'])) {
                     if (_.isArray(result[obj['name']])) {
                         result[obj['name']].push(obj['value']);
                     } else {
@@ -151,7 +155,7 @@
         if (!_.isString(prefix) || _.isEmpty(prefix)) {
             prefix = "";
         }
-        _.each(data, function (value, key, data) {
+        _.each(data, function (value, key) {
             if (form.find('*[name="' + prefix + key + '"]').length) {
                 var $this = form.find('*[name="' + prefix + key + '"]').first();
                 if ($this.is('input') || $this.is('textarea')) {

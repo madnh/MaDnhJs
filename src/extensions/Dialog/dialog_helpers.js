@@ -1,10 +1,20 @@
+/*
+ |--------------------------------------------------------------------------
+ | Dynamic content
+ |--------------------------------------------------------------------------
+ |
+ |
+ |
+ |
+ */
 ;(function (_) {
     _.M.defineConstant({
-        DIALOG_DYNAMIC_CONTENT_PRE_OPTIONS_NAME: '_.M.Dialog.dynamicContent'
+        DIALOG_DYNAMIC_CONTENT_PRE_OPTIONS_NAME: '_.M.Dialog.DynamicContent'
     });
     _.M.PreOptions.define(_.M.DIALOG_DYNAMIC_CONTENT_PRE_OPTIONS_NAME, {
         loading: 'Loading content...'
     });
+
     /**
      * Return content as function which provide dynamic content via AJAX.
      * Change dialog's pending status on start complete request
@@ -28,7 +38,7 @@
             if (!_.isNull(content)) {
                 return content;
             }
-            var aw = new _.M.AJAX(options);
+            var aw = new _.M.AJAX(_.omit(options, 'loading'));
 
             aw.done(function (response) {
                 content = response + '';
@@ -57,33 +67,55 @@
             return options.loading;
         }
     };
+})(_);
 
+/*
+ |--------------------------------------------------------------------------
+ | Closeable button
+ |--------------------------------------------------------------------------
+ |
+ |
+ |
+ |
+ */
 
+;(function (_) {
     function _close_dialog_handler(button) {
         var dialog = button.getDialog();
 
         if (dialog) {
-            dialog.close(Boolean(button.options.force));
+            button.closeDialog(Boolean(button.options.force));
         }
     }
 
     _.M.DialogButton.register('close', {
         label: 'Close',
-        name: 'close',
-        type: 'info',
+        type: _.M.BUTTON_INFO,
         force: false
     }, {
         handler: _close_dialog_handler
     });
+})(_);
 
-    /*
-     |--------------------------------------------------------------------------
-     | Dialog Alert
-     |--------------------------------------------------------------------------
-     |
-     |
-     |
-     */
+/*
+ |--------------------------------------------------------------------------
+ | Dialog Alert
+ |--------------------------------------------------------------------------
+ |
+ | 
+ | 
+ | 
+ */
+
+;(function (_) {
+    _.M.defineConstant({
+        DIALOG_ALERT_PRE_OPTIONS_NAME: '_.M.Dialog.Alert'
+    });
+    _.M.PreOptions.define(_.M.DIALOG_ALERT_PRE_OPTIONS_NAME, {
+        title: 'Alert',
+        button: {}
+    });
+
     /**
      *
      * @param message
@@ -91,35 +123,32 @@
      * @param options
      * @returns {*|Dialog}
      */
-    _.M.Dialog.alert = function (message, title, options) {
-        options = _.extend({
-            title: 'Alert',
-            buttons: [_.M.DialogButton.factory('close', {
-                size: 5,
-                type: _.M.BUTTON_INFO
-            })]
-        }, _.isObject(options) ? options : {}, {
-            content: message,
-            title: title || 'Alert'
+    _.M.Dialog.alert = function (message, options) {
+        options = _.extend(_.M.PreOptions.get(_.M.DIALOG_ALERT_PRE_OPTIONS_NAME, options), {
+            content: message
         });
 
-        var dialog = new _.M.Dialog(options);
+        var dialog = new _.M.Dialog(_.omit(options, 'button'));
+
+        dialog.attachButton(_.M.DialogButton.factory('close', options.button));
 
         dialog.open();
 
         return dialog;
     };
+})(_);
 
-    /*
-     |--------------------------------------------------------------------------
-     | Dialog Confirm
-     |--------------------------------------------------------------------------
-     |
-     |
-     |
-     */
+/*
+ |--------------------------------------------------------------------------
+ | Dialog Confirm
+ |--------------------------------------------------------------------------
+ |
+ |
+ |
+ */
+;(function (_) {
     _.M.defineConstant({
-        DIALOG_CONFIRM_PRE_OPTIONS_NAME: '_.M.Dialog.confirm'
+        DIALOG_CONFIRM_PRE_OPTIONS_NAME: '_.M.Dialog.Confirm'
     });
     _.M.PreOptions.define(_.M.DIALOG_CONFIRM_PRE_OPTIONS_NAME, {
         title: 'Confirm',
@@ -133,25 +162,23 @@
      * @returns {*|Dialog}
      */
     _.M.Dialog.confirm = function (message, callback, options) {
-        var dialog,
-            temp_button_cb = function (btn) {
-                this.getDialog().removeListener('default_button');
-                this.getDialog().close();
-
-                _.M.callFunc(callback, btn.options.name, null);
-            };
+        var dialog;
 
         options = _.extend(_.M.PreOptions.get(_.M.DIALOG_CONFIRM_PRE_OPTIONS_NAME, options), {
             content: message
         });
 
-        if (!options.buttons) {
+        if (_.isEmpty(options.buttons)) {
             options.buttons = _.M.DialogButton.factory(_.M.DIALOG_BUTTON_YES_NO);
         }
 
         dialog = new _.M.Dialog(_.omit(options, 'default_button'));
+
         _.each(dialog.buttons, function (button) {
-            button.option('handler', temp_button_cb);
+            button.setHandler(function () {
+                this.closeDialog();
+                callback(this.options.name);
+            });
         });
 
         if (!options.default_button) {
@@ -159,8 +186,10 @@
         }
 
         //Default button
-        dialog.on('close', function () {
-            _.M.callFunc(callback, options.default_button, null);
+        dialog.on('closed', function () {
+            if (!this.closed_by) {
+                _.M.callFunc(callback, options.default_button, null);
+            }
         }, {
             key: 'default_button'
         });
@@ -169,16 +198,17 @@
 
         return dialog;
     };
+})(_);
 
-
-    /*
-     |--------------------------------------------------------------------------
-     | Dialog iFrame
-     |--------------------------------------------------------------------------
-     |
-     |
-     |
-     */
+/*
+ |--------------------------------------------------------------------------
+ | Dialog iFrame
+ |--------------------------------------------------------------------------
+ |
+ |
+ |
+ */
+;(function (_) {
     _.M.defineConstant({
         DIALOG_IFRAME_PRE_OPTIONS_NAME: '_.M.Dialog.iFrame'
     });
@@ -189,11 +219,10 @@
     /**
      *
      * @param url
-     * @param title
      * @param options
      * @returns {*|Dialog}
      */
-    _.M.Dialog.iFrame = function (url, title, options) {
+    _.M.Dialog.iFrame = function (url, options) {
         var dialog,
             attrs = [],
             template = [];
@@ -222,61 +251,122 @@
         return dialog;
     };
 
+})(_);
 
-    /*
-     |--------------------------------------------------------------------------
-     | Dialog Form
-     |--------------------------------------------------------------------------
-     | - Buttons: submit, close
-     | - Options:
-     |  + form_classes: form classes, string or array of string
-     |  + message_classes: form message div classes, string or array of string. Default is "dialog_form_message"
-     |  + buttons: ddd other buttons
-     |  + buttons_option: object with button's name and button options
-     |  + submit_button: default submit button name. Dialog will trigger callback with this button when the form is submit without button click
-     |  + close_button: default close button name. Dialog will trigger callback with dialog close without button click
-     |  + validator: form validator callback. Return true on valid or string for errors. If return string then dialog will show error on message div.
-     |      Arguments:
-     |      - form DOM
-     |      - button instance
-     |      - dialog instance
-     |
-     |
-     |- Dialog data:
-     |  + form_selector: form selector
-     |  + form_message_selector: form message div selector
-     |  + update_message: update form message. Arguments: message. If arg message fail then hide message
-     |  + btn_handler: default button click handler, that valid form, show message on error and call callback.
-     |      If button is close button then close dialog before call callback. Useful for custom button
-     |      Arguments:
-     |      - btn: button instance
-     |
-     |- Form callback:
-     |      Arguments:
-     |      - button name:
-     |      - form DOM:
-     |      - button instance:
-     |      - dialog instance:
-     |
-     |
-     |
-     |
-     |
-     */
+/*
+ |--------------------------------------------------------------------------
+ | Dialog Form
+ |--------------------------------------------------------------------------
+ | - Buttons: submit, close
+ | - Options:
+ |  + form_classes: form classes, string or array of string
+ |  + message_classes: form message div classes, string or array of string. Default is "dialog_form_message"
+ |  + buttons: add other buttons
+ |  + buttons_option: object with button's name and button options
+ |  + submit_button: default submit button name. Dialog will trigger callback with this button when the form is submit without button click
+ |  + close_button: default close button name. Dialog will trigger callback with dialog close without button click
+ |  + validator: form validator callback. Return true on valid or string for errors. If return string then dialog will show error on message div.
+ |      Arguments:
+ |      - form DOM
+ |      - button instance
+ |      - dialog instance
+ |
+ |
+ |- Dialog data:
+ |  + form_selector: form selector
+ |  + form_message_selector: form message div selector
+ |  + update_message: update form message. Arguments: message. If arg message fail then hide message
+ |  + btn_handler: default button click handler, that valid form, show message on error and call callback.
+ |      If button is close button then close dialog before call callback. Useful for custom button
+ |      Arguments:
+ |      - btn: button instance
+ |
+ |- Form callback:
+ |      Arguments:
+ |      - button name:
+ |      - form DOM:
+ |      - button instance:
+ |      - dialog instance:
+ |
+ |
+ |
+ |
+ |
+ */
+;(function (_) {
+    _.M.DialogButton.register('submit', {
+        label: 'Submit'
+    }, {
+        name: 'submit'
+    });
+
     _.M.defineConstant({
-        DIALOG_FORM_PRE_OPTIONS_NAME: '_.M.Dialog.form'
+        BUTTON_SUBMIT: 'submit',
+        DIALOG_BUTTON_SUBMIT_CANCEL: ['submit', 'cancel']
+    });
+
+    _.M.defineConstant({
+        DIALOG_FORM_PRE_OPTIONS_NAME: '_.M.Dialog.Form'
     });
     _.M.PreOptions.define(_.M.DIALOG_FORM_PRE_OPTIONS_NAME, {
         title: 'Form',
         form_classes: '',
         message_classes: 'dialog_form_message',
         validator: null,
-        submit_button: 'submit',
-        close_button: 'close',
-        buttons_option: {}
+        submit_button_name: 'submit',
+        cancel_button_name: 'cancel',
+        buttons: [],
+        buttons_extend_options: {}
     });
 
-    function dialogFormContentHandler(content, dialog) {
+    /**
+     *
+     * @param {(string|function)} content
+     * @param {function} callback Callback arguments: button name, form DOM, button instance, dialog instance
+     * @param options
+     * @returns {*|Dialog}
+     */
+    _.M.Dialog.form = function (content, callback, options) {
+        var dialog = new _.M.Dialog();
+
+        options = _.extend(_.M.PreOptions.get(_.M.DIALOG_FORM_PRE_OPTIONS_NAME, options), {
+            content: content,
+            content_handler: dialogFormContentHandler
+        });
+
+        if (_.isEmpty(options.buttons)) {
+            options.buttons = _.M.DialogButton.factory(_.M.DIALOG_BUTTON_SUBMIT_CANCEL, {}, {
+                cancel: {
+                    handler: createCancelButtonHandler(callback)
+                },
+                submit: {
+                    handler: createButtonsHandler(callback, options)
+                }
+            });
+        }
+
+        dialog.option(
+            _.omit(options, ['form_classes', 'message_classes', 'validator', 'submit_button_name',
+                'cancel_button_name', 'buttons', 'buttons_extend_options'])
+        );
+
+        _.each(options.buttons, function (button) {
+            var attached_button = dialog.attachButton(button);
+
+            if (options.buttons_extend_options.hasOwnProperty(attached_button.options.name)) {
+                attached_button.option(_.clone(options.buttons_extend_options[attached_button.options.name]));
+            }
+        });
+
+        addDialogData(dialog, options);
+        addDialogMethods(dialog, options);
+        addDialogEvents(dialog, options);
+        dialog.open();
+
+        return dialog;
+    };
+
+    function dialogFormContentHandler(content) {
         return ['<form><div class="dialog_form_message"></div>', content, '<input type="submit" style="display: none;"/></form>'].join('');
     }
 
@@ -295,147 +385,117 @@
         return '';
     }
 
-    /**
-     *
-     * @param {(string|function)} content
-     * @param {function} callback Callback arguments: button name, form DOM, button instance, dialog instance
-     * @param options
-     * @returns {*|Dialog}
-     */
-    _.M.Dialog.form = function (content, callback, options) {
-        var dialog = new _.M.Dialog(),
-            btn_submit, btn_close,
-            dialog_dom_id, form_selector, form_message_selector;
+    function updateFormMessage(dialog, message) {
+        var message_dom = $(dialog.data['form_selector'] + ' ' + dialog.data['form_message_selector']);
 
-        options = _.extend(_.M.PreOptions.get(_.M.DIALOG_FORM_PRE_OPTIONS_NAME, options), {
-            content: content,
-            contentHandler: dialogFormContentHandler
-        });
-
-        dialog_dom_id = '#' + dialog.getTemplate().getDOMID();
-        form_selector = dialog_dom_id + ' form' + classesToSelector(options.form_classes);
-        form_message_selector = form_selector + ' ' + options.message_classes ? classesToSelector(options.message_classes) : '.dialog_form_message';
-
-        function update_message(message) {
-            var message_dom = $(form_message_selector);
-
-            if (message_dom.length) {
-                if (message) {
-                    message_dom.html(message).show();
-                } else {
-                    message_dom.html('').hide();
-                }
+        if (message_dom.length) {
+            if (message) {
+                message_dom.html(message).show();
+            } else {
+                message_dom.html('').hide();
             }
         }
+    }
 
-        function btn_handler(btn) {
-            var btn_dialog = this.getDialog(),
-                form = $(btn_dialog.data['form_selector']),
-                validate_result = true;
-
-            if ('close' === btn.options.name) {
-                btn.closeDialog(true);
-                _.M.callFunc(callback, [btn.options.name, null, btn, btn_dialog], btn_dialog);
-                return;
-            }
-
-            update_message(false);
-
-            if (options.validator) {
-                validate_result = options.validator(form, btn, btn_dialog);
-            }
-            if (true !== validate_result) {
-                update_message(validate_result);
-
-                return;
-            }
-
-            _.M.callFunc(callback, [btn.options.name, form, btn, btn_dialog], btn_dialog);
-        }
-
-
-        if (!options.buttons) {
-            options.buttons = [];
-        }
-        btn_submit = {
-            label: 'Submit',
-            name: 'submit'
-        };
-        btn_close = _.M.DialogButton.factory('close').options;
-
-        if (options.buttons_option.hasOwnProperty('submit')) {
-            _.extend(btn_submit, options.buttons_option.submit);
-        }
-        if (options.buttons_option.hasOwnProperty('close')) {
-            _.extend(btn_close, options.buttons_option.close);
-        }
-
-        btn_submit.handler = btn_handler;
-        btn_close.handler = btn_handler;
-
-        options.buttons.push(btn_submit, btn_close);
-        dialog.option(
-            _.omit(options, ['form_classes', 'message_classes', 'validator', 'submit_button',
-                'close_button', 'buttons_option'])
-        );
-        _.each(options.buttons, function (button) {
-            dialog.attachButton(button);
-        });
+    function addDialogData(dialog, options) {
+        var dialog_dom_id = '#' + dialog.getTemplate().getDOMID();
+        var form_selector = dialog_dom_id + ' form' + classesToSelector(options.form_classes);
+        var form_message_selector = form_selector + ' ' + options.message_classes ? classesToSelector(options.message_classes) : '.dialog_form_message';
 
         dialog.data['form_selector'] = form_selector;
         dialog.data['form_message_selector'] = form_message_selector;
-        dialog.data['update_message'] = update_message;
-        dialog.data['btn_handler'] = btn_handler;
+    }
 
-        function form_submit_event_listener(event) {
-            event.preventDefault();
+    function addDialogMethods(dialog) {
+        dialog.getFormDOM = function () {
+            return $(dialog.data['form_selector']);
+        };
 
-            if (options.submit_button) {
-                dialog.click(options.submit_button);
+        dialog.updateFormMessage = function (message) {
+            updateFormMessage(dialog, message);
+        };
+
+        dialog.clearFormMessage = function () {
+            updateFormMessage(dialog, false);
+        };
+    }
+
+    function addDialogEvents(dialog, options) {
+        dialog.on('open', function () {
+            $('body').on('submit', this.data['form_selector'], form_submit_event_listener);
+        });
+
+        dialog.on('closed', function () {
+            if (!this.closed_by && options.cancel_button_name) {
+                if (!this.hasButton(options.cancel_button_name)) {
+                    throw new Error('Invalid default button');
+                }
+
+                this.buttons[options.cancel_button_name].click();
             }
+        }, {
+            key: 'default_close_button'
+        });
 
-            return false;
+        dialog.on('closed', function () {
+            $('body').off('submit', this.data['form_selector'], form_submit_event_listener);
+        });
+    }
+
+    function form_submit_event_listener(event) {
+        event.preventDefault();
+
+        if (options.submit_button_name) {
+            dialog.click(options.submit_button_name);
         }
 
-        dialog.on('open', function () {
-            $('body').on('submit', form_selector, form_submit_event_listener);
-        });
-        dialog.on('close', function () {
-            $('body').off('submit', form_selector, form_submit_event_listener);
+        return false;
+    }
 
-            if (this.setClosedBy('')) {
-                var default_button = options.close_button;
+    function createCancelButtonHandler(callback) {
+        return function (button) {
+            var dialog = button.getDialog();
 
-                if (!default_button) {
-                    default_button = 'close';
-                }
-                if (!this.buttons.hasOwnProperty(default_button)) {
-                    throw new Error('Invalid default close button');
-                }
+            button.closeDialog(true);
+            _.M.callFunc(callback, [button.options.name, null, button, dialog], dialog);
+        }
+    }
 
-                this.buttons[default_button].click();
+    function createButtonsHandler(callback, options) {
+        return function (button) {
+            var dialog_instance = this.getDialog(),
+                form = $(dialog_instance.data['form_selector']),
+                validate_result = true;
+
+            updateFormMessage(dialog_instance, false);
+
+            if (options.validator) {
+                validate_result = options.validator(form, button, dialog_instance);
             }
-        });
+            if (true !== validate_result) {
+                updateFormMessage(dialog_instance, validate_result);
 
+                return;
+            }
 
-        dialog.open();
+            _.M.callFunc(callback, [button.options.name, form, button, dialog_instance], dialog_instance);
+        }
+    }
+})(_);
 
-        return dialog;
-    };
-
-
-    /*
-     |--------------------------------------------------------------------------
-     | Dialog Prompt
-     |--------------------------------------------------------------------------
-     | - options:
-     |      + value: current value
-     |      + input_type: text, password,...
-     |      + input_classes: class of input
-     |
-     | - callback: callback have 1 argument is value of prompt
-     |
-     */
+/*
+ |--------------------------------------------------------------------------
+ | Dialog Prompt
+ |--------------------------------------------------------------------------
+ | - options:
+ |      + value: current value
+ |      + input_type: text, password,...
+ |      + input_classes: class of input
+ |
+ | - callback: callback have 1 argument is value of prompt
+ |
+ */
+;(function (_) {
     _.M.defineConstant({
         DIALOG_PROMPT_PRE_OPTIONS_NAME: '_.M.Dialog.prompt'
     });
@@ -462,7 +522,7 @@
         content.push('<input name="prompt_data" type="', options.input_type + '" ',
             'class="', options.input_classes + '" ',
             'value="', options.value + '"',
-            'placeholder="',options.placeholder + '"',
+            'placeholder="', options.placeholder + '"',
             '/>');
 
         function prompt_cb(btn_name, form, btn, dialog) {

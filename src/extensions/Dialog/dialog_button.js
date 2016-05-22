@@ -318,7 +318,7 @@
     };
 
     /**
-     * 
+     *
      * @param name
      * @returns {_.M.DialogButton|null|*|Object|_.M.EventEmitter|_.M.Dialog}
      */
@@ -409,18 +409,19 @@
             var options, type_options;
 
             if (!DialogButton.has(type)) {
-                throw new Error('Invalid DialogButton type');
+                throw new Error('Dialog Button type is unregistered');
+            }
+            if (button_options.hasOwnProperty(type)) {
             }
 
             type_options = button_pre_options[type];
+            options = _.extend({},
+                type_options.options,
+                _.clone(all_button_options),
+                button_options.hasOwnProperty(type) ? button_options[type] : {},
+                type_options.freeze_options);
 
-            if (button_options.hasOwnProperty(type)) {
-                options = _.extend({}, type_options.options, button_options[type], type_options.freeze_options);
-            } else {
-                options = _.extend({}, type_options.options, type_options.freeze_options);
-            }
-
-            return new DialogButton(_.extend({}, all_button_options, options));
+            return new DialogButton(options);
         });
 
         if (buttons.length == 1) {
