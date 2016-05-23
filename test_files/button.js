@@ -31,3 +31,11 @@ function testButtonCallback() {
     dialog.attachButton(button_5);
     dialog.open();
 }
+
+function testButtonCallbackCloseDialog() {
+    var dialog = new _.M.Dialog({
+        content: 'Press button to close this dialog'
+    });
+    dialog.attachButton(_.M.DialogButton.factory('close'));
+    dialog.open();
+}

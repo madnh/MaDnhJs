@@ -61,3 +61,18 @@ button_5.setHandler(function() {
 <div class="well">
     <a href="javascript: testButtonCallback()" class="btn btn-info">Test</a>
 </div>
+
+# Đóng dialog
+
+```js
+var button = new _.M.DialogButton({label: 'Close'});
+
+button.setHandler(function() {
+  this.closeDialog();
+});
+```
+<div class="well">
+    <a href="javascript: testButtonCallbackCloseDialog()" class="btn btn-info">Test</a>
+</div>
+
+

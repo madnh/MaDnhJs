@@ -418,6 +418,14 @@
         dialog.clearFormMessage = function () {
             updateFormMessage(dialog, false);
         };
+        dialog.getFormData = function () {
+            if (!_.M.jForm) {
+                console.warn('Method getFormData require module jForm');
+                return {};
+            }
+
+            return _.M.jForm.getFormData(this.getFormDOM());
+        }
     }
 
     function addDialogEvents(dialog, options) {
