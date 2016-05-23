@@ -422,6 +422,29 @@
         return default_value;
     };
 
+    M.updateDeep = function (object, deep, callback) {
+        if (!M.hasDeep(object, deep)) {
+            throw new Error('Update undefined deep');
+        }
+        var deep_value = _.M.getDeep(object, deep);
+
+        M.defineDeep(object, deep, callback(deep_value));
+    };
+
+    M.appendDeep = function (object, deep, value) {
+        M.updateDeep(object, deep, function (current_value) {
+            if (M.isLikeString(current_value)) {
+                current_value += value + '';
+            } else if (_.isArray(current_value)) {
+                current_value.push(value);
+            } else {
+                current_value = [current_value, value];
+            }
+
+            return current_value;
+        });
+    };
+
     /**
      * Make sure that a value is in a range
      * @param {number} value
@@ -457,6 +480,21 @@
             result += chars[Math.round(Math.random() * (chars_length - 1))];
         }
         return result;
+    };
+
+    M.randomInteger = function (min, max) {
+        if(arguments.length == 0){
+            min = 0;
+            max = 10;
+        } else if(arguments.length == 1){
+            max = 0;
+        }
+        var tmp = max;
+
+        max = Math.max(Math.floor(min), Math.floor(max));
+        min = Math.min(Math.floor(tmp), Math.floor(min));
+
+        return Math.floor(Math.random() * (max - min + 1)) + min;
     };
 
     /**
@@ -1268,10 +1306,10 @@
                             || (_.isArray(types) && -1 != types.indexOf(tmp_type))
                             || (_.isFunction(types) && types(tmp_arg))) {
                             found = true;
-                        
+
                             return 'break';
                         }
-                        
+
                         index++;
                     }
                 })(arg, type));

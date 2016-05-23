@@ -32,15 +32,15 @@
         $(container || 'body').find('select[name="' + name + '"]').val(_.M.asArray(values));
     };
 
-    jForm.removeSelectOptionTags = function (selector, values) {
-        this.getSelectOptionTagByValue(selector, values).remove();
+    jForm.removeSelectOptionTags = function (name, values, container) {
+        this.getSelectOptionTagByValue(name, values, container).remove();
     };
 
-    jForm.disableSelectOptionTags = function (selector, values) {
-        this.getSelectOptionTagByValue(selector, values).attr('disabled', 'disabled').prop('disabled', true);
+    jForm.disableSelectOptionTags = function (name, values, container) {
+        this.getSelectOptionTagByValue(name, values, container).attr('disabled', 'disabled').prop('disabled', true);
     };
-    jForm.enableSelectOptionTags = function (selector, values) {
-        this.getSelectOptionTagByValue(selector, values).removeAttr('disabled', 'disabled').prop('disabled', false);
+    jForm.enableSelectOptionTags = function (name, values, container) {
+        this.getSelectOptionTagByValue(name, values, container).removeAttr('disabled', 'disabled').prop('disabled', false);
     };
     jForm.setRadioTagValue = function (name, value, container) {
         container = $(container || 'body');
@@ -49,16 +49,16 @@
         container.find("input:radio[name='" + name + "'][value=" + value + "]").prop('checked', true).attr('checked', 'checked');
     };
 
-    jForm.getRadioTagValue = function (radio_name, container) {
-        return $(container || 'body').find("input:radio[name ='" + radio_name + "']:checked").first().val();
+    jForm.getRadioTagValue = function (name, container) {
+        return $(container || 'body').find("input:radio[name ='" + name + "']:checked").first().val();
     };
 
 
-    jForm.setCheckBoxStatus = function (selector, status) {
+    jForm.setCheckBoxStatus = function (selector, is_checked) {
         var checkbox = $(selector);
-        checkbox.prop('checked', status);
+        checkbox.prop('checked', is_checked);
 
-        if (status) {
+        if (is_checked) {
             checkbox.attr('checked', 'checked');
         } else {
             checkbox.removeAttr('checked');
@@ -91,41 +91,51 @@
 
         checkboxes.removeAttr('checked').prop('checked', false);
         jForm.getCheckboxTagsByValue(name, values, container).attr('checked', 'checked').prop('checked', true);
-
     };
-
+    function get_input_name_as_deep(name) {
+        return name.replace(/]/g, '').replace(/\[/g, '.');
+    }
     function parser_element_value(element, container, result) {
         if (!element.attr('name')) {
             return;
         }
 
-        if (element.attr('type') === 'checkbox') {
-            var checkbox_name = element.attr('name');
-            var checkbox_value = element.is(':checked') ? (element.val() ? element.val() : true) : false;
+        var name = element.attr('name');
+        var name_as_deep = get_input_name_as_deep(name);
+        var value = element.val();
 
-            if (container.find('input[type="checkbox"][name="' + checkbox_name + '"]').length > 1) {
-                if (element.is(':checked')) {
-                    if (_.isUndefined(result[checkbox_name])) {
-                        result[checkbox_name] = [];
+        if (element.attr('type') === 'checkbox') {
+            if(element.is(':checked')){
+                var checkbox_value = value.length ? value : true;
+
+                if (container.find('input[name="' + name + '"]').length > 1) {
+                    if (element.is(':checked')) {
+                        try{
+                            _.M.appendDeep(result, name_as_deep, checkbox_value);
+                        }catch (ex){
+                            _.M.defineDeep(result, name_as_deep, [checkbox_value]);
+                        }
                     }
-                    result[checkbox_name].push(checkbox_value);
+                } else {
+                    if(_.isBoolean(checkbox_value)){
+                        _.M.defineDeep(result, name_as_deep, 'on');
+                    } else {
+                        _.M.defineDeep(result, name_as_deep + '.' + checkbox_value, 'on');
+                    }
                 }
-            } else {
-                result[checkbox_name] = checkbox_value;
             }
         } else {
-            result[element.attr('name')] = element.val();
+            _.M.defineDeep(result, name_as_deep, value);
         }
     }
 
     /**
-     * Get form value
-     * @param {string} form_selector
+     *
+     * @param {string} form
      * @returns {{}}
      */
-    jForm.getFormInputValue = function (form_selector) {
-        var form = $(form_selector);
-        var elements = form.find('input:not(input[type="radio"]), textarea, select, input[type="radio"]:checked');
+    jForm.getFormValue = function (form) {
+        var elements = $(form).find('input:not(input[type="radio"]), textarea, select, input[type="radio"]:checked');
         var result = {};
 
         elements.each(function () {
@@ -143,7 +153,7 @@
      * @param prefix
      * @returns {boolean}
      */
-    jForm.assignFormData = function (form, data, prefix) {
+    jForm.assignFormValue = function (form, data, prefix) {
         form = $(form);
 
         if (!form.length) {
