@@ -355,6 +355,9 @@
                 <dt>event</dt><dd>Tên event</dd>
                 <dt>data</dt><dd>Event data</dd>
             </dl>
+            <div class="alert alert-info">
+                <strong>Chú ý!</strong> Mỗi event khi được phát sinh và notice các followers sẽ phát sinh một event khác có tên <code><strong>&lt;tên event&gt;</strong>_complete</code>
+            </div>
         </li>
         <li class="list-group-item">
             <h4>Examples</h4>

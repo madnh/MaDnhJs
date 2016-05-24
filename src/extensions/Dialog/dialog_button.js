@@ -397,6 +397,25 @@
         disable_on_pending: false
     });
 
+
+    (function (_) {
+        function _close_dialog_handler(button) {
+            var dialog = button.getDialog();
+
+            if (dialog) {
+                button.closeDialog(Boolean(button.options.force));
+            }
+        }
+
+        DialogButton.register('close', {
+            label: 'Close',
+            type: _.M.BUTTON_INFO,
+            force: false
+        }, {
+            handler: _close_dialog_handler
+        });
+    })(_);
+
     DialogButton.factory = function (types, all_button_options, button_options) {
         if (!_.isObject(all_button_options)) {
             all_button_options = {};

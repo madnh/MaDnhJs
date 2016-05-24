@@ -144,3 +144,67 @@ function testTogglePendingDialog() {
     dialog.open();
 }
 
+function testDialogDynamicContent() {
+    var dialog = new _.M.Dialog();
+
+    dialog.option('content', _.M.Dialog.dynamicContent({
+        url: '/examples/ajax.php',
+        method: 'POST',
+        data: {
+            name: 'Manh',
+            sleep: 2
+        }
+    }));
+
+    dialog.open();
+}
+
+function testDialogHelperAlert() {
+    _.M.Dialog.alert('Xin chào :)');
+}
+function testDialogHelperAlertCustomTitle() {
+    _.M.Dialog.alert('Xin chào :)', 'Ahihi');
+}
+
+function testDialogHelperConfirm() {
+    _.M.Dialog.confirm('Bạn có chắc muốn xóa các file này?', function (button_name) {
+        alert('Bạn chọn: ' + button_name);
+    });
+}
+
+function testDialogIFrame() {
+    _.M.Dialog.iFrame('https://www.youtube.com/embed/oofSnsGkops');
+}
+
+function testDialogIFrameWithAttributes() {
+    _.M.Dialog.iFrame('https://www.youtube.com/embed/oofSnsGkops?autoplay=1', {
+        attributes: {
+            allowfullscreen: true
+        }
+    });
+}
+
+function testDialogHelperForm() {
+    var template = '<div class="form-group"><label for="inputEmail3" class="col-sm-2 control-label">Email</label><div class="col-sm-10"><input type="email" name="email" class="form-control" id="inputEmail3" placeholder="Email"></div></div><div class="form-group"><label for="inputPassword3" class="col-sm-2 control-label">Password</label><div class="col-sm-10"><input type="password" name="password" class="form-control" id="inputPassword3" placeholder="Password"></div></div><div class="form-group"><label class="col-sm-2 control-label">Groups</label><div class="col-sm-10"><select  name="groups" id="groups" class="form-control" multiple><option value="a">A</option><option value="b">B</option><option value="c">C</option></select></div></div><div class="form-group"><label class="col-sm-2 control-label">Permissions</label><div class="col-sm-10"><label><input type="checkbox" name="permissions" value="admin"> Admin</label><label><input type="checkbox" name="permissions" value="superman"> Superman</label><label><input type="checkbox" name="permissions" value="gay"> Gay</label></div></div>';
+
+    function callback(button_name, form) {
+        console.log(_.M.jForm.getFormValue(form));
+    }
+
+    _.M.Dialog.form(template, callback, {
+        title: 'Re-login',
+        type: _.M.DIALOG_SUCCESS
+    });
+}
+
+function testDialogHelperPrompt() {
+    _.M.Dialog.prompt('Tên của bạn là gì?', function (name) {
+        if (false === name) {
+            alert('Xin chào ai đó');
+        } else {
+            alert('Xin chào ' + name);
+        }
+    }, {
+        default_value: 'Mạnh'
+    });
+}

@@ -301,63 +301,77 @@
      * @param {Function} [final_cb]
      */
     EventEmitter.prototype.emitEvent = function (events, data, final_cb) {
-        var self = this,
-            emitted = false,
-            thisFunc = arguments.callee;
+        var self = this;
 
-        events = _.M.asArray(events);
-
-        for (var i in events) {
-            if (events.hasOwnProperty(i)) {
-                var event = events[i];
-
-                if (this._events.hasOwnProperty(event)) {
-                    var listeners = this._events[event].priority.getContents();
-
-                    if (listeners.length) {
-                        emitted = true;
-                        _.each(listeners, function (listener) {
-                            if (listener.meta.async) {
-                                _.M.async(listener.content, data, listener.meta.context || self);
-                            } else {
-                                _.M.callFunc(listener.content, data, listener.meta.context || self);
-                            }
-                        });
-                    }
-                }
-
-                if (emitted) {
-                    if (!this._event_emitted.hasOwnProperty(event)) {
-                        this._event_emitted[event] = 1;
-                    } else {
-                        this._event_emitted[event] += 1;
-                    }
-
-                    if (event !== 'event_emitted') {
-                        thisFunc.call(self, 'event_emitted', [event, data]);
-                    }
-                }
-
-                if ('event_emitted' !== event && -1 == this._event_privates.indexOf(event) && !_.isEmpty(this._event_followers)) {
-                    _.each(this._event_followers, function (eventEmitterAttached) {
-                        function cb(source_id, source_event, source_data) {
-                            eventEmitterAttached.target.notice(source_id, source_event, source_data);
-                        }
-
-                        if (eventEmitterAttached.async) {
-                            _.M.async(cb, [self.id, event, data], self);
-                        } else {
-                            _.M.callFunc(cb, [self.id, event, data], self);
-                        }
-                    });
-                }
+        _.each(_.M.asArray(events), function (event) {
+            if (self._events.hasOwnProperty(event)) {
+                _emit_event(self, event, _.clone(data));
             }
-        }
+
+            if (_is_need_to_notice(self, event)) {
+                _notice_event(self, event, _.clone(data));
+            }
+
+            _emit_event(self, event + '_complete', _.clone(data));
+        });
 
         if (final_cb) {
             final_cb.call(this);
         }
     };
+
+    function _emit_event(instance, event_name, data) {
+        var emitted = false,
+            listeners;
+
+        if (instance._events.hasOwnProperty(event_name)) {
+            listeners = instance._events[event_name].priority.getContents();
+            if (listeners.length) {
+                emitted = true;
+
+                _.each(listeners, function (listener) {
+                    if (listener.meta.async) {
+                        _.M.async(listener.content, data, listener.meta.context || instance);
+                    } else {
+                        _.M.callFunc(listener.content, data, listener.meta.context || instance);
+                    }
+                });
+            }
+        }
+
+        if (!instance._event_emitted.hasOwnProperty(event_name)) {
+            instance._event_emitted[event_name] = 1;
+        } else {
+            instance._event_emitted[event_name] += 1;
+        }
+
+        if (event_name !== 'event_emitted') {
+            arguments.callee(instance, 'event_emitted', [event_name, _.clone(data)]);
+        }
+
+        return emitted;
+    }
+
+    function _is_need_to_notice(instance, event_name) {
+        return 'event_emitted' !== event_name
+            && -1 == instance._event_privates.indexOf(event_name)
+            && !_.isEmpty(instance._event_followers);
+    }
+
+    function _notice_event(instance, event_name, data) {
+        _.each(instance._event_followers, function (follower) {
+            function cb(source_id, source_event, source_data) {
+                follower.target.notice(source_id, source_event, source_data);
+            }
+
+            if (follower.async) {
+                _.M.async(cb, [instance.id, event_name, data], instance);
+            } else {
+                _.M.callFunc(cb, [instance.id, event_name, data], instance);
+            }
+        });
+    }
+
 
     /**
      * Alias of 'emitEvent'
@@ -408,7 +422,7 @@
     EventEmitter.prototype.off = function () {
         return this.removeListener.apply(this, arguments);
     };
-    
+
     EventEmitter.prototype.mimic = function () {
         this._event_mimics = this._event_mimics.concat(_.flatten(_.toArray(arguments)));
     };
@@ -545,7 +559,6 @@
                         return 'break';
                     }
                 });
-
 
                 this.emitEvent(mimic ? _.omit(notices, mimic) : notices, _.clone(notice_data));
             }

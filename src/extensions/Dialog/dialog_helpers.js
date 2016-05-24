@@ -71,34 +71,6 @@
 
 /*
  |--------------------------------------------------------------------------
- | Closeable button
- |--------------------------------------------------------------------------
- |
- |
- |
- |
- */
-
-;(function (_) {
-    function _close_dialog_handler(button) {
-        var dialog = button.getDialog();
-
-        if (dialog) {
-            button.closeDialog(Boolean(button.options.force));
-        }
-    }
-
-    _.M.DialogButton.register('close', {
-        label: 'Close',
-        type: _.M.BUTTON_INFO,
-        force: false
-    }, {
-        handler: _close_dialog_handler
-    });
-})(_);
-
-/*
- |--------------------------------------------------------------------------
  | Dialog Alert
  |--------------------------------------------------------------------------
  |
@@ -113,7 +85,7 @@
     });
     _.M.PreOptions.define(_.M.DIALOG_ALERT_PRE_OPTIONS_NAME, {
         title: 'Alert',
-        button: {}
+        close_button_options: {}
     });
 
     /**
@@ -124,13 +96,19 @@
      * @returns {*|Dialog}
      */
     _.M.Dialog.alert = function (message, options) {
+        if (_.M.isLikeString(options)) {
+            options = {
+                title: options + ''
+            }
+        }
+
         options = _.extend(_.M.PreOptions.get(_.M.DIALOG_ALERT_PRE_OPTIONS_NAME, options), {
             content: message
         });
 
-        var dialog = new _.M.Dialog(_.omit(options, 'button'));
+        var dialog = new _.M.Dialog(_.omit(options, 'close_button_options'));
 
-        dialog.attachButton(_.M.DialogButton.factory('close', options.button));
+        dialog.attachButton(_.M.DialogButton.factory('close', options.close_button_options));
 
         dialog.open();
 
@@ -152,7 +130,8 @@
     });
     _.M.PreOptions.define(_.M.DIALOG_CONFIRM_PRE_OPTIONS_NAME, {
         title: 'Confirm',
-        default_button: null
+        default_button: null,
+        buttons: []
     });
     /**
      *
@@ -163,6 +142,12 @@
      */
     _.M.Dialog.confirm = function (message, callback, options) {
         var dialog;
+
+        if (_.M.isLikeString(options)) {
+            options = {
+                title: options + ''
+            }
+        }
 
         options = _.extend(_.M.PreOptions.get(_.M.DIALOG_CONFIRM_PRE_OPTIONS_NAME, options), {
             content: message
@@ -226,6 +211,12 @@
         var dialog,
             attrs = [],
             template = [];
+
+        if (_.M.isLikeString(options)) {
+            options = {
+                title: options + ''
+            }
+        }
 
         options = _.M.PreOptions.get(_.M.DIALOG_IFRAME_PRE_OPTIONS_NAME, options);
 
@@ -313,6 +304,7 @@
         form_classes: '',
         message_classes: 'dialog_form_message',
         validator: null,
+        auto_focus: true,
         submit_button_name: 'submit',
         cancel_button_name: 'cancel',
         buttons: [],
@@ -361,10 +353,47 @@
         addDialogData(dialog, options);
         addDialogMethods(dialog, options);
         addDialogEvents(dialog, options);
+
         dialog.open();
+
+        if (options.auto_focus) {
+            setTimeout(function () {
+                dialog.getDOM().find('input:visible, textarea:visible').first().focus();
+            }, 500);
+        }
 
         return dialog;
     };
+
+    function createCancelButtonHandler(callback) {
+        return function (button) {
+            var dialog = button.getDialog();
+
+            button.closeDialog(true);
+            _.M.callFunc(callback, [button.options.name, null, button, dialog], dialog);
+        }
+    }
+
+    function createButtonsHandler(callback, options) {
+        return function (button) {
+            var dialog_instance = this.getDialog(),
+                form = $(dialog_instance.data['form_selector']),
+                validate_result = true;
+
+            updateFormMessage(dialog_instance, false);
+
+            if (options.validator) {
+                validate_result = options.validator(form, dialog_instance);
+            }
+            if (true !== validate_result) {
+                updateFormMessage(dialog_instance, validate_result);
+
+                return;
+            }
+
+            _.M.callFunc(callback, [button.options.name, form, button, dialog_instance], dialog_instance);
+        }
+    }
 
     function dialogFormContentHandler(content) {
         return ['<form><div class="dialog_form_message"></div>', content, '<input type="submit" style="display: none;"/></form>'].join('');
@@ -429,6 +458,16 @@
     }
 
     function addDialogEvents(dialog, options) {
+        function form_submit_event_listener(event) {
+            event.preventDefault();
+
+            if (options.submit_button_name) {
+                dialog.click(options.submit_button_name);
+            }
+
+            return false;
+        }
+
         dialog.on('open', function () {
             $('body').on('submit', this.data['form_selector'], form_submit_event_listener);
         });
@@ -448,46 +487,6 @@
         dialog.on('closed', function () {
             $('body').off('submit', this.data['form_selector'], form_submit_event_listener);
         });
-    }
-
-    function form_submit_event_listener(event) {
-        event.preventDefault();
-
-        if (options.submit_button_name) {
-            dialog.click(options.submit_button_name);
-        }
-
-        return false;
-    }
-
-    function createCancelButtonHandler(callback) {
-        return function (button) {
-            var dialog = button.getDialog();
-
-            button.closeDialog(true);
-            _.M.callFunc(callback, [button.options.name, null, button, dialog], dialog);
-        }
-    }
-
-    function createButtonsHandler(callback, options) {
-        return function (button) {
-            var dialog_instance = this.getDialog(),
-                form = $(dialog_instance.data['form_selector']),
-                validate_result = true;
-
-            updateFormMessage(dialog_instance, false);
-
-            if (options.validator) {
-                validate_result = options.validator(form, button, dialog_instance);
-            }
-            if (true !== validate_result) {
-                updateFormMessage(dialog_instance, validate_result);
-
-                return;
-            }
-
-            _.M.callFunc(callback, [button.options.name, form, button, dialog_instance], dialog_instance);
-        }
     }
 })(_);
 
@@ -509,11 +508,11 @@
     });
     _.M.PreOptions.define(_.M.DIALOG_PROMPT_PRE_OPTIONS_NAME, {
         title: 'Prompt',
-        value: '',
+        default_value: '',
         placeholder: '',
         input_type: 'text',
         input_classes: 'form-control',
-        buttons_option: {
+        buttons_extend_options: {
             submit: {
                 label: 'Ok'
             }
@@ -524,29 +523,39 @@
         var content = [],
             dialog;
 
+        if (_.M.isLikeString(options)) {
+            options = {
+                title: options + ''
+            };
+        }
+
         options = _.M.PreOptions.get(_.M.DIALOG_PROMPT_PRE_OPTIONS_NAME, options);
 
         content.push('<p>', message, '</p>');
         content.push('<input name="prompt_data" type="', options.input_type + '" ',
             'class="', options.input_classes + '" ',
-            'value="', options.value + '"',
+            'value="', options.default_value + '"',
             'placeholder="', options.placeholder + '"',
             '/>');
 
-        function prompt_cb(btn_name, form, btn, dialog) {
-            var value = options.value;
+        function prompt_cb(btn_name, form, btn) {
+            if(!form){
+                callback(false);
+                return;
+            }
+            
+            var value = options.default_value;
 
             if ('submit' === btn_name) {
                 value = form.find('input[name="prompt_data"]').val();
-                btn.closeDialog(true);
+                btn.closeDialog();
             }
 
             callback(value);
         }
 
+        dialog = _.M.Dialog.form(content.join(''), prompt_cb, _.omit(options, 'default_value', 'placeholder', 'input_type', 'input_classes'));
 
-        dialog = _.M.Dialog.form(content.join(''), prompt_cb, _.omit(options, 'value', 'placeholder', 'input_type', 'input_classes'));
-
-        dialog.open();
+        return dialog;
     }
 })(_);
