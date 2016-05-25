@@ -365,6 +365,14 @@
         return button;
     };
 
+    Dialog.prototype.attachMultiButtons = function (buttons) {
+        var self = this;
+
+        _.each(buttons, function (button) {
+            self.attachButton(button);
+        });
+    };
+
     /**
      * Check if button exists
      * @param {string} name

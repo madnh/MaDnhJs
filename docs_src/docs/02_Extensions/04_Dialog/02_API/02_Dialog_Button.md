@@ -52,27 +52,37 @@ Mỗi dialog có thể bao gồm các button, class `_.M.DialogButton` chính l�
     <tr>
         <td><code>BUTTON_OK</code></td>
         <td>ok</td>
-        <td>Tên button</td>
+        <td>Tên loại button</td>
     </tr>
     <tr>
         <td><code>BUTTON_CANCEL</code></td>
         <td>cancel</td>
-        <td>Tên button</td>
+        <td>Tên loại button</td>
     </tr>
     <tr>
         <td><code>BUTTON_YES</code></td>
         <td>yes</td>
-        <td>Tên button</td>
+        <td>Tên loại button</td>
     </tr>
     <tr>
         <td><code>BUTTON_NO</code></td>
         <td>no</td>
-        <td>Tên button</td>
+        <td>Tên loại button</td>
     </tr>
     <tr>
         <td><code>BUTTON_RETRY</code></td>
         <td>retry</td>
-        <td>Tên button</td>
+        <td>Tên loại button</td>
+    </tr>
+    <tr>
+        <td><code>BUTTON_CLOSE</code></td>
+        <td>close</td>
+        <td>Tên loại button</td>
+    </tr>
+    <tr>
+        <td><code>BUTTON_SUBMIT</code></td>
+        <td>submit</td>
+        <td>Tên loại button</td>
     </tr>
     <tr>
         <td><code>DIALOG_BUTTON_OK_ONLY</code></td>
@@ -97,6 +107,11 @@ Mỗi dialog có thể bao gồm các button, class `_.M.DialogButton` chính l�
     <tr>
         <td><code>DIALOG_BUTTON_RETRY_CANCEL</code></td>
         <td>['retry', 'cancel']</td>
+        <td>Các button dùng cho method <code>_.M.DialogButton.factory</code></td>
+    </tr>
+    <tr>
+        <td><code>DIALOG_BUTTON_SUBMIT_CANCEL</code></td>
+        <td>['submit', 'cancel']</td>
         <td>Các button dùng cho method <code>_.M.DialogButton.factory</code></td>
     </tr>
     </tbody>

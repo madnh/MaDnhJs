@@ -364,13 +364,24 @@
         return false;
     };
 
+
+    /*
+     |--------------------------------------------------------------------------
+     | Static methods
+     |--------------------------------------------------------------------------
+     |
+     |
+     |
+     |
+     */
+
     var button_pre_options = {};
 
-    DialogButton.has = function (name) {
+    DialogButton.isDefined = function (name) {
         return button_pre_options.hasOwnProperty(name);
     };
 
-    DialogButton.register = function (name, options, freeze_options) {
+    DialogButton.define = function (name, options, freeze_options) {
         button_pre_options[name] = {
             options: _.isObject(options) ? options : {},
             freeze_options: _.isObject(freeze_options) ? freeze_options : {}
@@ -378,43 +389,14 @@
         button_pre_options[name].freeze_options.name = name;
     };
 
-    DialogButton.options = function (name, options) {
-        if (button_pre_options.hasOwnProperty(name)) {
+    DialogButton.updateOptions = function (name, options) {
+        if (DialogButton.isDefined(name)) {
             _.extend(button_pre_options[name].options, options);
+            return true;
         }
 
         return false;
     };
-
-    _.each(['Ok', 'Yes', 'No', 'Retry', 'Ignore'], function (label) {
-        DialogButton.register(label.toLowerCase(), {
-            label: label
-        });
-    });
-
-    DialogButton.register('cancel', {
-        label: 'Cancel',
-        disable_on_pending: false
-    });
-
-
-    (function (_) {
-        function _close_dialog_handler(button) {
-            var dialog = button.getDialog();
-
-            if (dialog) {
-                button.closeDialog(Boolean(button.options.force));
-            }
-        }
-
-        DialogButton.register('close', {
-            label: 'Close',
-            type: _.M.BUTTON_INFO,
-            force: false
-        }, {
-            handler: _close_dialog_handler
-        });
-    })(_);
 
     DialogButton.factory = function (types, all_button_options, button_options) {
         if (!_.isObject(all_button_options)) {
@@ -427,10 +409,8 @@
         var buttons = _.M.asArray(types).map(function (type) {
             var options, type_options;
 
-            if (!DialogButton.has(type)) {
+            if (!DialogButton.isDefined(type)) {
                 throw new Error('Dialog Button type is unregistered');
-            }
-            if (button_options.hasOwnProperty(type)) {
             }
 
             type_options = button_pre_options[type];
@@ -462,4 +442,48 @@
     _.M.isDialogButton = function (button) {
         return button instanceof DialogButton;
     };
+
+    /*
+     |--------------------------------------------------------------------------
+     | Predefine button types
+     |--------------------------------------------------------------------------
+     |
+     |
+     |
+     |
+     */
+
+    _.each(['Ok', 'Yes', 'No', 'Retry', 'Ignore'], function (label) {
+        DialogButton.define(label.toLowerCase(), {
+            label: label
+        });
+    });
+
+    DialogButton.define('cancel', {
+        label: 'Cancel',
+        disable_on_pending: false
+    });
+
+
+    (function (_) {
+        _.M.defineConstant({
+            BUTTON_CLOSE: 'close'
+        });
+
+        function _close_dialog_handler(button) {
+            var dialog = button.getDialog();
+
+            if (dialog) {
+                button.closeDialog(Boolean(button.options.force));
+            }
+        }
+
+        DialogButton.define(_.M.BUTTON_CLOSE, {
+            label: 'Close',
+            type: _.M.BUTTON_INFO,
+            force: false
+        }, {
+            handler: _close_dialog_handler
+        });
+    })(_);
 })(_);

@@ -285,10 +285,8 @@
  |
  */
 ;(function (_) {
-    _.M.DialogButton.register('submit', {
+    _.M.DialogButton.define('submit', {
         label: 'Submit'
-    }, {
-        name: 'submit'
     });
 
     _.M.defineConstant({

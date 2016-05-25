@@ -39,3 +39,26 @@ function testButtonCallbackCloseDialog() {
     dialog.attachButton(_.M.DialogButton.factory('close'));
     dialog.open();
 }
+
+function testButtonGlobalMethodDefine() {
+    _.M.DialogButton.define('test', {
+        label: 'Test button',
+        type: _.M.BUTTON_DANGER
+    }, {
+        icon: 'glyphicon glyphicon-leaf'
+    });
+
+    var dialog = new _.M.Dialog({
+        content: 'Test define button'
+    });
+
+    dialog.attachButton(_.M.DialogButton.factory('test', {type: _.M.BUTTON_SUCCESS, icon: 'glyphicon glyphicon-tags'}));
+    dialog.open();
+}
+function testButtonGlobalMethodFactory() {
+    var dialog = new _.M.Dialog({
+        content: 'Test factory button'
+    });
+    dialog.attachMultiButtons(_.M.DialogButton.factory(_.M.DIALOG_BUTTON_YES_NO_CANCEL));
+    dialog.open();
+}
