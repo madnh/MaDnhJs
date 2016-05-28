@@ -42,7 +42,7 @@
      * @constant {string} VERSION
      * @default
      */
-    var version = '1.0.0';
+    var version = '1.2.3';
 
     var M = {};
     Object.defineProperty(M, 'VERSION', {
