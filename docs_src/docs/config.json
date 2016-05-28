@@ -2,7 +2,7 @@
   "title": "MaDnhJS",
   "tagline": "JS common functions",
   "author": "Do Danh Manh",
-  "image": "logo.png",
+  "image": "javascript.png",
   "live": {
     "inherit_index": true,
     "clean_urls": true

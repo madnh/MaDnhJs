@@ -152,7 +152,7 @@
         this.waiter_keys = [];
         this.setLayout(_layout);
         this.setSection('HEADER', _section_header.bind(this));
-        this.setSection('BODy', _section_body.bind(this));
+        this.setSection('BODY', _section_body.bind(this));
         this.setSection('FOOTER', _section_footer.bind(this));
 
         this.mimic('open', 'toggle_enable', 'close', 'hide', 'show', 'update_content');

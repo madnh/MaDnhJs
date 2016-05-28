@@ -98,22 +98,22 @@ MaDnhJS cung cấp một số hàm tiện ích sau, xem API để biết danh s�
 Core extensions được lưu cùng file với các core functions 
  
 * _.M.FLAG
+* _.M.CACHE
 * _.M.WAITER
+* _.M.PreOptions
 * _.M.BaseClass
 * _.M.ContentManager
 * _.M.Priority
 * _.M.EventEmitter
-* _.M.CACHE
+* _.M.Task
 * _.M.AJAX
 * _.M.App
-* _.M.AJAXResponseAdapter
 
 ### Các extensions đính kèm
 
 Có một số extension đính kèm với MaDnhJS, lưu ở thư mục `/extensions`
 
-* _.M.TAG
-* _.M.TEMPLATE
-* _.M.LIST
-* _.M.JFORM
-* _.M.Dialog
+* App DOM Plugin
+* TEMPLATE
+* jFORM
+* Dialog
