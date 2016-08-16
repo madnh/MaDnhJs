@@ -23,10 +23,12 @@
   "license": "MIT",
   "homepage": "https://github.com/madnh/madnhjs",
   "devDependencies": {
+    "chai": "^3.5.0",
     "grunt": "^0.4.5",
     "grunt-contrib-clean": "^1.0.0",
     "grunt-contrib-concat": "^0.5.1",
     "grunt-contrib-copy": "^1.0.0",
-    "grunt-contrib-uglify": "^0.11.0"
+    "grunt-contrib-uglify": "^0.11.0",
+    "mocha": "^3.0.2"
   }
 }

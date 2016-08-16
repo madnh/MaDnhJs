@@ -42,7 +42,7 @@
      * @constant {string} VERSION
      * @default
      */
-    var version = '1.2.3';
+    var version = '1.2.4';
 
     var M = {};
     Object.defineProperty(M, 'VERSION', {
@@ -69,6 +69,16 @@
     });
     _.module('M', M);
 
+    /**
+     * Slice arguments of a function as array
+     * @param args
+     * @param {Number} [start]
+     * @param {Number} [end]
+     * @return {*}
+     */
+    M.sliceArguments = function (args, start, end) {
+        return slice.apply(args, slice.call(arguments, 1));
+    };
 
     /**
      * Loop over array or object like _.each but breakable
@@ -307,8 +317,9 @@
      * @returns {*}
      * @example
      * _.M.asObject(); //{}
-     * _.M.asObject('yahoo'); //{}
-     * _.M.asObject(235); //{}
+     * _.M.asObject(['foo', 'bar', 123]); //{0: "a", 1: 'bar', 2: 123}
+     * _.M.asObject('yahoo'); //{0: "yahoo"}
+     * _.M.asObject(235); //{0: 235}
      * _.M.asObject('yahoo', 123); //{yahoo: 123}
      * _.M.asObject({yahoo: 123, goooo:'ASDWd'}); //{yahoo: 123, goooo:'ASDWd'}
      *
@@ -318,8 +329,12 @@
             case arguments.length == 1:
                 if (_.isObject(name)) {
                     return name;
+                } else if (_.isArray(name) || _.isArguments(name)) {
+                    return _.object(Object.keys(name), name);
                 }
-                return {};
+
+                return {0: name};
+                break;
 
             case arguments.length >= 2:
                 if (_.isObject(name)) {
@@ -333,6 +348,112 @@
         }
 
         return {};
+    };
+
+    /**
+     * Merge multiple array
+     * @return {Array}
+     */
+    M.mergeArray = function () {
+        var result = [];
+
+        _.each(arguments, function (arr) {
+            _.each(arr, function (item) {
+                result.push(item);
+            });
+        });
+
+        return result;
+    };
+
+    M.mergeObject = function () {
+        var result = {}, next_index = 0;
+
+        _.each(arguments, function (obj) {
+            if (_.isArray(obj) || !_.isObject(obj)) {
+                obj = M.asArray(obj);
+                obj = _.object(_.range(next_index, next_index += obj.length), obj);
+            }
+
+            _.extend(result, obj);
+        });
+
+        return result;
+    };
+
+    function is_diff_strict_cb(value_1, value_2) {
+        return value_1 !== value_2;
+    }
+
+    function is_diff_loose_cb(value_1, value_2) {
+        return value_1 != value_2;
+    }
+
+    /**
+     * Get dirty of object with others object
+     * @param {function} cb Callback return true if 2 item is difference
+     * @param object
+     * @param [others...]
+     * @return {{}}
+     */
+    function diff_object(cb, object, others) {
+        if (arguments.length < 2) {
+            return {};
+        }
+
+        var result = {};
+
+        if (!_.isFunction(cb)) {
+            cb = cb ? is_diff_strict_cb : is_diff_loose_cb;
+        }
+
+        others = M.mergeObject.apply(M, slice.call(arguments, 2));
+
+        _.each(object, function (value, key) {
+            if (!others.hasOwnProperty(key)) {
+                result[key] = value;
+            } else {
+                if (cb(value, others[key])) {
+                    result[key] = value;
+                }
+            }
+        });
+
+        return result;
+    }
+
+    /**
+     * Get dirty of object with others object. Strict comparison
+     * @param callback
+     * @param object
+     * @param others
+     * @return {*}
+     */
+    M.diffObject = function (callback, object, others) {
+        var args = _.toArray(arguments);
+
+        args.unshift(is_diff_strict_cb);
+
+        return diff_object.apply(null, args);
+    };
+
+    /**
+     * Get dirty of object with others object. Loose comparison
+     * @param callback
+     * @param object
+     * @param others
+     * @return {*}
+     */
+    M.diffObjectLoose = function (callback, object, others) {
+        var args = _.toArray(arguments);
+
+        args.unshift(is_diff_loose_cb);
+
+        return diff_object.apply(null, args);
+    };
+
+    M.diffObjectWithCallback = function (callback, object, others) {
+        return diff_object.apply(null, slice.apply(arguments))
     };
 
     /**
@@ -483,10 +604,10 @@
     };
 
     M.randomInteger = function (min, max) {
-        if(arguments.length == 0){
+        if (arguments.length == 0) {
             min = 0;
             max = 10;
-        } else if(arguments.length == 1){
+        } else if (arguments.length == 1) {
             max = 0;
         }
         var tmp = max;
@@ -1340,6 +1461,15 @@
         return b - a;
     }
 
+    function is_equal_strict(a, b) {
+        return a === b;
+    }
+
+    function is_equal_loose(a, b) {
+        return a == b;
+    }
+
+
     M.defineConstant({
         /**
          * Array sort compare function. Sort number
@@ -1357,6 +1487,27 @@
          * var scores = [1, 10, 2, 21];
          * scores.sort(_.M.SORT_NUMBER_DESC); // [21, 10, 2, 1]
          */
-        SORT_NUMBER_DESC: sortNumberDescCallback
+        SORT_NUMBER_DESC: sortNumberDescCallback,
+
+        /**
+         * Compare 2 value is equal, strict comparison
+         * @constant
+         * @example
+         * _.M.IS_EQUAL(1, 1); //true
+         * _.M.IS_EQUAL(1, '1'); //false
+         */
+        IS_EQUAL: is_equal_strict,
+
+        /**
+         * Compare 2 value is equal, loose comparison
+         * @constant
+         * @example
+         * _.M.IS_LOOSE_EQUAL(1, 1); //true
+         * _.M.IS_LOOSE_EQUAL(1, '1'); //true
+         * _.M.IS_LOOSE_EQUAL(1, true); //true
+         * _.M.IS_LOOSE_EQUAL(1, false); //false
+         * _.M.IS_LOOSE_EQUAL(1, 2); //false
+         */
+        IS_LOOSE_EQUAL: is_equal_loose
     });
 })(_);
