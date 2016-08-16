@@ -1490,24 +1490,24 @@
         SORT_NUMBER_DESC: sortNumberDescCallback,
 
         /**
-         * Compare 2 value is equal, strict comparison
-         * @constant
-         * @example
-         * _.M.IS_EQUAL(1, 1); //true
-         * _.M.IS_EQUAL(1, '1'); //false
-         */
-        IS_EQUAL: is_equal_strict,
-
-        /**
          * Compare 2 value is equal, loose comparison
          * @constant
          * @example
-         * _.M.IS_LOOSE_EQUAL(1, 1); //true
-         * _.M.IS_LOOSE_EQUAL(1, '1'); //true
-         * _.M.IS_LOOSE_EQUAL(1, true); //true
-         * _.M.IS_LOOSE_EQUAL(1, false); //false
-         * _.M.IS_LOOSE_EQUAL(1, 2); //false
+         * _.M.IS_EQUAL(1, 1); //true
+         * _.M.IS_EQUAL(1, '1'); //true
+         * _.M.IS_EQUAL(1, true); //true
+         * _.M.IS_EQUAL(1, false); //false
+         * _.M.IS_EQUAL(1, 2); //false
          */
-        IS_LOOSE_EQUAL: is_equal_loose
+        IS_EQUAL: is_equal_loose,
+
+        /**
+         * Compare 2 value is equal, strict comparison
+         * @constant
+         * @example
+         * _.M.IS_STRICT_EQUAL(1, 1); //true
+         * _.M.IS_STRICT_EQUAL(1, '1'); //false
+         */
+        IS_STRICT_EQUAL: is_equal_strict
     });
 })(_);

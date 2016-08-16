@@ -1,17 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Test</title>
-    <link rel="stylesheet" href="css/bootstrap.min.css">
-    <!--<link rel="stylesheet" href="css/bootstrap-theme.min.css">-->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.3/jquery.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-    <script src="/dist/underscore.js"></script>
-    <script src="/dist/madnh.js"></script>
-    <script src="/dist/madnh_extensions.js"></script>
+    <meta charset="utf-8">
+    <title>Mocha Tests</title>
+    <link href="https://cdn.rawgit.com/mochajs/mocha/2.2.5/mocha.css" rel="stylesheet" />
 </head>
 <body>
+<div id="mocha"></div>
 
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.3/jquery.min.js"></script>
+<script src="https://cdn.rawgit.com/Automattic/expect.js/0.3.1/index.js"></script>
+<script src="https://cdn.rawgit.com/mochajs/mocha/2.2.5/mocha.js"></script>
+<script src="https://cdn.rawgit.com/chaijs/chai/3.5.0/chai.js"></script>
+
+<script src="/dist/underscore.js"></script>
+<script src="/dist/madnh.js"></script>
+
+<script>mocha.setup('bdd')</script>
+<script src="js/test_files/core.js"></script>
+<script>
+    mocha.checkLeaks();
+    mocha.globals(['jQuery']);
+    mocha.run();
+</script>
 </body>
 </html>
