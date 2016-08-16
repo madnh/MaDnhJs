@@ -30,7 +30,8 @@ Kiểm tra một số/số dạng chuỗi là số lẻ?
 
 ### Ví dụ
 ```js
-_.M.isOdd(5); //true
-_.M.isOdd(4); //false
-_.M.isOdd('11'); //true
-``
+_.M.isOdd(5); //false
+_.M.isOdd(4); //true
+_.M.isOdd('11'); //false
+_.M.isOdd('8'); //true
+```

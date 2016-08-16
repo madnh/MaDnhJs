@@ -39,6 +39,6 @@ Trả về constructor name của một object instance
 ### Ví dụ
 ```js
 _.M.className(_.App); //"[object Object]"
-_.M.className(_.App, true); //App
+_.M.className(_.App, true); //EventEmitter
 _.M.className(new _.M.EventEmitter(), true); //EventEmitter
 ```

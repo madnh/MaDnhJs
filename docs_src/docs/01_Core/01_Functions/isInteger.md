@@ -31,6 +31,8 @@ Kiểm tra một giá trị có là dạng số và là số nguyên
 ### Ví dụ
 ```js
 _.M.isInteger(123); //true
-_.M.isInteger(123.5); //false
 _.M.isInteger('123'); //true
+_.M.isInteger(123.5); //false
+_.M.isInteger(true); //false
+_.M.isInteger([]); //false
 ```

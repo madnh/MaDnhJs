@@ -41,6 +41,8 @@ Capitalize a string
 
 ### Ví dụ
 ```js
-_.M.capitalize('TOI bi DiEn'); //'Toi Bi Dien'
-_.M.capitalize('TOI bi DiEn', false); //'Toi bi dien'
+var str = 'xin chao';
+
+_.M.capitalize(str); //'Xin Chao'
+_.M.capitalize(str, false); //'Xin chao'
 ```

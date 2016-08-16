@@ -37,7 +37,7 @@ Kiểm tra object có phải là instance của một class?
 
 ### Ví dụ
 ```js
-_.M.isInstanceOf(_.App, 'App');//true
+_.M.isInstanceOf(_.App, 'EventEmitter');//true
 _.M.isInstanceOf(123, 'Object'); //false
 _.M.isInstanceOf(123, 'Number'); //true
 _.M.isInstanceOf('123', 'String'); //true

@@ -42,7 +42,7 @@
      * @constant {string} VERSION
      * @default
      */
-    var version = '1.2.4';
+    var version = '1.2.5';
 
     var M = {};
     Object.defineProperty(M, 'VERSION', {
@@ -653,17 +653,21 @@
      * _.M.firstNotEmpty(['', 0, false, 123]); //123
      */
     M.firstNotEmpty = function () {
-        return _.find(_.flatten(slice.call(arguments, 0)), function (value) {
+        var arr = _.flatten(_.toArray(arguments));
+
+        return _.find(arr, function (value) {
             if (_.isString(value)) {
-                return value.length > 0;
+                return value.trim().length > 0;
             }
             if (M.isNumeric(value)) {
                 var parsedValue = parseFloat(value);
-                return parsedValue !== 0 && !_.isNaN(parseFloat(value)) && !_.isFinite(parsedValue);
+
+                return parsedValue !== 0 && !_.isNaN(parsedValue) && _.isFinite(parsedValue);
             }
             if (value === true) {
                 return true;
             }
+
             return !_.isEmpty(value);
         });
     };
@@ -769,7 +773,7 @@
             length = 1;
         }
 
-        if (length <= 0) {
+        if (length < 1) {
             return '';
         }
         return string.toString().substr(0, length);
@@ -789,7 +793,7 @@
         if (_.isUndefined(length)) {
             length = 1;
         }
-        if (length <= 0) {
+        if (length < 1) {
             return '';
         }
 
@@ -844,7 +848,7 @@
      * _.M.isInteger('123'); //true
      */
     M.isInteger = function (number) {
-        return number % 1 === 0;
+        return M.isNumeric(number) && number % 1 === 0;
     };
 
     /**
@@ -870,25 +874,26 @@
      * @param number
      * @returns {boolean}
      * @example
-     * _.M.isOdd(5); //true
-     * _.M.isOdd(4); //false
-     * _.M.isOdd('11'); //true
+     * _.M.isOdd(5); //false
+     * _.M.isOdd(4); //true
+     * _.M.isOdd('11'); //false
+     * _.M.isOdd('8'); //true
      */
     M.isOdd = function (number) {
-        return M.isInteger(number) && !M.isMultiple(number, 2);
+        return M.isMultiple(number, 2);
     };
     /**
      * Check if a number is even
      * @param number
      * @returns {boolean}
      * @example
-     * _.M.isOdd(5); //false
-     * _.M.isOdd(4); //true
-     * _.M.isOdd('11'); //false
-     * _.M.isOdd('8'); //true
+     * _.M.isEven(5); //true
+     * _.M.isEven(4); //false
+     * _.M.isEven('11'); //true
+     * _.M.isEven('8'); //false
      */
     M.isEven = function (number) {
-        return this.isMultiple(number, 2);
+        return !M.isMultiple(number, 2);
     };
 
     /**
@@ -922,16 +927,14 @@
      * @param {boolean} [all = true] True - all words of string, False - Only first word
      * @returns {string}
      * @example
-     * _.M.capitalize('XIN CHAO ban'); //'Xin Chao Ban'
-     * _.M.capitalize('XIN CHAO ban', false); //'Xin chao ban'
+     * _.M.capitalize('xin chao'); //'Xin Chao'
+     * _.M.capitalize('xin chao', false); //'Xin chao'
      */
     M.capitalize = function (str, all) {
-        var lastResponded;
-        return str.toLowerCase().replace(all ? /[^']/g : /^\S/, function (lower) {
-            var upper = lower.toUpperCase(), result;
-            result = lastResponded ? lower : upper;
-            lastResponded = upper !== lower;
-            return result;
+        all = _.isUndefined(all) ? true : Boolean(all);
+
+        return str.replace(all ? /(^|\s)[a-z]/g : /(^|\s)[a-z]/, function (text) {
+            return text.toUpperCase();
         });
     };
 
@@ -969,7 +972,7 @@
      * _.M.isBlank('    '); // true
      */
     M.isBlank = function (str) {
-        return str.trim().length === 0;
+        return String(str).trim().length === 0;
     };
 
     /**

@@ -34,8 +34,7 @@ _.M.contentType(123); //number
 _.M.contentType('123'); //string
 _.M.contentType('Yahooooooo'); //string
 _.M.contentType(true); //boolean
-_.M.contentType(true); //boolean
 _.M.contentType([1,2]); //Array
 _.M.contentType({color: 'red'}); //Object
-_.M.contentType(_.App); //App
+_.M.contentType(_.App); //EventEmitter
 ```
