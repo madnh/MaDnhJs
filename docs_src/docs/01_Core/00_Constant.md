@@ -66,6 +66,31 @@ _.M.isDefinedConstant('BAZ'); //true
             </code>
         </td>
     </tr>
+    <tr>
+        <td>IS_EQUAL</td>
+        <td>function</td>
+        <td>
+            Hàm so sánh 2 giá trị, <b>loose comparison</b> <br>
+            <code>
+                _.M.IS_EQUAL(1, 1); //true
+                _.M.IS_EQUAL(1, '1'); //true
+                _.M.IS_EQUAL(1, true); //true
+                _.M.IS_EQUAL(1, false); //false
+                _.M.IS_EQUAL(1, 2); //false
+            </code>
+        </td>
+    </tr>
+    <tr>
+        <td>IS_STRICT_EQUAL</td>
+        <td>function</td>
+        <td>
+            Hàm so sánh 2 giá trị, <b>strict comparison</b> <br>
+            <code>
+                _.M.IS_STRICT_EQUAL(1, 1); //true
+                _.M.IS_STRICT_EQUAL(1, '1'); //false
+            </code>
+        </td>
+    </tr>
     </tbody>
 </table>
 

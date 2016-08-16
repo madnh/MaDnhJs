@@ -48,14 +48,20 @@ Gọi callback với các tham số
 
 ### Ví dụ
 ```js
-_.M.callFunc(null, alert, 123);
-_.M.callFunc(null, function(name, old){
+_.M.callFunc(alert, 123);
+//Call func, get result
+function test(old) {
+    return old + 1;
+}
+console.log(_.M.callFunc(test, 10));
+//
+_.M.callFunc(function(name, old){
     alert('My name is ' + name + ', ' + old + 'years old');
     }, ['Manh', 10]);
 
 var obj = {name: 'Manh', old: 10};
 
-_.M.callFunc(obj, function(say_hi){
+_.M.callFunc(function(say_hi){
     alert((say_hi ? 'Hi' : 'Hello') + '! my name is ' + this.name + ', ' + this.old + ' years old');
-}, true);
+}, true, obj);
 ```

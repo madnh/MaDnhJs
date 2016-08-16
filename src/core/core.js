@@ -1236,12 +1236,8 @@
      * }, true);
      */
     M.callFunc = function (callback, args, context) {
-        if (arguments.length > 2) {
-            if (arguments.length == 3) {
-                args = M.asArray(args);
-            } else {
-                args = slice.apply(arguments, 2);
-            }
+        if (arguments.length >= 2) {
+            args = M.asArray(args);
         } else {
             args = [];
         }
@@ -1258,7 +1254,7 @@
                 throw new Error('Invalid callback!');
             } else if (_.isFunction(callback)) {
 
-                return callback.apply(context, args);
+                return callback.apply(context || null, args);
             } else if (_.isArray(callback)) {
                 var result = [],
                     this_func = arguments.callee;
@@ -1266,9 +1262,11 @@
                 _.each(callback, function (tmpFunc) {
                     result.push(this_func(tmpFunc, args, context));
                 });
+
                 return result;
             }
         }
+
         return undefined;
     };
 

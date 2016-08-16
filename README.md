@@ -116,3 +116,13 @@ Có một số extension đính kèm với MaDnhJS, lưu ở thư mục `/extens
 * TEMPLATE
 * jFORM
 * Dialog
+
+# Build Document
+
+MaDnhJS sử dụng **daux.io** để build docs, mã nguồn được lưu ở folder __docs_src__. Sau khi edit, move tới folder __docs_src__ và chạy lệnh:
+
+```
+grunt docs
+```
+
+Docs sau khi được generate sẽ được lưu ở folder **docs**
