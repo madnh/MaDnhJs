@@ -106,7 +106,7 @@
             types = Object.keys(this._contents);
             type_checked = true;
         } else {
-            types = _.M.asArray(types);
+            types = _.M.beArray(types);
         }
 
         _.M.loop(types, function (type) {
@@ -147,7 +147,7 @@
             types = Object.keys(this._contents);
             type_checked = true;
         } else {
-            types = _.M.asArray(types);
+            types = _.M.beArray(types);
         }
 
         _.M.loop(types, function (type) {
@@ -311,7 +311,7 @@
             }
         }
         if (!_.isEmpty(keys)) {
-            var type_grouped = _.groupBy(_.M.asArray(keys), getContentTypeFromKey);
+            var type_grouped = _.groupBy(_.M.beArray(keys), getContentTypeFromKey);
 
             for (type in type_grouped) {
                 if (type_grouped.hasOwnProperty(type)) {

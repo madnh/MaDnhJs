@@ -115,7 +115,7 @@
         this._error = null;
 
         if (_.isString(this.handler)) {
-            this.handler = _.M.asArray(this.handler);
+            this.handler = _.M.beArray(this.handler);
         }
         if (_.isFunction(this.handler)) {
             this.handler.bind(this)(data, this.setProcessResult.bind(this), this.setProcessError.bind(this));

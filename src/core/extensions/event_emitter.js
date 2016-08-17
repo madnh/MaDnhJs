@@ -174,8 +174,8 @@
             key: null,
             async: false
         });
-        listeners = _.M.asArray(listeners);
-        events = _.uniq(_.M.asArray(events));
+        listeners = _.M.beArray(listeners);
+        events = _.uniq(_.M.beArray(events));
 
         _.each(events, function (event) {
             if (!self._events.hasOwnProperty(event)) {
@@ -277,9 +277,9 @@
 
         if (_.isObject(events)) {
             _.each(events, function (event_cbs, event_name) {
-                event_cbs = _.M.asArray(event_cbs);
+                event_cbs = _.M.beArray(event_cbs);
                 _.each(event_cbs, function (event_cb) {
-                    event_cb = _.M.asArray(event_cb);
+                    event_cb = _.M.beArray(event_cb);
                     events_arr.push({
                         name: event_name,
                         cb: event_cb[0],
@@ -303,7 +303,7 @@
     EventEmitter.prototype.emitEvent = function (events, data, final_cb) {
         var self = this;
 
-        _.each(_.M.asArray(events), function (event) {
+        _.each(_.M.beArray(events), function (event) {
             if (self._events.hasOwnProperty(event)) {
                 _emit_event(self, event, _.clone(data));
             }
@@ -388,7 +388,7 @@
      */
     EventEmitter.prototype.removeListener = function (key_or_listener, priority) {
         var self = this;
-        key_or_listener = _.M.asArray(key_or_listener);
+        key_or_listener = _.M.beArray(key_or_listener);
         _.each(key_or_listener, function (remover) {
             if (_.M.isLikeString(remover)) {
                 _.each(Object.keys(self._events), function (event_name) {
@@ -479,8 +479,8 @@
             this._event_following[eventEmitter.id] = {
                 id: eventEmitter.id,
                 type: eventEmitter.type_prefix,
-                only: _.M.asArray(only || []),
-                excepts: _.M.asArray(excepts || [])
+                only: _.M.beArray(only || []),
+                excepts: _.M.beArray(excepts || [])
             };
             this.emitEvent('attached', [eventEmitter, only, excepts]);
             if (hard) {

@@ -165,7 +165,7 @@
     };
 
     DialogButton.prototype.option = function (name, value) {
-        var option = _.M.asObject.apply(_.M, _.toArray(arguments));
+        var option = _.M.beObject.apply(_.M, _.toArray(arguments));
 
         if (option.template_name) {
             this.setTemplate(_.M.Template.templateInstance(_.M.DIALOG_BUTTON_TEMPLATE_TYPE, option.template_name));
@@ -406,7 +406,7 @@
             button_options = {};
         }
 
-        var buttons = _.M.asArray(types).map(function (type) {
+        var buttons = _.M.beArray(types).map(function (type) {
             var options, type_options;
 
             if (!DialogButton.isDefined(type)) {

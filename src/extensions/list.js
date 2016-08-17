@@ -178,7 +178,7 @@
         removeItem: function (type, name) {
             var result = false;
             if (this.hasType(type)) {
-                name = _.M.asArray(name);
+                name = _.M.beArray(name);
                 var old = _.clone(_list_system[type]), removed;
 
                 _.M.removeItem(_list_system[type], name);

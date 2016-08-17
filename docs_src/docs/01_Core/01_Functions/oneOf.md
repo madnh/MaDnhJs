@@ -47,7 +47,6 @@ title: _.M.oneOf
                     <li>Phần tử đầu tiên của <code>values</code>: không dùng parameter <code>default_value</code></li>
                 </ul>
             </li>
-
         </ul>
     </dd>
 </dl>
@@ -56,7 +55,10 @@ title: _.M.oneOf
 ```js
 var items = [1,2,3,'a'];
 _.M.oneOf(1, items); // 1
-_.M.oneOf(0, items); // 1
 _.M.oneOf('a', items); // 'a'
-_.M.oneOf('b', items, 'C'); // 'C'
+//
+_.M.oneOf(0, items); // 1
+//
+_.M.oneOf(1, items, 'FOO'); // 1
+_.M.oneOf('b', items, 'FOO'); // 'FOO'
 ```

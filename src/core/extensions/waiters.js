@@ -89,7 +89,7 @@
             if (this.has(waiter_key)) {
                 var waiter = _waiters[waiter_key];
 
-                result = waiter.callback.apply(this_arg || null, _.M.asArray(args));
+                result = waiter.callback.apply(this_arg || null, _.M.beArray(args));
                 if (waiter.once) {
                     this.remove(waiter_key);
                 }

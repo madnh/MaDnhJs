@@ -21,7 +21,7 @@
 
 
     jForm.getSelectOptionTagByValue = function (name, values, container) {
-        var queries = _.map(_.M.asArray(values), function (value) {
+        var queries = _.map(_.M.beArray(values), function (value) {
             return 'option[value="' + value + '"]';
         });
 
@@ -29,7 +29,7 @@
     };
 
     jForm.setSelectTagValue = function (name, values, container) {
-        $(container || 'body').find('select[name="' + name + '"]').val(_.M.asArray(values));
+        $(container || 'body').find('select[name="' + name + '"]').val(_.M.beArray(values));
     };
 
     jForm.removeSelectOptionTags = function (name, values, container) {
@@ -66,7 +66,7 @@
     };
 
     jForm.getCheckboxTagsByValue = function (name, values, container) {
-        var queries = _.map(_.M.asArray(values), function (value) {
+        var queries = _.map(_.M.beArray(values), function (value) {
             return 'input[type="checkbox"][name="' + name + '"][value="' + value + '"]';
         });
 

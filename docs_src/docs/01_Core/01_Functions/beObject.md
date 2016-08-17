@@ -1,4 +1,4 @@
-title: _.M.asObject
+title: _.M.beObject
 -----
 
 Đảm bảo đối số truyền vào là object hoặc là tên và giá trị của một field của object
@@ -36,9 +36,9 @@ title: _.M.asObject
 
 ### Ví dụ
 ```js
-_.M.asObject(); //{}
-_.M.asObject('yahoo'); //{}
-_.M.asObject(235); //{}
-_.M.asObject('yahoo', 123); //{yahoo: 123}
-_.M.asObject({yahoo: 123, goooo:'ASDWd'}); //{yahoo: 123, goooo:'ASDWd'}
+_.M.beObject(); //{}
+_.M.beObject('yahoo'); //{}
+_.M.beObject(235); //{}
+_.M.beObject('yahoo', 123); //{yahoo: 123}
+_.M.beObject({yahoo: 123, goooo:'ASDWd'}); //{yahoo: 123, goooo:'ASDWd'}
 ```

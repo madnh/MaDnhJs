@@ -80,6 +80,73 @@
         return slice.apply(args, slice.call(arguments, 1));
     };
 
+    M.beNumber = function (value, default_value) {
+        value = parseFloat(value);
+
+        if (M.isNumeric(value)) {
+            return value;
+        }
+        if (_.isUndefined(default_value)) {
+            return 0;
+        }
+
+        return M.isNumeric(default_value) ? parseFloat(default_value) : M.beNumber(default_value, 0);
+    };
+    /**
+     * Make sure function parameter is array
+     * @param {*} value
+     * @returns {Array}
+     * @example
+     * _.M.beArray([123]) => [123]
+     * _.M.beArray(123) => [123]
+     */
+    M.beArray = function (value) {
+        if (_.isArray(value)) {
+            return value;
+        }
+        return [value];
+    };
+
+    /**
+     * Make sure first argument is object or arguments are name and value of object
+     * @param {*} [name]
+     * @param {*} [value]
+     * @returns {*}
+     * @example
+     * _.M.beObject(); //{}
+     * _.M.beObject(['foo', 'bar', 123]); //{0: "a", 1: 'bar', 2: 123}
+     * _.M.beObject('yahoo'); //{0: "yahoo"}
+     * _.M.beObject(235); //{0: 235}
+     * _.M.beObject('yahoo', 123); //{yahoo: 123}
+     * _.M.beObject({yahoo: 123, goooo:'ASDWd'}); //{yahoo: 123, goooo:'ASDWd'}
+     *
+     */
+    M.beObject = function (name, value) {
+        switch (true) {
+            case arguments.length == 1:
+                if (_.isObject(name)) {
+                    return name;
+                } else if (_.isArray(name) || _.isArguments(name)) {
+                    return _.object(Object.keys(name), name);
+                }
+
+                return {0: name};
+                break;
+
+            case arguments.length >= 2:
+                if (_.isObject(name)) {
+                    return name;
+                }
+                var obj = {};
+
+                obj[name] = value;
+
+                return obj;
+        }
+
+        return {};
+    };
+
     /**
      * Loop over array or object like _.each but breakable
      * @param {object|array} obj Loop object
@@ -158,7 +225,8 @@
         return removed;
     };
 
-    var idCounter = {};
+    var unique_id_status = {};
+
     /**
      * Return Next ID of type
      * @param {string} [type="unique_id"] Type of ID
@@ -175,16 +243,18 @@
      *
      */
     M.nextID = function (type, type_as_prefix) {
+        var id = 0;
+
         if (_.isEmpty(type)) {
             type = 'unique_id';
         }
-        if (!_.has(idCounter, type)) {
-            idCounter[type] = 0;
+        if (!unique_id_status.hasOwnProperty(type)) {
+            unique_id_status[type] = id;
+        } else {
+            id = ++unique_id_status[type];
         }
 
-        var id = idCounter[type]++;
-
-        return type_as_prefix || _.isUndefined(type_as_prefix) ? type + '_' + id : id;
+        return get_unique_id_with_prefix(type, id, type_as_prefix);
     };
 
     /**
@@ -205,18 +275,38 @@
      * _.M.currentID(); //unique_id_2
      */
     M.currentID = function (type, type_as_prefix) {
-        var id = 0;
+        if (_.isEmpty(type)) {
+            type = 'unique_id';
+        }
+
+        var id = unique_id_status.hasOwnProperty(type) ? unique_id_status[type] : 0;
+
+        return get_unique_id_with_prefix(type, id, type_as_prefix);
+    };
+
+    M.resetID = function (type, value) {
+        value = arguments.length > 1 ? M.beNumber(value) : 0;
+        value = Math.max(value, 0);
 
         if (_.isEmpty(type)) {
             type = 'unique_id';
         }
-        if (_.has(idCounter, type)) {
-            id = idCounter[type] - 1;
+        if (value == 0) {
+            delete unique_id_status[type];
+        } else if (unique_id_status.hasOwnProperty(type)) {
+            unique_id_status[type] = value;
         }
 
-
-        return type_as_prefix || _.isUndefined(type_as_prefix) ? type + '_' + id : id;
+        return value;
     };
+
+    function get_unique_id_with_prefix(type, id, type_as_prefix) {
+        if (type_as_prefix || _.isUndefined(type_as_prefix)) {
+            return type + '_' + id;
+        }
+
+        return id;
+    }
 
 
     /**
@@ -295,60 +385,6 @@
         return obj == null || type === 'string' || type === 'number' || type === 'boolean';
     };
 
-    /**
-     * Make sure function parameter is array
-     * @param {*} value
-     * @returns {Array}
-     * @example
-     * _.M.asArray([123]) => [123]
-     * _.M.asArray(123) => [123]
-     */
-    M.asArray = function (value) {
-        if (_.isArray(value)) {
-            return value;
-        }
-        return [value];
-    };
-
-    /**
-     * Make sure first argument is object or arguments are name and value of object
-     * @param {*} [name]
-     * @param {*} [value]
-     * @returns {*}
-     * @example
-     * _.M.asObject(); //{}
-     * _.M.asObject(['foo', 'bar', 123]); //{0: "a", 1: 'bar', 2: 123}
-     * _.M.asObject('yahoo'); //{0: "yahoo"}
-     * _.M.asObject(235); //{0: 235}
-     * _.M.asObject('yahoo', 123); //{yahoo: 123}
-     * _.M.asObject({yahoo: 123, goooo:'ASDWd'}); //{yahoo: 123, goooo:'ASDWd'}
-     *
-     */
-    M.asObject = function (name, value) {
-        switch (true) {
-            case arguments.length == 1:
-                if (_.isObject(name)) {
-                    return name;
-                } else if (_.isArray(name) || _.isArguments(name)) {
-                    return _.object(Object.keys(name), name);
-                }
-
-                return {0: name};
-                break;
-
-            case arguments.length >= 2:
-                if (_.isObject(name)) {
-                    return name;
-                }
-                var obj = {};
-
-                obj[name] = value;
-
-                return obj;
-        }
-
-        return {};
-    };
 
     /**
      * Merge multiple array
@@ -371,7 +407,7 @@
 
         _.each(arguments, function (obj) {
             if (_.isArray(obj) || !_.isObject(obj)) {
-                obj = M.asArray(obj);
+                obj = M.beArray(obj);
                 obj = _.object(_.range(next_index, next_index += obj.length), obj);
             }
 
@@ -1107,7 +1143,7 @@
      * _.M.toggle(arr, ['A', 'V'], false) => ['B', 'C', 'D']
      */
     M.toggle = function (array, elements, status) {
-        elements = _.uniq(_.asArray(elements));
+        elements = _.uniq(_.beArray(elements));
         if (_.isUndefined(status)) {
             var exclude = _.intersection(array, elements);
             var include = _.difference(elements, array);
@@ -1240,7 +1276,7 @@
      */
     M.callFunc = function (callback, args, context) {
         if (arguments.length >= 2) {
-            args = M.asArray(args);
+            args = M.beArray(args);
         } else {
             args = [];
         }
@@ -1374,6 +1410,55 @@
         return createConsoleCB.apply(null, ['error'].concat(slice.apply(arguments)));
     };
 
+
+    var debug_types_status = {}, is_active_all_debug_type = false;
+
+    M.isDebugging = function (type) {
+        if (is_active_all_debug_type || _.isEmpty(type)) {
+            return is_active_all_debug_type;
+        }
+
+        return debug_types_status.hasOwnProperty(type) && debug_types_status[type];
+
+    };
+    M.debugging = function (type) {
+        if (_.isEmpty(type)) {
+            is_active_all_debug_type = true;
+            return;
+        }
+
+        debug_types_status[type] = true;
+    };
+    M.debugComplete = function (type) {
+        if (_.isEmpty(type)) {
+            is_active_all_debug_type = false;
+            return;
+        }
+
+        delete debug_types_status[type];
+    };
+    M.onDebugging = function (type, callback) {
+        if (this.isDebugging(type)) {
+            M.callFunc(callback);
+        }
+    };
+    M.getDebugString = function (details, glue) {
+        var result = [];
+
+        _.each(M.beArray(details), function (item) {
+            result.push(JSON.stringify(item));
+        });
+
+        return result.join(glue || "\n");
+    };
+
+    M.debugStatus = function () {
+        return {
+            _all: is_active_all_debug_type,
+            types: _.clone(debug_types_status)
+        }
+    };
+
     /**
      *
      * @param args
@@ -1388,10 +1473,10 @@
      * _.M.optionalArgs([true, 'A'], order, rules);//{bool: true, str: "A"}
      * _.M.optionalArgs(['A'], order, rules); //{str: "A"}
      * _.M.optionalArgs(['A', 'V'], order, rules); //{int: "A", bool: "V"}
-     * _.M.optionalArgs([1, []], order, rules); //{int: 1, bool: Array[0]}
-     * _.M.optionalArgs([true, []], order, rules); //{bool: true, str: Array[0]}
-     * _.M.optionalArgs(['A', []], order, rules); //{int: "A", bool: Array[0]}
-     * _.M.optionalArgs([[], []], order, rules); //{int: Array[0], bool: Array[0]}
+     * _.M.optionalArgs([1, []], order, rules); //{int: 1, bool: []}
+     * _.M.optionalArgs([true, []], order, rules); //{int: true, bool: []}
+     * _.M.optionalArgs(['A', []], order, rules); //{int: "A", bool: []}
+     * _.M.optionalArgs([[], []], order, rules); //{int: Array[0], bool: []}
      *
      * _.M.optionalArgs(['A', 'V'], ['int', 'bool', 'str', 'str2'], {int: 'number', bool: 'boolean', str: 'string', str2: 'string'});
      * //=> {str: "A", str2: "V"}
@@ -1422,7 +1507,7 @@
                 found = false;
                 last_index = index;
 
-                _.M.loop(args_with_type.slice(index), (function (tmp_arg, tmp_type) {
+                M.loop(args_with_type.slice(index), (function (tmp_arg, tmp_type) {
                     return function (types) {
                         if (types === true || tmp_type === types
                             || (_.isArray(types) && -1 != types.indexOf(tmp_type))

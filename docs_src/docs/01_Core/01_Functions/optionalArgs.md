@@ -54,10 +54,10 @@ _.M.optionalArgs([1, true, 'A'], order, rules); //{int: 1, bool: true, str: "A"}
 _.M.optionalArgs([true, 'A'], order, rules);//{bool: true, str: "A"}
 _.M.optionalArgs(['A'], order, rules); //{str: "A"}
 _.M.optionalArgs(['A', 'V'], order, rules); //{int: "A", bool: "V"}
-_.M.optionalArgs([1, []], order, rules); //{int: 1, bool: Array[0]}
-_.M.optionalArgs([true, []], order, rules); //{bool: true, str: Array[0]}
-_.M.optionalArgs(['A', []], order, rules); //{int: "A", bool: Array[0]}
-_.M.optionalArgs([[], []], order, rules); //{int: Array[0], bool: Array[0]}
+_.M.optionalArgs([1, []], order, rules); //{int: 1, bool: []}
+_.M.optionalArgs([true, []], order, rules); //{int: true, bool: []}
+_.M.optionalArgs(['A', []], order, rules); //{int: "A", bool: []}
+_.M.optionalArgs([[], []], order, rules); //{int: Array[0], bool: []}
 
 _.M.optionalArgs(['A', 'V'], ['int', 'bool', 'str', 'str2'], {int: 'number', bool: 'boolean', str: 'string', str2: 'string'});
 //=> {str: "A", str2: "V"}

@@ -191,7 +191,7 @@
     };
 
     Dialog.prototype.option = function (name, value) {
-        var option = _.M.asObject.apply(_.M, _.toArray(arguments));
+        var option = _.M.beObject.apply(_.M, _.toArray(arguments));
 
         if (option.template_name) {
             this.setTemplate(_.M.Template.templateInstance(_.M.DIALOG_TEMPLATE_TYPE, option.template_name));

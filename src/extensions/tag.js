@@ -80,7 +80,7 @@
         } else {
             tag_arr.push('>');
 
-            _.each(_.M.asArray(this.content), function (tmp_children) {
+            _.each(_.M.beArray(this.content), function (tmp_children) {
                 tag_arr.push(tmp_children + '');
             });
 
@@ -119,7 +119,7 @@
         _.each(this._data, function (data_value, data_name) {
             element.setAttribute('data-' + data_name, _.clone(data_value));
         });
-        _.each(_.M.asArray(this.content), function (tmp_children) {
+        _.each(_.M.beArray(this.content), function (tmp_children) {
             element.appendChild(document.createTextNode(tmp_children.toString()));
         });
 
@@ -303,7 +303,7 @@
         var content = '';
 
         if (arguments.length == 0) {
-            _.each(_.M.asArray(this.content), function (tmp_children) {
+            _.each(_.M.beArray(this.content), function (tmp_children) {
                 content += tmp_children.toString();
             });
             return content;
@@ -397,7 +397,7 @@
     TAG.prototype.toggleClass = function (classes, status) {
         var curr_classes = this.class();
 
-        classes = _.uniq(_.M.asArray(classes));
+        classes = _.uniq(_.M.beArray(classes));
         if (_.isUndefined(status)) {
             var exclude = _.intersection(curr_classes, classes);
             var include = _.difference(classes, curr_classes);

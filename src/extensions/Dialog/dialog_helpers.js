@@ -401,7 +401,7 @@
         if (!_.isArray(classes)) {
             (classes + '').split(' ');
         }
-        classes = _.flatten(_.M.asArray(classes));
+        classes = _.flatten(_.M.beArray(classes));
 
         if (!_.isEmpty(classes)) {
             return _.map(classes, function (class_name) {

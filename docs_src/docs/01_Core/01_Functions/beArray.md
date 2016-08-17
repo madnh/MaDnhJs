@@ -1,4 +1,4 @@
-title: _.M.asArray
+title: _.M.beArray
 -----
 
 Đảm bảo giá trị truyền vào là array
@@ -30,6 +30,6 @@ title: _.M.asArray
 
 ### Ví dụ
 ```js
-_.M.asArray([123]) => [123]
-_.M.asArray(123) => [123]
+_.M.beArray([123]); //[123]
+_.M.beArray(123); //[123]
 ```
