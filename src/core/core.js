@@ -1413,6 +1413,11 @@
 
     var debug_types_status = {}, is_active_all_debug_type = false;
 
+    /**
+     *
+     * @param type
+     * @returns {boolean}
+     */
     M.isDebugging = function (type) {
         if (is_active_all_debug_type || _.isEmpty(type)) {
             return is_active_all_debug_type;
@@ -1421,6 +1426,10 @@
         return debug_types_status.hasOwnProperty(type) && debug_types_status[type];
 
     };
+    /**
+     *
+     * @param [type] default is all debug type
+     */
     M.debugging = function (type) {
         if (_.isEmpty(type)) {
             is_active_all_debug_type = true;
@@ -1429,19 +1438,38 @@
 
         debug_types_status[type] = true;
     };
+    /**
+     *
+     * @param [type] default is all debug type
+     */
     M.debugComplete = function (type) {
         if (_.isEmpty(type)) {
             is_active_all_debug_type = false;
+            debug_types_status = {};
+
             return;
         }
 
         delete debug_types_status[type];
     };
+
+    /**
+     * Run callback if is in debugging of a type
+     * @param type null - all debug type
+     * @param {function} callback
+     */
     M.onDebugging = function (type, callback) {
         if (this.isDebugging(type)) {
             M.callFunc(callback);
         }
     };
+
+    /**
+     * Get json string of an array
+     * @param {array} details
+     * @param {string} [glue="\n"]
+     * @returns {string}
+     */
     M.getDebugString = function (details, glue) {
         var result = [];
 
@@ -1450,13 +1478,6 @@
         });
 
         return result.join(glue || "\n");
-    };
-
-    M.debugStatus = function () {
-        return {
-            _all: is_active_all_debug_type,
-            types: _.clone(debug_types_status)
-        }
     };
 
     /**
