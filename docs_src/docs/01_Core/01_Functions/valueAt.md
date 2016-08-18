@@ -45,10 +45,10 @@ Trả về giá trị tại một vị trí của array, hỗ trợ lấy các g
 var arr = ['a', 'b', 'c'];
 var str = 'Yahoo';
 
-_.M.valueAt(a, 1); //'b'
-_.M.valueAt(a, 5); //'c'
-_.M.valueAt(a, -1); //'c'
-_.M.valueAt(a, -2); //'b'
+_.M.valueAt(arr, 1); //'b'
+_.M.valueAt(arr, 4); //'b'
+_.M.valueAt(arr, -1); //'c'
+_.M.valueAt(arr, -2); //'b'
 _.M.valueAt(str, 2); //'h'
 _.M.valueAt(str, -2); //'o'
 ```

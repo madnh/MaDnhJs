@@ -1073,7 +1073,7 @@
      * _.M.valueAt(str, -2); //'o'
      */
     M.valueAt = function (array, index) {
-        if (_.isLikeString(array)) {
+        if (M.isLikeString(array)) {
             array = (array + '').split('');
         }
         if (!_.isArray(array)) {
@@ -1143,7 +1143,7 @@
      * _.M.toggle(arr, ['A', 'V'], false) => ['B', 'C', 'D']
      */
     M.toggle = function (array, elements, status) {
-        elements = _.uniq(_.beArray(elements));
+        elements = _.uniq(M.beArray(elements));
         if (_.isUndefined(status)) {
             var exclude = _.intersection(array, elements);
             var include = _.difference(elements, array);
