@@ -42,7 +42,7 @@
      * @constant {string} VERSION
      * @default
      */
-    var version = '1.2.5';
+    var version = '1.2.6';
 
     var M = {};
     Object.defineProperty(M, 'VERSION', {
@@ -225,48 +225,48 @@
         return removed;
     };
 
-    var unique_id_status = {};
+    var unique_id_current_status = {};
 
     /**
-     * Return Next ID of type
+     * Return Next ID of type, start from 1
      * @param {string} [type="unique_id"] Type of ID
      * @param {boolean} [type_as_prefix = true]  Use type as prefix of return ID
      * @returns {string|number}
      * @example <caption>Default type</caption>
-     * _.M.nextID(); //unique_id_0
      * _.M.nextID(); //unique_id_1
-     * _.M.nextID(null, false); //2
-     * _.M.nextID('superman'); //superman_0
+     * _.M.nextID(); //unique_id_2
+     * _.M.nextID(null, false); //3
      * _.M.nextID('superman'); //superman_1
-     * _.M.nextID(); //unique_id_3
-     * _.M.nextID('superman', false); //2
+     * _.M.nextID('superman'); //superman_2
+     * _.M.nextID(); //unique_id_4
+     * _.M.nextID('superman', false); //3
      *
      */
     M.nextID = function (type, type_as_prefix) {
-        var id = 0;
-
         if (_.isEmpty(type)) {
             type = 'unique_id';
         }
-        if (!unique_id_status.hasOwnProperty(type)) {
-            unique_id_status[type] = id;
+        if (!unique_id_current_status.hasOwnProperty(type)) {
+            unique_id_current_status[type] = 1;
         } else {
-            id = ++unique_id_status[type];
+            unique_id_current_status[type]++;
         }
 
-        return get_unique_id_with_prefix(type, id, type_as_prefix);
+        return get_unique_id_with_prefix(type, unique_id_current_status[type], type_as_prefix);
     };
 
     /**
      * Return current ID of type
      * @param {string} [type="unique_id"] Type of ID
      * @param {boolean} [type_as_prefix = true] Use type as prefix of return ID
-     * @returns {string|number}
+     * @returns {boolean|string|number}
      * @example
+     * _.M.currentID(); //false
      * _.M.nextID(); //unique_id_0
      * _.M.nextID(); //unique_id_1
      * _.M.currentID(); //unique_id_1
      * _.M.currentID(null, false); //1
+     * _.M.currentID('superman'); //false
      * _.M.nextID('superman'); //superman_0
      * _.M.nextID('superman'); //superman_1
      * _.M.currentID('superman'); //superman_1
@@ -279,22 +279,30 @@
             type = 'unique_id';
         }
 
-        var id = unique_id_status.hasOwnProperty(type) ? unique_id_status[type] : 0;
+        if (!unique_id_current_status.hasOwnProperty(type)) {
+            return false;
+        }
 
-        return get_unique_id_with_prefix(type, id, type_as_prefix);
+        return get_unique_id_with_prefix(type, unique_id_current_status[type], type_as_prefix);
     };
 
+    /**
+     *
+     * @param {string} type a type, do not require existed
+     * @param {number} [value]
+     * @returns {number|*}
+     */
     M.resetID = function (type, value) {
-        value = arguments.length > 1 ? M.beNumber(value) : 0;
-        value = Math.max(value, 0);
-
         if (_.isEmpty(type)) {
             type = 'unique_id';
         }
-        if (value == 0) {
-            delete unique_id_status[type];
-        } else if (unique_id_status.hasOwnProperty(type)) {
-            unique_id_status[type] = value;
+
+        if (_.isUndefined(value)) {
+            delete unique_id_current_status[type];
+        } else {
+            value = arguments.length > 1 ? M.beNumber(value) : 0;
+            value = Math.max(value, 0);
+            unique_id_current_status[type] = value;
         }
 
         return value;

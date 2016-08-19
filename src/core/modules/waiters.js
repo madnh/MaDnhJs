@@ -16,22 +16,22 @@
          * @param {string} waiter_key
          */
         has: function (waiter_key) {
-            return _.has(_waiters, waiter_key);
+            return _waiters.hasOwnProperty(waiter_key) && _waiters[waiter_key].times > 0;
         },
 
         /**
          * Add callback
          * @param {(string|function)} callback Callback
-         * @param {boolean} [once = true] Waiter is run only one time
+         * @param {int} [times = 1] Run times
          * @param {string} [description = ''] Waiter description
          * @returns string Callback key
          */
-        add: function (callback, once, description) {
+        add: function (callback, times, description) {
             var key = _.M.nextID('waiter_key', true);
 
             _waiters[key] = {
                 callback: callback,
-                once: _.isUndefined(once) || Boolean(once),
+                times: _.isUndefined(times) ? 1 : times,
                 description: description || ''
             };
 
@@ -41,18 +41,19 @@
         /**
          * Similar to "add" but add waiter key to window as function
          * @param {(string|function)} callback Callback
-         * @param {boolean} [once = true] Waiter is run only one time
+         * @param {int} [times = 1] Run times
          * @param {string} [description] Waiter description
          * @returns {(string|number)} Waiter key/function name
          */
-        createFunc: function (callback, once, description) {
-            var key = this.add(callback, once, description);
+        createFunc: function (callback, times, description) {
+            var key = this.add(callback, times, description);
             var self = this;
 
-            window[key] = function () {
-                var args = [key].concat([Array.prototype.slice.call(arguments)]);
-                self.run.apply(self, args);
-            };
+            window[key] = (function (key) {
+                return function () {
+                    return self.run.apply(self, [key].concat(_.toArray(arguments)));
+                };
+            })(key);
 
             return key;
         },
@@ -62,10 +63,11 @@
          * @returns {Array} Removed waiters
          */
         remove: function () {
-            var removed = [];
-            var self = this;
-            _.each(_.flatten(_.toArray(arguments)), function (tmp_key) {
-                if (self.has(tmp_key)) {
+            var keys = _.flatten(_.toArray(arguments)),
+                removed = [];
+
+            _.each(keys, function (tmp_key) {
+                if (_waiters.hasOwnProperty(tmp_key)) {
                     removed.push(tmp_key);
                     window[tmp_key] = undefined;
                     delete _waiters[tmp_key];
@@ -84,16 +86,18 @@
          * @returns {*}
          */
         run: function (waiter_key, args, this_arg) {
-            var result = false;
+            var result;
 
             if (this.has(waiter_key)) {
-                var waiter = _waiters[waiter_key];
+                result = _waiters[waiter_key].callback.apply(this_arg || null, _.M.beArray(args));
 
-                result = waiter.callback.apply(this_arg || null, _.M.beArray(args));
-                if (waiter.once) {
+                if (--_waiters[waiter_key].times < 1) {
                     this.remove(waiter_key);
                 }
+            } else {
+                throw new Error('Waiter key is non-exists: ' + waiter_key);
             }
+
             return result;
         },
 

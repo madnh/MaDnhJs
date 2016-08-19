@@ -2,7 +2,7 @@
 <head>
     <meta charset="utf-8">
     <title>Mocha Tests</title>
-    <link href="https://cdn.rawgit.com/mochajs/mocha/2.2.5/mocha.css" rel="stylesheet" />
+    <link href="https://cdn.rawgit.com/mochajs/mocha/2.2.5/mocha.css" rel="stylesheet"/>
 </head>
 <body>
 <div id="mocha"></div>
@@ -16,7 +16,12 @@
 <script src="/dist/madnh.js"></script>
 
 <script>mocha.setup('bdd')</script>
-<script src="js/test_files/core.js"></script>
+<script src="js/test_files/core/core.js"></script>
+<script src="js/test_files/core/modules/flag.js"></script>
+<script src="js/test_files/core/modules/cache.js"></script>
+<script src="js/test_files/core/modules/waiter.js"></script>
+<script src="js/test_files/core/modules/pre_options.js"></script>
+<script src="js/test_files/core/modules/base_class.js"></script>
 <script>
     mocha.globals(['jQuery']);
 

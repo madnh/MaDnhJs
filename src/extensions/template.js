@@ -140,6 +140,10 @@
         return this;
     };
 
+    /**
+     *
+     * @returns {boolean|number}
+     */
     Template.prototype.currentDraw = function () {
         return _.M.currentID(this.id + '_draw', false);
     };

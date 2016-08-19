@@ -5,13 +5,13 @@
  * @requires _.M.EventEmitter
  */
 ;(function (_) {
-    /**
-     *
-     * @type {_.M.EventEmitter}
-     */
-    var app_instance = new _.M.EventEmitter();
+    function App() {
+        _.M.EventEmitter.call(this);
 
-    app_instance._event_privates = ['init'];
+        this.private('init');
+    }
+
+    _.M.inherit(App, _.M.EventEmitter);
 
     /**
      * Option this app
@@ -19,7 +19,7 @@
      * @param {*} value
      * @param {string} [separator='.']
      */
-    app_instance.option = function (option, value, separator) {
+    App.prototype.option = function (option, value, separator) {
         var options = {}, invalid_options;
 
         if (_.isObject(option)) {
@@ -50,18 +50,13 @@
     /**
      * Add init callback
      * @param {function} callback
-     * @param {boolean} [once=true]
-     * @param {number} [priority]
+     * @param {boolean} [time=1]
+     * @param {number} [priority=_.M.PRIORITY_DEFAULT]
      */
-    app_instance.onInit = function (callback, once, priority) {
-        var options = _.M.optionalArgs(Array.prototype.slice.call(arguments, 1), ['once', 'priority'], {
-            once: 'boolean',
-            priority: 'number'
-        });
-
+    App.prototype.onInit = function (callback, time, priority) {
         this.addListener('init', callback, {
-            times: !options.hasOwnProperty('once') || !Boolean(options.once) ? 1 : -1,
-            priority: options.priority || _.M.PRIORITY_DEFAULT
+            times: time || 1,
+            priority: priority || _.M.PRIORITY_DEFAULT
         });
 
         return this;
@@ -71,16 +66,15 @@
      * Init App
      * @param {boolean} [reset=false]
      */
-    app_instance.init = function (reset) {
+    App.prototype.init = function (reset) {
         this.emitEvent('init');
 
         reset && this.resetEvents('init');
     };
 
-    app_instance.resetInitCallbacks = function () {
+    App.prototype.resetInitCallbacks = function () {
         this.resetEvents('init');
     };
 
-    _.module('App', app_instance);
-
+    _.module('App', new App);
 })(_);

@@ -1774,48 +1774,48 @@
         return removed;
     };
 
-    var unique_id_status = {};
+    var unique_id_current_status = {};
 
     /**
-     * Return Next ID of type
+     * Return Next ID of type, start from 1
      * @param {string} [type="unique_id"] Type of ID
      * @param {boolean} [type_as_prefix = true]  Use type as prefix of return ID
      * @returns {string|number}
      * @example <caption>Default type</caption>
-     * _.M.nextID(); //unique_id_0
      * _.M.nextID(); //unique_id_1
-     * _.M.nextID(null, false); //2
-     * _.M.nextID('superman'); //superman_0
+     * _.M.nextID(); //unique_id_2
+     * _.M.nextID(null, false); //3
      * _.M.nextID('superman'); //superman_1
-     * _.M.nextID(); //unique_id_3
-     * _.M.nextID('superman', false); //2
+     * _.M.nextID('superman'); //superman_2
+     * _.M.nextID(); //unique_id_4
+     * _.M.nextID('superman', false); //3
      *
      */
     M.nextID = function (type, type_as_prefix) {
-        var id = 0;
-
         if (_.isEmpty(type)) {
             type = 'unique_id';
         }
-        if (!unique_id_status.hasOwnProperty(type)) {
-            unique_id_status[type] = id;
+        if (!unique_id_current_status.hasOwnProperty(type)) {
+            unique_id_current_status[type] = 1;
         } else {
-            id = ++unique_id_status[type];
+            unique_id_current_status[type]++;
         }
 
-        return get_unique_id_with_prefix(type, id, type_as_prefix);
+        return get_unique_id_with_prefix(type, unique_id_current_status[type], type_as_prefix);
     };
 
     /**
      * Return current ID of type
      * @param {string} [type="unique_id"] Type of ID
      * @param {boolean} [type_as_prefix = true] Use type as prefix of return ID
-     * @returns {string|number}
+     * @returns {boolean|string|number}
      * @example
+     * _.M.currentID(); //false
      * _.M.nextID(); //unique_id_0
      * _.M.nextID(); //unique_id_1
      * _.M.currentID(); //unique_id_1
      * _.M.currentID(null, false); //1
+     * _.M.currentID('superman'); //false
      * _.M.nextID('superman'); //superman_0
      * _.M.nextID('superman'); //superman_1
      * _.M.currentID('superman'); //superman_1
@@ -1828,22 +1828,30 @@
             type = 'unique_id';
         }
 
-        var id = unique_id_status.hasOwnProperty(type) ? unique_id_status[type] : 0;
+        if (!unique_id_current_status.hasOwnProperty(type)) {
+            return false;
+        }
 
-        return get_unique_id_with_prefix(type, id, type_as_prefix);
+        return get_unique_id_with_prefix(type, unique_id_current_status[type], type_as_prefix);
     };
 
+    /**
+     *
+     * @param {string} type a type, do not require existed
+     * @param {number} [value]
+     * @returns {number|*}
+     */
     M.resetID = function (type, value) {
-        value = arguments.length > 1 ? M.beNumber(value) : 0;
-        value = Math.max(value, 0);
-
         if (_.isEmpty(type)) {
             type = 'unique_id';
         }
-        if (value == 0) {
-            delete unique_id_status[type];
-        } else if (unique_id_status.hasOwnProperty(type)) {
-            unique_id_status[type] = value;
+
+        if (_.isUndefined(value)) {
+            delete unique_id_current_status[type];
+        } else {
+            value = arguments.length > 1 ? M.beNumber(value) : 0;
+            value = Math.max(value, 0);
+            unique_id_current_status[type] = value;
         }
 
         return value;
@@ -3171,7 +3179,7 @@
  * @module _.M.FLAG
  * @memberOf _.M
  */
-;(function(_){
+;(function (_) {
     var _flags = {};
 
     /**
@@ -3193,12 +3201,7 @@
          * @param {boolean} [is_active=true] Flag status, default is True
          */
         flag: function (name, is_active) {
-            if (_.isUndefined(is_active)) {
-                is_active = true;
-            } else {
-                is_active = Boolean(is_active);
-            }
-
+            is_active = _.isUndefined(is_active) ? true : Boolean(is_active);
 
             if (_.isArray(name)) {
                 _.each(name, function (tmp_name) {
@@ -3251,11 +3254,16 @@
             return result;
         },
 
-
+        /**
+         *
+         * @param {string|string[]} name
+         * @param {boolean} [status] Missing - On/off when current flag's status is off/on.
+         * Boolean - On/off when status is true/false
+         */
         toggle: function (name, status) {
             var thisFunc = arguments.callee;
             var self = this;
-            
+
             if (_.isArray(name)) {
                 _.each(name, function (tmp_name) {
                     thisFunc.apply(self, [tmp_name, status]);
@@ -3267,6 +3275,10 @@
                     this.flag(name, !this.isFlagged(name));
                 }
             }
+        },
+
+        reset: function () {
+            _flags = {};
         }
 
     });
@@ -3284,7 +3296,7 @@
      */
     function BaseClass() {
         if (!this.type_prefix) {
-            this.type_prefix = (_.M.className(this, true) + '').toLowerCase();
+            this.type_prefix = _.M.className(this, true);
         }
 
         if (!this.id) {
@@ -3314,7 +3326,7 @@
         if (!_.isEmpty(not_founds)) {
             throw new Error('PreOptions are not defined:' + not_founds.join(', '));
         }
-        if(!_.isObject(options)){
+        if (!_.isObject(options)) {
             options = {};
         }
         if (!real_time) {
@@ -3438,8 +3450,9 @@
 
             return Object.keys(_pre_options);
         },
-        debug: function () {
-            return _pre_options;
+
+        reset: function () {
+            _pre_options = {};
         }
     });
 })(_);
@@ -4349,22 +4362,22 @@
          * @param {string} waiter_key
          */
         has: function (waiter_key) {
-            return _.has(_waiters, waiter_key);
+            return _waiters.hasOwnProperty(waiter_key) && _waiters[waiter_key].times > 0;
         },
 
         /**
          * Add callback
          * @param {(string|function)} callback Callback
-         * @param {boolean} [once = true] Waiter is run only one time
+         * @param {int} [times = 1] Run times
          * @param {string} [description = ''] Waiter description
          * @returns string Callback key
          */
-        add: function (callback, once, description) {
+        add: function (callback, times, description) {
             var key = _.M.nextID('waiter_key', true);
 
             _waiters[key] = {
                 callback: callback,
-                once: _.isUndefined(once) || Boolean(once),
+                times: _.isUndefined(times) ? 1 : times,
                 description: description || ''
             };
 
@@ -4374,18 +4387,19 @@
         /**
          * Similar to "add" but add waiter key to window as function
          * @param {(string|function)} callback Callback
-         * @param {boolean} [once = true] Waiter is run only one time
+         * @param {int} [times = 1] Run times
          * @param {string} [description] Waiter description
          * @returns {(string|number)} Waiter key/function name
          */
-        createFunc: function (callback, once, description) {
-            var key = this.add(callback, once, description);
+        createFunc: function (callback, times, description) {
+            var key = this.add(callback, times, description);
             var self = this;
 
-            window[key] = function () {
-                var args = [key].concat([Array.prototype.slice.call(arguments)]);
-                self.run.apply(self, args);
-            };
+            window[key] = (function (key) {
+                return function () {
+                    return self.run.apply(self, [key].concat(_.toArray(arguments)));
+                };
+            })(key);
 
             return key;
         },
@@ -4395,10 +4409,11 @@
          * @returns {Array} Removed waiters
          */
         remove: function () {
-            var removed = [];
-            var self = this;
-            _.each(_.flatten(_.toArray(arguments)), function (tmp_key) {
-                if (self.has(tmp_key)) {
+            var keys = _.flatten(_.toArray(arguments)),
+                removed = [];
+
+            _.each(keys, function (tmp_key) {
+                if (_waiters.hasOwnProperty(tmp_key)) {
                     removed.push(tmp_key);
                     window[tmp_key] = undefined;
                     delete _waiters[tmp_key];
@@ -4417,16 +4432,18 @@
          * @returns {*}
          */
         run: function (waiter_key, args, this_arg) {
-            var result = false;
+            var result;
 
             if (this.has(waiter_key)) {
-                var waiter = _waiters[waiter_key];
+                result = _waiters[waiter_key].callback.apply(this_arg || null, _.M.beArray(args));
 
-                result = waiter.callback.apply(this_arg || null, _.M.beArray(args));
-                if (waiter.once) {
+                if (--_waiters[waiter_key].times < 1) {
                     this.remove(waiter_key);
                 }
+            } else {
+                throw new Error('Waiter key is non-exists: ' + waiter_key);
             }
+
             return result;
         },
 
@@ -4478,8 +4495,15 @@
      * @class _.M.EventEmitter
      * @extends _.M.BaseClass
      */
-    function EventEmitter(limit) {
+    function EventEmitter(options) {
         _.M.BaseClass.call(this);
+
+        options = _.defaults(options || {}, {
+            'limit': _.M.EVENT_EMITTER_EVENT_LIMIT_LISTENERS,
+            'events': {},
+            'event_mimics': [],
+            'event_privates': []
+        });
 
         /**
          *
@@ -4497,7 +4521,7 @@
         /**
          * @private
          */
-        this._limit = (limit || _.M.EVENT_EMITTER_EVENT_LIMIT_LISTENERS) + 0;
+        this._limit = _.M.beNumber(options.limit, _.M.EVENT_EMITTER_EVENT_LIMIT_LISTENERS);
 
         /**
          *
@@ -4526,6 +4550,16 @@
          * @private
          */
         this._event_privates = ['attach', 'attached'];
+
+        if (!_.isEmpty(options['events'])) {
+            this.addListeners(_.M.beObject(options['events']));
+        }
+        if (!_.isEmpty(options['event_mimics'])) {
+            this.mimic(_.M.beArray(options['event_mimics']));
+        }
+        if (!_.isEmpty(options['event_privates'])) {
+            this.private(_.M.beArray(options['event_privates']));
+        }
     }
 
     /**
@@ -4873,6 +4907,16 @@
         return this.removeListener.apply(this, arguments);
     };
 
+    /**
+     * Set events is private
+     */
+    EventEmitter.prototype.private = function () {
+        this._event_privates = this._event_privates.concat(_.flatten(_.toArray(arguments)));
+    };
+
+    /**
+     * Set events is mimic
+     */
     EventEmitter.prototype.mimic = function () {
         this._event_mimics = this._event_mimics.concat(_.flatten(_.toArray(arguments)));
     };
@@ -5153,7 +5197,7 @@
      * Set cache value
      * @param {string} name
      * @param {*} value
-     * @param {number} [live_time]
+     * @param {number} [live_time] Seconds
      * @private
      */
     function _set_cache(name, value, live_time) {
@@ -5188,14 +5232,17 @@
     function _cache_collection_change(name, value, addMode) {
         var live_time = _.M.CACHE_MEDIUM;
         var new_value = [];
+
         if (_.isUndefined(addMode)) {
             addMode = true;
         }
 
         if (_has_cache(name)) {
             var old_detail = _cache_data[name];
+
             live_time = old_detail.live_time;
             new_value = old_detail.value;
+
             if (!_.isArray(new_value)) {
                 new_value = [new_value];
             }
@@ -5203,12 +5250,18 @@
                 new_value.push(value);
             } else {
                 var last_index = _.lastIndexOf(new_value, value);
+
                 if (last_index != -1) {
                     new_value.splice(last_index, 1);
                 }
             }
         } else {
-            new_value.push(value);
+            if(addMode){
+                new_value.push(value);
+            }else{
+                return undefined;
+            }
+
         }
         _set_cache(name, new_value, live_time);
         return _cache_data[name].value;
@@ -5391,7 +5444,7 @@
          * @returns {number}
          */
         increment: function (name, value) {
-            if (!_.isNumeric(value)) {
+            if (!_.M.isNumeric(value)) {
                 value = 1;
             }
             return _cache_number_change(name, value, true);
@@ -5407,7 +5460,7 @@
          * @returns {number}
          */
         decrement: function (name, value) {
-            if (!_.isNumeric(value)) {
+            if (!_.M.isNumeric(value)) {
                 value = 1;
             }
             return _cache_number_change(name, value, false);
@@ -5702,13 +5755,13 @@
  * @requires _.M.EventEmitter
  */
 ;(function (_) {
-    /**
-     *
-     * @type {_.M.EventEmitter}
-     */
-    var app_instance = new _.M.EventEmitter();
+    function App() {
+        _.M.EventEmitter.call(this);
 
-    app_instance._event_privates = ['init'];
+        this.private('init');
+    }
+
+    _.M.inherit(App, _.M.EventEmitter);
 
     /**
      * Option this app
@@ -5716,7 +5769,7 @@
      * @param {*} value
      * @param {string} [separator='.']
      */
-    app_instance.option = function (option, value, separator) {
+    App.prototype.option = function (option, value, separator) {
         var options = {}, invalid_options;
 
         if (_.isObject(option)) {
@@ -5747,18 +5800,13 @@
     /**
      * Add init callback
      * @param {function} callback
-     * @param {boolean} [once=true]
-     * @param {number} [priority]
+     * @param {boolean} [time=1]
+     * @param {number} [priority=_.M.PRIORITY_DEFAULT]
      */
-    app_instance.onInit = function (callback, once, priority) {
-        var options = _.M.optionalArgs(Array.prototype.slice.call(arguments, 1), ['once', 'priority'], {
-            once: 'boolean',
-            priority: 'number'
-        });
-
+    App.prototype.onInit = function (callback, time, priority) {
         this.addListener('init', callback, {
-            times: !options.hasOwnProperty('once') || !Boolean(options.once) ? 1 : -1,
-            priority: options.priority || _.M.PRIORITY_DEFAULT
+            times: time || 1,
+            priority: priority || _.M.PRIORITY_DEFAULT
         });
 
         return this;
@@ -5768,18 +5816,17 @@
      * Init App
      * @param {boolean} [reset=false]
      */
-    app_instance.init = function (reset) {
+    App.prototype.init = function (reset) {
         this.emitEvent('init');
 
         reset && this.resetEvents('init');
     };
 
-    app_instance.resetInitCallbacks = function () {
+    App.prototype.resetInitCallbacks = function () {
         this.resetEvents('init');
     };
 
-    _.module('App', app_instance);
-
+    _.module('App', new App);
 })(_);
 /**
  * @module _.M.AJAX

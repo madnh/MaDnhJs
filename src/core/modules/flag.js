@@ -2,7 +2,7 @@
  * @module _.M.FLAG
  * @memberOf _.M
  */
-;(function(_){
+;(function (_) {
     var _flags = {};
 
     /**
@@ -24,12 +24,7 @@
          * @param {boolean} [is_active=true] Flag status, default is True
          */
         flag: function (name, is_active) {
-            if (_.isUndefined(is_active)) {
-                is_active = true;
-            } else {
-                is_active = Boolean(is_active);
-            }
-
+            is_active = _.isUndefined(is_active) ? true : Boolean(is_active);
 
             if (_.isArray(name)) {
                 _.each(name, function (tmp_name) {
@@ -82,11 +77,16 @@
             return result;
         },
 
-
+        /**
+         *
+         * @param {string|string[]} name
+         * @param {boolean} [status] Missing - On/off when current flag's status is off/on.
+         * Boolean - On/off when status is true/false
+         */
         toggle: function (name, status) {
             var thisFunc = arguments.callee;
             var self = this;
-            
+
             if (_.isArray(name)) {
                 _.each(name, function (tmp_name) {
                     thisFunc.apply(self, [tmp_name, status]);
@@ -98,6 +98,10 @@
                     this.flag(name, !this.isFlagged(name));
                 }
             }
+        },
+
+        reset: function () {
+            _flags = {};
         }
 
     });

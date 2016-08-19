@@ -1,7 +1,6 @@
 describe('CORE', function () {
     var expect = chai.expect,
-        chai_assert = chai.assert,
-        _win = window;
+        chai_assert = chai.assert;
 
     it('MADNH MIXIN SUCCESS', function () {
         expect(_).to.have.property('M');
@@ -285,7 +284,7 @@ describe('CORE', function () {
                 chai_assert.strictEqual(_.M.className(_.App), '[object Object]');
             });
             it('Constructor only', function () {
-                chai_assert.strictEqual(_.M.className(_.App, true), 'EventEmitter');
+                chai_assert.strictEqual(_.M.className(_.App, true), 'App');
             });
         });
         describe('_.M.contentType', function () {
@@ -296,7 +295,7 @@ describe('CORE', function () {
                 chai_assert.strictEqual(_.M.contentType(true), 'boolean');
                 chai_assert.strictEqual(_.M.contentType([1, 2]), 'Array');
                 chai_assert.strictEqual(_.M.contentType({color: 'red'}), 'Object');
-                chai_assert.strictEqual(_.M.contentType(_.App), 'EventEmitter');
+                chai_assert.strictEqual(_.M.contentType(_.App), 'App');
             });
         });
         describe('_.M.currentID', function () {
@@ -306,9 +305,8 @@ describe('CORE', function () {
             });
 
             it('Default type', function () {
-                chai_assert.strictEqual(_.M.currentID(), 'unique_id_0');
-                chai_assert.strictEqual(_.M.currentID(null), 'unique_id_0');
-                _.M.nextID();
+                chai_assert.isFalse(_.M.currentID());
+                chai_assert.isFalse(_.M.currentID(null));
                 _.M.nextID();
                 chai_assert.strictEqual(_.M.currentID(), 'unique_id_1');
                 chai_assert.strictEqual(_.M.currentID(null), 'unique_id_1');
@@ -316,8 +314,7 @@ describe('CORE', function () {
             });
 
             it('Custom type', function () {
-                chai_assert.strictEqual(_.M.currentID('superman'), 'superman_0');
-                _.M.nextID('superman');
+                chai_assert.isFalse(_.M.currentID('superman'));
                 _.M.nextID('superman');
                 chai_assert.strictEqual(_.M.currentID('superman'), 'superman_1');
                 chai_assert.strictEqual(_.M.currentID('superman', false), 1);
@@ -499,7 +496,7 @@ describe('CORE', function () {
         describe('_.M.isInstanceOf', function () {
             it('test', function () {
                 chai_assert.isFalse(_.M.isInstanceOf(_.M.isInstanceOf(123, 'Object'), 'EventEmitter'));
-                chai_assert.isTrue(_.M.isInstanceOf(_.App, 'EventEmitter'));
+                chai_assert.isTrue(_.M.isInstanceOf(_.App, 'App'));
                 chai_assert.isTrue(_.M.isInstanceOf(new _.M.EventEmitter(), 'EventEmitter'));
                 chai_assert.isTrue(_.M.isInstanceOf(123, 'Number'));
                 chai_assert.isTrue(_.M.isInstanceOf('123', 'String'));
@@ -633,14 +630,14 @@ describe('CORE', function () {
             });
 
             it('Default type', function () {
-                chai_assert.strictEqual(_.M.nextID(), 'unique_id_0');
                 chai_assert.strictEqual(_.M.nextID(), 'unique_id_1');
-                chai_assert.strictEqual(_.M.nextID(null, false), 2);
+                chai_assert.strictEqual(_.M.nextID(), 'unique_id_2');
+                chai_assert.strictEqual(_.M.nextID(null, false), 3);
             });
             it('Custom type', function () {
-                chai_assert.strictEqual(_.M.nextID('superman'), 'superman_0');
                 chai_assert.strictEqual(_.M.nextID('superman'), 'superman_1');
-                chai_assert.strictEqual(_.M.nextID('superman', false), 2);
+                chai_assert.strictEqual(_.M.nextID('superman'), 'superman_2');
+                chai_assert.strictEqual(_.M.nextID('superman', false), 3);
             });
         });
         describe('_.M.nowSecond', function () {

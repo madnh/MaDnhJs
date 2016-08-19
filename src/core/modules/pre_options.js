@@ -14,7 +14,7 @@
         if (!_.isEmpty(not_founds)) {
             throw new Error('PreOptions are not defined:' + not_founds.join(', '));
         }
-        if(!_.isObject(options)){
+        if (!_.isObject(options)) {
             options = {};
         }
         if (!real_time) {
@@ -138,8 +138,9 @@
 
             return Object.keys(_pre_options);
         },
-        debug: function () {
-            return _pre_options;
+
+        reset: function () {
+            _pre_options = {};
         }
     });
 })(_);

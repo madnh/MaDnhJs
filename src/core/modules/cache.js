@@ -74,7 +74,7 @@
      * Set cache value
      * @param {string} name
      * @param {*} value
-     * @param {number} [live_time]
+     * @param {number} [live_time] Seconds
      * @private
      */
     function _set_cache(name, value, live_time) {
@@ -109,14 +109,17 @@
     function _cache_collection_change(name, value, addMode) {
         var live_time = _.M.CACHE_MEDIUM;
         var new_value = [];
+
         if (_.isUndefined(addMode)) {
             addMode = true;
         }
 
         if (_has_cache(name)) {
             var old_detail = _cache_data[name];
+
             live_time = old_detail.live_time;
             new_value = old_detail.value;
+
             if (!_.isArray(new_value)) {
                 new_value = [new_value];
             }
@@ -124,12 +127,18 @@
                 new_value.push(value);
             } else {
                 var last_index = _.lastIndexOf(new_value, value);
+
                 if (last_index != -1) {
                     new_value.splice(last_index, 1);
                 }
             }
         } else {
-            new_value.push(value);
+            if(addMode){
+                new_value.push(value);
+            }else{
+                return undefined;
+            }
+
         }
         _set_cache(name, new_value, live_time);
         return _cache_data[name].value;
@@ -312,7 +321,7 @@
          * @returns {number}
          */
         increment: function (name, value) {
-            if (!_.isNumeric(value)) {
+            if (!_.M.isNumeric(value)) {
                 value = 1;
             }
             return _cache_number_change(name, value, true);
@@ -328,7 +337,7 @@
          * @returns {number}
          */
         decrement: function (name, value) {
-            if (!_.isNumeric(value)) {
+            if (!_.M.isNumeric(value)) {
                 value = 1;
             }
             return _cache_number_change(name, value, false);

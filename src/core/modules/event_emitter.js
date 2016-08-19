@@ -28,8 +28,15 @@
      * @class _.M.EventEmitter
      * @extends _.M.BaseClass
      */
-    function EventEmitter(limit) {
+    function EventEmitter(options) {
         _.M.BaseClass.call(this);
+
+        options = _.defaults(options || {}, {
+            'limit': _.M.EVENT_EMITTER_EVENT_LIMIT_LISTENERS,
+            'events': {},
+            'event_mimics': [],
+            'event_privates': []
+        });
 
         /**
          *
@@ -47,7 +54,7 @@
         /**
          * @private
          */
-        this._limit = (limit || _.M.EVENT_EMITTER_EVENT_LIMIT_LISTENERS) + 0;
+        this._limit = _.M.beNumber(options.limit, _.M.EVENT_EMITTER_EVENT_LIMIT_LISTENERS);
 
         /**
          *
@@ -76,6 +83,16 @@
          * @private
          */
         this._event_privates = ['attach', 'attached'];
+
+        if (!_.isEmpty(options['events'])) {
+            this.addListeners(_.M.beObject(options['events']));
+        }
+        if (!_.isEmpty(options['event_mimics'])) {
+            this.mimic(_.M.beArray(options['event_mimics']));
+        }
+        if (!_.isEmpty(options['event_privates'])) {
+            this.private(_.M.beArray(options['event_privates']));
+        }
     }
 
     /**
@@ -423,6 +440,16 @@
         return this.removeListener.apply(this, arguments);
     };
 
+    /**
+     * Set events is private
+     */
+    EventEmitter.prototype.private = function () {
+        this._event_privates = this._event_privates.concat(_.flatten(_.toArray(arguments)));
+    };
+
+    /**
+     * Set events is mimic
+     */
     EventEmitter.prototype.mimic = function () {
         this._event_mimics = this._event_mimics.concat(_.flatten(_.toArray(arguments)));
     };
