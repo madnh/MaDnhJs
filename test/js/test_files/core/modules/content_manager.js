@@ -27,6 +27,7 @@ describe('MODULE - ContentManager', function () {
                 detail;
 
             chai_assert.isString(key = items.add(val));
+            chai_assert.isTrue(items.isValidKey(key));
             chai_assert.isTrue(items.has(key));
             chai_assert.isTrue(items.hasType('string'));
             chai_assert.isTrue(items.hasContent(val));
@@ -37,6 +38,12 @@ describe('MODULE - ContentManager', function () {
             chai_assert.strictEqual(detail.content, val);
             chai_assert.property(detail, 'meta');
             chai_assert.isUndefined(detail.meta);
+            //
+            var keys = items.keys();
+            //
+            chai_assert.isObject(keys);
+            chai_assert.property(keys, 'string');
+            chai_assert.sameMembers(keys['string'], [key]);
         });
         it('Add, unique', function () {
             var val = _.M.randomString(20),
@@ -232,12 +239,10 @@ describe('MODULE - ContentManager', function () {
                 meta: undefined,
                 content: value
             };
-            console.log(must_be);
         });
 
         it('must return object if found', function () {
             var found = items.find(callback);
-            console.log(found);
             chai_assert.deepEqual(found, must_be);
         });
         it('custom type, must return object if found', function () {
@@ -251,5 +256,87 @@ describe('MODULE - ContentManager', function () {
         it('must return false when custom type non-exists', function () {
             chai_assert.isFalse(items.find(callback, 'other_type'));
         });
+    });
+    describe('Using', function () {
+        before(reset_each_descibe);
+        var value = 'item',
+            key;
+
+        it('Return true for an exists key', function () {
+            key = items.add(value);
+            //
+            chai_assert.isTrue(items.has(key));
+            chai_assert.isTrue(items.using(key));
+            chai_assert.isTrue(items.isUsing(key));
+        });
+        it('Return false if key isn\'t exists', function () {
+            var non_exists_key = _.M.nowSecond() + _.M.randomString(5);
+            //
+            chai_assert.isFalse(items.has(non_exists_key));
+            chai_assert.isFalse(items.using(non_exists_key));
+            chai_assert.isFalse(items.isUsing(non_exists_key));
+        });
+        it('Return true if a content is using', function () {
+            chai_assert.isTrue(items.isUsing(key));
+            chai_assert.isTrue(items.isUsingContent(value));
+        });
+        it('Return false if a content is unused', function () {
+            var non_exists_content = _.M.nowSecond() + _.M.randomString(5);
+            //
+            chai_assert.isFalse(items.hasContent(non_exists_content));
+            chai_assert.isFalse(items.isUsingContent(non_exists_content));
+        });
+        it('unused an using key', function () {
+            var other_using_key = items.add(_.M.randomString(10));
+            //
+            chai_assert.isTrue(items.using(other_using_key));
+            chai_assert.isTrue(items.isUsing(other_using_key));
+            //
+            items.unused(other_using_key);
+            //
+            chai_assert.isTrue(items.has(other_using_key));
+            chai_assert.isFalse(items.isUsing(other_using_key));
+            items.remove(other_using_key);
+        });
+        it('Valid usingKeys', function () {
+            var using_keys = items.usingKeys();
+            //
+            chai_assert.isArray(using_keys);
+            chai_assert.isAbove(using_keys.length, 0);
+            chai_assert.include(using_keys, key);
+        });
+        it('Valid usingKeys grouped', function () {
+            var using_keys_grouped = items.usingKeys(true);
+            //
+            chai_assert.isObject(using_keys_grouped);
+            chai_assert.property(using_keys_grouped, 'string');
+            chai_assert.sameMembers(using_keys_grouped['string'], [key]);
+        });
+
+        it('remove using keys', function () {
+            var using_keys = items.usingKeys(true),
+                removed_using_keys = _.groupBy(items.removeUsing(), 'type');
+            //
+            removed_using_keys = _.mapObject(removed_using_keys, function (array_of_detail) {
+                return _.pluck(array_of_detail, 'key');
+            });
+
+            chai_assert.deepEqual(using_keys, removed_using_keys);
+            chai_assert.isFalse(items.isUsing(key));
+        });
+        it('remove unused keys', function () {
+            var other_key = items.add(_.M.randomString(10)),
+                unused_keys = items.unusedKeys(true),
+                removed_unused_keys = _.groupBy(items.removeUnusing(), 'type');
+            //
+            removed_unused_keys = _.mapObject(removed_unused_keys, function (array_of_detail) {
+                return _.pluck(array_of_detail, 'key');
+            });
+            chai_assert.deepEqual(unused_keys, removed_unused_keys);
+            chai_assert.isFalse(items.has(other_key));
+            chai_assert.isFalse(items.isUsing(other_key));
+        });
+
+
     });
 });
