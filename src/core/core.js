@@ -42,7 +42,7 @@
      * @constant {string} VERSION
      * @default
      */
-    var version = '1.2.7';
+    var version = '1.2.8';
 
     var M = {};
     Object.defineProperty(M, 'VERSION', {
@@ -627,7 +627,7 @@
 
     /**
      * Get random string
-     * @param {number} length
+     * @param {number} [length]
      * @param {string} [chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ']
      * @returns {string}
      * @example
@@ -640,6 +640,8 @@
             chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         }
         chars_length = chars.length;
+
+        length = M.beNumber(length, 10);
 
         for (i = length; i > 0; --i) {
             result += chars[Math.round(Math.random() * (chars_length - 1))];

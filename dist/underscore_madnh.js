@@ -1591,7 +1591,7 @@
      * @constant {string} VERSION
      * @default
      */
-    var version = '1.2.7';
+    var version = '1.2.8';
 
     var M = {};
     Object.defineProperty(M, 'VERSION', {
@@ -2176,7 +2176,7 @@
 
     /**
      * Get random string
-     * @param {number} length
+     * @param {number} [length]
      * @param {string} [chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ']
      * @returns {string}
      * @example
@@ -2189,6 +2189,8 @@
             chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         }
         chars_length = chars.length;
+
+        length = M.beNumber(length, 10);
 
         for (i = length; i > 0; --i) {
             result += chars[Math.round(Math.random() * (chars_length - 1))];
@@ -3547,6 +3549,16 @@
     ContentManager.prototype.types = function () {
         return Object.keys(this._contents);
     };
+    ContentManager.prototype.keys = function () {
+        var self = this,
+            result = {};
+
+        Object.keys(this._contents).forEach(function (type) {
+            result[type] = Object.keys(self._contents[type]);
+        });
+
+        return result;
+    };
 
     /**
      * Filter content by callback, return position of valid contents
@@ -3653,7 +3665,7 @@
      * @returns {boolean}
      */
     ContentManager.prototype.isValidKey = function (key) {
-        return false !== getContentTypeFromKey(key);
+        return false !== getContentTypeFromKey(this, key);
     };
 
     /**
@@ -3862,7 +3874,7 @@
     /**
      * Get unused keys
      * @param {boolean} [grouped=false] Group keys by type
-     * @return {{}|string[]}
+     * @return {object|Array}
      */
     ContentManager.prototype.unusedKeys = function (grouped) {
         var using_grouped = this.usingKeys(true),
@@ -4072,17 +4084,10 @@
      * @returns {{using: string[], types: {}}}
      */
     ContentManager.prototype.status = function () {
-        var status = {
-                using: Object.keys(this._usings),
-                types: {}
-            },
-            self = this;
-
-        Object.keys(this._contents).forEach(function (type) {
-            status.types[type] = Object.keys(self._contents[type]);
-        });
-
-        return status;
+        return {
+            using: Object.keys(this._usings),
+            types: this.keys()
+        };
     };
 
     /**
