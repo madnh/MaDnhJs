@@ -2,17 +2,17 @@
 <head>
     <meta charset="utf-8">
     <title>Mocha Tests</title>
-    <link href="https://cdn.rawgit.com/mochajs/mocha/2.2.5/mocha.css" rel="stylesheet"/>
+    <link href="vendor/mocha/mocha.css" rel="stylesheet"/>
 </head>
 <body>
 <div id="mocha"></div>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.3/jquery.min.js"></script>
-<script src="https://cdn.rawgit.com/Automattic/expect.js/0.3.1/index.js"></script>
-<script src="https://cdn.rawgit.com/mochajs/mocha/2.2.5/mocha.js"></script>
-<script src="https://cdn.rawgit.com/chaijs/chai/3.5.0/chai.js"></script>
+<script src="vendor/jquery/dist/jquery.min.js"></script>
+<script src="vendor/expect.js/index.js"></script>
+<script src="vendor/mocha/mocha.js"></script>
+<script src="vendor/chai/chai.js"></script>
 
-<script src="/dist/underscore.js"></script>
+<script src="vendor/underscore/underscore-min.js"></script>
 <script src="/dist/madnh.js"></script>
 
 <script>mocha.setup('bdd')</script>
@@ -22,6 +22,7 @@
 <script src="js/test_files/core/modules/waiter.js"></script>
 <script src="js/test_files/core/modules/pre_options.js"></script>
 <script src="js/test_files/core/modules/base_class.js"></script>
+<script src="js/test_files/core/modules/content_manager.js"></script>
 <script>
     mocha.globals(['jQuery']);
 

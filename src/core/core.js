@@ -1241,8 +1241,8 @@
 
     /**
      * Inherit constructor prototype
-     * @param {function} destination Destination constructor
-     * @param {function} source Source constructor
+     * @param {function} subclass_constructor Destination constructor
+     * @param {function} base_class_constructor Source constructor
      * @param {boolean} [addSuper = true] Add property to destination prototype that reference back to source prototype
      *
      * @see https://github.com/Olical/Heir
@@ -1254,12 +1254,12 @@
      *
      * _.M.inherit(MyEE, _.M.EventEmitter);
      */
-    M.inherit = function (destination, source, addSuper) {
-        var proto = destination.prototype = Object.create(source.prototype);
-        proto.constructor = destination;
+    M.inherit = function (subclass_constructor, base_class_constructor, addSuper) {
+        var proto = subclass_constructor.prototype = Object.create(base_class_constructor.prototype);
+        proto.constructor = subclass_constructor;
 
         if (addSuper || _.isUndefined(addSuper)) {
-            proto._super = source.prototype;
+            proto._super = base_class_constructor.prototype;
         }
     };
 

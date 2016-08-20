@@ -2790,8 +2790,8 @@
 
     /**
      * Inherit constructor prototype
-     * @param {function} destination Destination constructor
-     * @param {function} source Source constructor
+     * @param {function} subclass_constructor Destination constructor
+     * @param {function} base_class_constructor Source constructor
      * @param {boolean} [addSuper = true] Add property to destination prototype that reference back to source prototype
      *
      * @see https://github.com/Olical/Heir
@@ -2803,12 +2803,12 @@
      *
      * _.M.inherit(MyEE, _.M.EventEmitter);
      */
-    M.inherit = function (destination, source, addSuper) {
-        var proto = destination.prototype = Object.create(source.prototype);
-        proto.constructor = destination;
+    M.inherit = function (subclass_constructor, base_class_constructor, addSuper) {
+        var proto = subclass_constructor.prototype = Object.create(base_class_constructor.prototype);
+        proto.constructor = subclass_constructor;
 
         if (addSuper || _.isUndefined(addSuper)) {
-            proto._super = source.prototype;
+            proto._super = base_class_constructor.prototype;
         }
     };
 
@@ -3505,14 +3505,15 @@
 
     /**
      * Extract key to get content {string} type
+     * @param {ContentManager} instance
      * @param {string} key
      * @returns {(string|boolean)} False when invalid key
      */
-    function getContentTypeFromKey(key) {
-        var info = key.split('_');
+    function getContentTypeFromKey(instance, key) {
+        var info = key.substr(instance.id.length + 1).split('_');
 
         if (info.length > 2) {
-            return info[1];
+            return info[0];
         }
         return false;
     }
@@ -3521,12 +3522,13 @@
      * @class _.M.ContentManager
      */
     function ContentManager() {
-        this.type_prefix = 'content';
         _.M.BaseClass.call(this);
 
         this._contents = {};
         this._usings = {};
     }
+
+    _.M.inherit(ContentManager, _.M.BaseClass);
 
     /**
      * Check if content type is exists
@@ -3680,13 +3682,13 @@
             return true;
         }
 
-        if(!this.isValidKey(key)){
-            return false;
+        var type = getContentTypeFromKey(this, key);
+
+        if (false !== type) {
+            return this._contents.hasOwnProperty(type) && this._contents[type].hasOwnProperty(key);
         }
 
-        var type = getContentTypeFromKey(key);
-
-        return this._contents.hasOwnProperty(type) && this._contents[type].hasOwnProperty(key);
+        return false;
     };
 
     /**
@@ -3713,7 +3715,7 @@
             type = _.M.contentType(content);
         }
 
-        var key = _.M.nextID(this.type_prefix + '_' + type, true);
+        var key = _.M.nextID(this.id + '_' + type);
 
         if (!this._contents.hasOwnProperty(type)) {
             this._contents[type] = {};
@@ -3769,7 +3771,7 @@
             }
         }
         if (!_.isEmpty(keys)) {
-            var type_grouped = _.groupBy(_.M.beArray(keys), getContentTypeFromKey);
+            var type_grouped = _.groupBy(_.M.beArray(keys), _.partial(getContentTypeFromKey, this));
 
             for (type in type_grouped) {
                 if (type_grouped.hasOwnProperty(type)) {
@@ -3812,7 +3814,7 @@
     ContentManager.prototype.isUsingContent = function (content, type) {
         var positions = this.contentPositions(content, type);
 
-        if(!_.isEmpty(positions)){
+        if (!_.isEmpty(positions)) {
             return !_.isEmpty(_.intersection(_.pluck(positions, 'key'), Object.keys(this._usings)));
         }
 
@@ -3854,7 +3856,7 @@
      */
     ContentManager.prototype.usingKeys = function (grouped) {
         if (grouped) {
-            return _.groupBy(Object.keys(this._usings), getContentTypeFromKey);
+            return _.groupBy(Object.keys(this._usings), _.partial(getContentTypeFromKey, this));
         }
 
         return Object.keys(this._usings);
@@ -3895,7 +3897,7 @@
      * @returns {*}
      */
     ContentManager.prototype.get = function (key) {
-        var type = getContentTypeFromKey(key);
+        var type = getContentTypeFromKey(this, key);
 
         if (false !== type && this._contents[type].hasOwnProperty(key)) {
             return _.clone(this._contents[type][key]);
@@ -3957,7 +3959,7 @@
      */
     ContentManager.prototype.remove = function (keys) {
         var removes = [],
-            key_grouped = _.groupBy(_.flatten(_.toArray(arguments)), getContentTypeFromKey);
+            key_grouped = _.groupBy(_.flatten(_.toArray(arguments)), _.partial(getContentTypeFromKey, this));
 
         delete key_grouped['false'];
 
@@ -4013,7 +4015,7 @@
      */
     ContentManager.prototype.update = function (key, content, meta) {
         if (this.hasKey(key)) {
-            var type = getContentTypeFromKey(key);
+            var type = getContentTypeFromKey(this, key);
 
             this._contents[type][key].content = content;
 
@@ -4035,7 +4037,7 @@
      */
     ContentManager.prototype.updateMeta = function (key, meta) {
         if (this.hasKey(key)) {
-            var type = getContentTypeFromKey(key);
+            var type = getContentTypeFromKey(this, key);
 
             this._contents[type][key].meta = meta;
 
