@@ -48,7 +48,7 @@ describe('MODULES - WAITER', function () {
             chai_assert.isTrue(window.hasOwnProperty(key));
             //
             chai_assert.doesNotThrow(function () {
-                console.log(window[key]('Manh'));
+                window[key]('test');
             });
             //
             chai_assert.isFalse(_.M.WAITER.has(key));

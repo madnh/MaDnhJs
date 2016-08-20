@@ -42,7 +42,7 @@
      * @constant {string} VERSION
      * @default
      */
-    var version = '1.2.6';
+    var version = '1.2.7';
 
     var M = {};
     Object.defineProperty(M, 'VERSION', {
@@ -1963,9 +1963,10 @@
     function getContentTypeFromKey(instance, key) {
         var info = key.substr(instance.id.length + 1).split('_');
 
-        if (info.length > 2) {
+        if (info.length > 1) {
             return info[0];
         }
+
         return false;
     }
 
@@ -2000,7 +2001,13 @@
 
     /**
      * Filter content by callback, return position of valid contents
-     * @param callback Callback arguments: content, meta, content key, content type. Return true on valid content, otherwise
+     * @param {function} callback Callback arguments:
+     * - content
+     * - meta
+     * - key
+     * - content type.
+     * Return true on valid content, otherwise
+     *
      * @param types
      * @returns {Array} Each item is object:
      *  - type: content type
@@ -2010,31 +2017,25 @@
      */
     ContentManager.prototype.filter = function (callback, types) {
         var result = [],
-            type_checked = false,
-            type, self = this;
+            self = this;
 
         if (_.isUndefined(types)) {
             types = Object.keys(this._contents);
-            type_checked = true;
         } else {
-            types = _.M.beArray(types);
+            types = _.intersection(_.M.beArray(types), Object.keys(this._contents));
         }
 
         _.M.loop(types, function (type) {
-            if (type_checked || self._contents.hasOwnProperty(type)) {
-                _.M.loop(Object.keys(self._contents[type]), function (key) {
-                    if (callback(_.clone(self._contents[type][key].content), _.clone(self._contents[type][key].meta), key, type)) {
-                        result.push({
-                            type: type,
-                            key: key,
-                            content: _.clone(self._contents[type][key].content),
-                            meta: _.clone(self._contents[type][key].meta)
-                        });
-                    }
-                });
-            } else {
-                throw new Error('Content type not found');
-            }
+            _.M.loop(Object.keys(self._contents[type]), function (key) {
+                if (callback(_.clone(self._contents[type][key].content), _.clone(self._contents[type][key].meta), key, type)) {
+                    result.push({
+                        type: type,
+                        key: key,
+                        content: _.clone(self._contents[type][key].content),
+                        meta: self._contents[type][key].meta ? _.clone(self._contents[type][key].meta) : undefined
+                    });
+                }
+            });
         });
 
         return result;
@@ -2048,38 +2049,35 @@
      *  - type: content type
      *  - key: content key
      *  - content: content
+     *  - meta: meta
      */
     ContentManager.prototype.find = function (callback, types) {
         var found = false,
-            type_checked = false,
-            type, self = this;
+            self = this;
 
         if (_.isUndefined(types)) {
             types = Object.keys(this._contents);
-            type_checked = true;
         } else {
-            types = _.M.beArray(types);
+            types = _.intersection(_.M.beArray(types), Object.keys(this._contents));
         }
 
         _.M.loop(types, function (type) {
-            if (type_checked || self._contents.hasOwnProperty(type)) {
-                _.M.loop(Object.keys(self._contents[type]), function (key) {
-                    if (callback(_.clone(self._contents[type][key].content), _.clone(self._contents[type][key].meta), key, type)) {
-                        found = {
-                            type: type,
-                            key: key,
-                            content: _.clone(self._contents[type][key].content)
-                        };
+            _.M.loop(Object.keys(self._contents[type]), function (key) {
+                var item = self._contents[type][key];
+                if (callback(_.clone(item.content), _.clone(item.meta), key, type)) {
+                    found = {
+                        type: type,
+                        key: key,
+                        content: _.clone(item.content),
+                        meta: item.meta ? _.clone(item.meta) : undefined
+                    };
 
-                        return 'break';
-                    }
-                });
-
-                if (found) {
                     return 'break';
                 }
-            } else {
-                throw new Error('Invalid content type');
+            });
+
+            if (found) {
+                return 'break';
             }
         });
 
@@ -2128,7 +2126,7 @@
      * @param {string} key
      * @returns {boolean}
      */
-    ContentManager.prototype.hasKey = function (key) {
+    ContentManager.prototype.has = function (key) {
         if (this.isUsing(key)) {
             return true;
         }
@@ -2147,11 +2145,11 @@
      */
     ContentManager.prototype.clean = function () {
         var self = this;
-        Object.keys(this._contents).forEach(function (type) {
-            if (self._contents.hasOwnProperty(type) && _.isEmpty(self._contents[type])) {
+        _.each(Object.keys(this._contents), function (type) {
+            if (_.isEmpty(self._contents[type])) {
                 delete self._contents[type];
             }
-        });
+        })
     };
 
     /**
@@ -2279,7 +2277,7 @@
      * @return {boolean} True -> key is exists and set using status success. False -> key is not exists
      */
     ContentManager.prototype.using = function (key, is_using) {
-        if (this.hasKey(key)) {
+        if (this.has(key)) {
             if (_.isUndefined(is_using) || is_using) {
                 this._usings[key] = true;
             } else {
@@ -2407,6 +2405,9 @@
     /**
      * Remove content by key. Return removed keys
      * @param {string|string[]} keys
+     * @returns {object[]} Array of objects, each object has 2 item:
+     * - type: content type
+     * - key: removed key
      */
     ContentManager.prototype.remove = function (keys) {
         var removes = [],
@@ -2436,10 +2437,12 @@
     };
 
     /**
-     * Remove content, return content key
+     * Remove items by content
      * @param {*} content
      * @param {string} [type]
-     * @returns {Array} Removed positions
+     * @returns {object[]} Array of objects, each object has 2 item:
+     * - type: content type
+     * - key: removed key
      */
     ContentManager.prototype.removeContent = function (content, type) {
         var positions = this.contentPositions(content, type),
@@ -2465,7 +2468,7 @@
      * @returns {boolean}
      */
     ContentManager.prototype.update = function (key, content, meta) {
-        if (this.hasKey(key)) {
+        if (this.has(key)) {
             var type = getContentTypeFromKey(this, key);
 
             this._contents[type][key].content = content;
@@ -2487,7 +2490,7 @@
      * @returns {boolean}
      */
     ContentManager.prototype.updateMeta = function (key, meta) {
-        if (this.hasKey(key)) {
+        if (this.has(key)) {
             var type = getContentTypeFromKey(this, key);
 
             this._contents[type][key].meta = meta;
