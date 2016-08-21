@@ -2684,6 +2684,15 @@
     Priority.prototype.hasPriority = function (priority) {
         return this._priorities.hasOwnProperty(priority);
     };
+
+    /**
+     * Check if a key is exists
+     * @param {string} key
+     * @returns {*|boolean}
+     */
+    Priority.prototype.has = function (key) {
+        return this._content_manager.has(key);
+    };
     /**
      * Check if a content has exists
      * @param {*} content
@@ -2698,13 +2707,14 @@
      * @returns {{priorities: number, contents: number}}
      */
     Priority.prototype.status = function () {
-        var result = {
-                priorities: Object.keys(this._priorities).length,
+        var priorities = Object.keys(this._priorities),
+            result = {
+                priorities: priorities.length,
                 contents: 0
             },
             self = this;
 
-        Object.keys(this._priorities).forEach(function (priority) {
+        priorities.forEach(function (priority) {
             result.contents += self._priorities[priority].length;
         });
 
@@ -2719,13 +2729,11 @@
      * @returns {(string|boolean)} content key
      */
     Priority.prototype.addContent = function (content, priority, meta) {
-        if (_.isUndefined(priority)) {
-            priority = _.M.PRIORITY_DEFAULT;
-        }
-
         var key = this._content_manager.add(content, meta, 'priority');
 
         this._content_manager.using(key);
+        priority = _.M.beNumber(priority, _.M.PRIORITY_DEFAULT);
+
         if (!_.has(this._priorities, priority)) {
             this._priorities[priority] = [];
         }
@@ -2741,28 +2749,30 @@
      * @returns {boolean}
      */
     Priority.prototype.removeContent = function (content, priority) {
+        if (priority && !this.hasPriority(priority)) {
+            return false;
+        }
+
         var content_positions = this._content_manager.contentPositions(content, 'priority');
         var keys = _.pluck(content_positions, 'key');
 
         if (priority) {
-            if (this.hasPriority(priority)) {
-                return this.removeKey(_.intersection(keys, this._priorities[priority]));
-            }
-            return false;
+            return this.remove(_.intersection(keys, this._priorities[priority]));
         }
 
-        return this.removeKey(keys);
+        return this.remove(keys);
     };
 
     /**
      * Remove content by keys
-     * @param {string} key
+     * @param {string|string[]} keys
      * @returns {*} Removed content
      */
-    Priority.prototype.removeKey = function (key) {
+    Priority.prototype.remove = function (keys) {
         var self = this, removed;
 
-        removed = _.pluck(this._content_manager.remove(key), 'key');
+        removed = _.pluck(this._content_manager.remove(keys), 'key');
+
         _.each(Object.keys(this._priorities), function (tmp_priority) {
             self._priorities[tmp_priority] = _.difference(self._priorities[tmp_priority], removed);
         });
@@ -2785,7 +2795,7 @@
 
         _.each(priority_keys, function (priority) {
             var content_picked = _.pick(raw_contents, self._priorities[priority]);
-            
+
             if (content_only) {
                 contents = contents.concat(_.pluck(
                     _.values(content_picked),
@@ -3338,7 +3348,7 @@
             if (_.M.isLikeString(remover)) {
                 _.each(Object.keys(self._events), function (event_name) {
                     if (_.has(self._events[event_name].key_mapped, remover)) {
-                        self._events[event_name].priority.removeKey(self._events[event_name].key_mapped[remover]);
+                        self._events[event_name].priority.remove(self._events[event_name].key_mapped[remover]);
                         delete self._events[event_name].key_mapped[remover];
 
                         if (self._events[event_name].priority.status().contents == 0) {

@@ -410,7 +410,7 @@
             if (_.M.isLikeString(remover)) {
                 _.each(Object.keys(self._events), function (event_name) {
                     if (_.has(self._events[event_name].key_mapped, remover)) {
-                        self._events[event_name].priority.removeKey(self._events[event_name].key_mapped[remover]);
+                        self._events[event_name].priority.remove(self._events[event_name].key_mapped[remover]);
                         delete self._events[event_name].key_mapped[remover];
 
                         if (self._events[event_name].priority.status().contents == 0) {
