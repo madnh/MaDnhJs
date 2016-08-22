@@ -193,41 +193,58 @@
     };
 
     /**
-     * Remove content
-     * @param {*} content
-     * @param {number} priority
-     * @returns {boolean}
+     * Remove content by keys
+     * @param {string|string[]} keys
+     * @param {number|number[]} [priorities] Special priorities, default is all priorities
+     * @returns {string[]} Removed content
      */
-    Priority.prototype.removeContent = function (content, priority) {
-        if (priority && !this.hasPriority(priority)) {
-            return false;
+    Priority.prototype.remove = function (keys, priorities) {
+        var self = this, remove_keys = [];
+
+        if (!priorities) {
+            priorities = Object.keys(this._priorities);
+        } else {
+            priorities = _.M.castItemsType(_.M.beArray(priorities), 'number');
+            priorities = _.intersection(priorities, _.M.castItemsType(Object.keys(this._priorities), 'number'));
+        }
+        keys = _.M.beArray(keys);
+        _.M.loop(priorities, function (priority) {
+            var remove_keys_this_priority = _.intersection(keys, self._priorities[priority]);
+
+            if(_.isEmpty(remove_keys_this_priority)){
+                return;
+            }
+
+            remove_keys = remove_keys.concat(remove_keys_this_priority);
+            self._priorities[priority] = _.difference(remove_keys_this_priority, self._priorities[priority]);
+            keys = _.difference(keys, remove_keys_this_priority);
+
+            if (_.isEmpty(keys)) {
+                return 'break';
+            }
+        });
+        if(_.isEmpty(remove_keys)){
+            return [];
         }
 
-        var content_positions = this._content_manager.contentPositions(content, 'priority');
-        var keys = _.pluck(content_positions, 'key');
-
-        if (priority) {
-            return this.remove(_.intersection(keys, this._priorities[priority]));
-        }
-
-        return this.remove(keys);
+        return _.pluck(this._content_manager.remove(remove_keys), 'key');
     };
 
     /**
-     * Remove content by keys
-     * @param {string|string[]} keys
-     * @returns {*} Removed content
+     * Remove content
+     * @param {*} content
+     * @param {number|number[]} [priorities] Special priorities, default is all priorities
+     * @returns {string[]}
      */
-    Priority.prototype.remove = function (keys) {
-        var self = this, removed;
+    Priority.prototype.removeContent = function (content, priorities) {
+        var content_positions = this._content_manager.contentPositions(content, 'priority'),
+            keys = _.pluck(content_positions, 'key');
 
-        removed = _.pluck(this._content_manager.remove(keys), 'key');
+        if (priorities) {
+            return this.remove(keys, priorities);
+        }
 
-        _.each(Object.keys(this._priorities), function (tmp_priority) {
-            self._priorities[tmp_priority] = _.difference(self._priorities[tmp_priority], removed);
-        });
-
-        return removed;
+        return this.remove(keys);
     };
 
     /**
@@ -237,7 +254,7 @@
      */
     Priority.prototype.getContents = function (content_only) {
         var contents = [],
-            priority_keys = Object.keys(this._priorities),
+            priority_keys = _.M.castItemsType(Object.keys(this._priorities), 'number'),
             self = this,
             raw_contents = this._content_manager.getType('priority');
 

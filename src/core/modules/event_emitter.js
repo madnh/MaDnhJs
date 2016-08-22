@@ -212,40 +212,39 @@
             }
         });
 
-
-        if (listeners.length) {
-            if (option.key === null) {
-                option.key = _.M.nextID('event_emitter_listener', true);
-            }
-            var keys = [];
-
-            _.each(events, function (event) {
-                _.M.loop(listeners, function (listener) {
-                    if (option.context) {
-                        listener = listener.bind(option.context);
-                    }
-
-                    if (option.times != -1) {
-                        listener = _.before(option.times + 1, listener);
-                    }
-
-                    keys.push(self._events[event].priority.addContent(listener, option.priority, {
-                        listener_key: option.key,
-                        async: option.async
-                    }));
-                });
-
-                if (!_.has(self._events[event].key_mapped, option.key)) {
-                    self._events[event].key_mapped[option.key] = keys;
-                } else {
-                    self._events[event].key_mapped[option.key] = self._events[event].key_mapped[option.key].concat(keys);
-                }
-            });
-
-            return option.key;
+        if (!listeners.length) {
+            return false;
+        }
+        if (option.key === null) {
+            option.key = _.M.nextID('event_emitter_listener', true);
         }
 
-        return false;
+        var keys = [];
+
+        _.each(events, function (event) {
+            _.M.loop(listeners, function (listener) {
+                if (option.context) {
+                    listener = listener.bind(option.context);
+                }
+
+                if (option.times != -1) {
+                    listener = _.before(option.times + 1, listener);
+                }
+
+                keys.push(self._events[event].priority.addContent(listener, option.priority, {
+                    listener_key: option.key,
+                    async: option.async
+                }));
+            });
+
+            if (!_.has(self._events[event].key_mapped, option.key)) {
+                self._events[event].key_mapped[option.key] = keys;
+            } else {
+                self._events[event].key_mapped[option.key] = self._events[event].key_mapped[option.key].concat(keys);
+            }
+        });
+
+        return option.key;
     };
 
     /**
@@ -400,13 +399,13 @@
 
     /**
      * Remove listener by key
-     * @param {string|Function|Array} key_or_listener Listener key or listener it self
+     * @param {string|Function|Array} remove Listener / listener key or array of them
      * @param {number} [priority]
      */
-    EventEmitter.prototype.removeListener = function (key_or_listener, priority) {
+    EventEmitter.prototype.removeListener = function (remove, priority) {
         var self = this;
-        key_or_listener = _.M.beArray(key_or_listener);
-        _.each(key_or_listener, function (remover) {
+        remove = _.M.beArray(remove);
+        _.each(remove, function (remover) {
             if (_.M.isLikeString(remover)) {
                 _.each(Object.keys(self._events), function (event_name) {
                     if (_.has(self._events[event_name].key_mapped, remover)) {
@@ -427,7 +426,7 @@
                     }
                 });
             } else {
-                throw new Error('Invalid remover, it must be key of added listener or listener it self');
+                throw new Error('Invalid key or listener, it must be key of added listener or listener it self');
             }
         });
     };

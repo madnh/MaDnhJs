@@ -147,6 +147,51 @@
         return {};
     };
 
+    var cast_types = {};
+
+    cast_types['string'] = function (value) {
+        return value + '';
+    };
+    cast_types['boolean'] = function (value) {
+        return Boolean(value);
+    };
+
+    cast_types['number'] = function (value) {
+        return M.beNumber(value);
+    };
+    cast_types['integer'] = function (value) {
+        return Math.floor(M.beNumber(value));
+    };
+    cast_types['array'] = M.beArray;
+    cast_types['object'] = function (value) {
+        return M.beObject(value);
+    };
+
+    /**
+     * Convert array|object item to other type. Support types:
+     * - string
+     * - boolean
+     * - number
+     * - integer
+     * - array
+     * - object
+     *
+     * @param object
+     * @param type
+     * @return {Array|object}
+     * @throws Error when cast type is unsupported
+     */
+    M.castItemsType = function (object, type) {
+        if (!cast_types.hasOwnProperty(type)) {
+            throw new Error('Invalid cast type. Available types are: string, number, integer, array and object');
+        }
+        if (_.isArray(object)) {
+            return _.map(_.clone(object), cast_types[type]);
+        }
+
+        return _.mapObject(_.clone(object), cast_types[type]);
+    };
+
     /**
      * Loop over array or object like _.each but breakable
      * @param {object|array} obj Loop object
@@ -468,13 +513,12 @@
 
     /**
      * Get dirty of object with others object. Strict comparison
-     * @param callback
-     * @param object
-     * @param others
+     * @param {object} object
+     * @param {object} others
      * @return {*}
      */
-    M.diffObject = function (callback, object, others) {
-        var args = _.toArray(arguments);
+    M.diffObject = function (object, others) {
+        var args = _.flatten(_.toArray(arguments));
 
         args.unshift(is_diff_strict_cb);
 
@@ -2743,41 +2787,58 @@
     };
 
     /**
-     * Remove content
-     * @param {*} content
-     * @param {number} priority
-     * @returns {boolean}
+     * Remove content by keys
+     * @param {string|string[]} keys
+     * @param {number|number[]} [priorities] Special priorities, default is all priorities
+     * @returns {string[]} Removed content
      */
-    Priority.prototype.removeContent = function (content, priority) {
-        if (priority && !this.hasPriority(priority)) {
-            return false;
+    Priority.prototype.remove = function (keys, priorities) {
+        var self = this, remove_keys = [];
+
+        if (!priorities) {
+            priorities = Object.keys(this._priorities);
+        } else {
+            priorities = _.M.castItemsType(_.M.beArray(priorities), 'number');
+            priorities = _.intersection(priorities, _.M.castItemsType(Object.keys(this._priorities), 'number'));
+        }
+        keys = _.M.beArray(keys);
+        _.M.loop(priorities, function (priority) {
+            var remove_keys_this_priority = _.intersection(keys, self._priorities[priority]);
+
+            if(_.isEmpty(remove_keys_this_priority)){
+                return;
+            }
+
+            remove_keys = remove_keys.concat(remove_keys_this_priority);
+            self._priorities[priority] = _.difference(remove_keys_this_priority, self._priorities[priority]);
+            keys = _.difference(keys, remove_keys_this_priority);
+
+            if (_.isEmpty(keys)) {
+                return 'break';
+            }
+        });
+        if(_.isEmpty(remove_keys)){
+            return [];
         }
 
-        var content_positions = this._content_manager.contentPositions(content, 'priority');
-        var keys = _.pluck(content_positions, 'key');
-
-        if (priority) {
-            return this.remove(_.intersection(keys, this._priorities[priority]));
-        }
-
-        return this.remove(keys);
+        return _.pluck(this._content_manager.remove(remove_keys), 'key');
     };
 
     /**
-     * Remove content by keys
-     * @param {string|string[]} keys
-     * @returns {*} Removed content
+     * Remove content
+     * @param {*} content
+     * @param {number|number[]} [priorities] Special priorities, default is all priorities
+     * @returns {string[]}
      */
-    Priority.prototype.remove = function (keys) {
-        var self = this, removed;
+    Priority.prototype.removeContent = function (content, priorities) {
+        var content_positions = this._content_manager.contentPositions(content, 'priority'),
+            keys = _.pluck(content_positions, 'key');
 
-        removed = _.pluck(this._content_manager.remove(keys), 'key');
+        if (priorities) {
+            return this.remove(keys, priorities);
+        }
 
-        _.each(Object.keys(this._priorities), function (tmp_priority) {
-            self._priorities[tmp_priority] = _.difference(self._priorities[tmp_priority], removed);
-        });
-
-        return removed;
+        return this.remove(keys);
     };
 
     /**
@@ -2787,7 +2848,7 @@
      */
     Priority.prototype.getContents = function (content_only) {
         var contents = [],
-            priority_keys = Object.keys(this._priorities),
+            priority_keys = _.M.castItemsType(Object.keys(this._priorities), 'number'),
             self = this,
             raw_contents = this._content_manager.getType('priority');
 
@@ -3150,40 +3211,39 @@
             }
         });
 
-
-        if (listeners.length) {
-            if (option.key === null) {
-                option.key = _.M.nextID('event_emitter_listener', true);
-            }
-            var keys = [];
-
-            _.each(events, function (event) {
-                _.M.loop(listeners, function (listener) {
-                    if (option.context) {
-                        listener = listener.bind(option.context);
-                    }
-
-                    if (option.times != -1) {
-                        listener = _.before(option.times + 1, listener);
-                    }
-
-                    keys.push(self._events[event].priority.addContent(listener, option.priority, {
-                        listener_key: option.key,
-                        async: option.async
-                    }));
-                });
-
-                if (!_.has(self._events[event].key_mapped, option.key)) {
-                    self._events[event].key_mapped[option.key] = keys;
-                } else {
-                    self._events[event].key_mapped[option.key] = self._events[event].key_mapped[option.key].concat(keys);
-                }
-            });
-
-            return option.key;
+        if (!listeners.length) {
+            return false;
+        }
+        if (option.key === null) {
+            option.key = _.M.nextID('event_emitter_listener', true);
         }
 
-        return false;
+        var keys = [];
+
+        _.each(events, function (event) {
+            _.M.loop(listeners, function (listener) {
+                if (option.context) {
+                    listener = listener.bind(option.context);
+                }
+
+                if (option.times != -1) {
+                    listener = _.before(option.times + 1, listener);
+                }
+
+                keys.push(self._events[event].priority.addContent(listener, option.priority, {
+                    listener_key: option.key,
+                    async: option.async
+                }));
+            });
+
+            if (!_.has(self._events[event].key_mapped, option.key)) {
+                self._events[event].key_mapped[option.key] = keys;
+            } else {
+                self._events[event].key_mapped[option.key] = self._events[event].key_mapped[option.key].concat(keys);
+            }
+        });
+
+        return option.key;
     };
 
     /**
@@ -3338,13 +3398,13 @@
 
     /**
      * Remove listener by key
-     * @param {string|Function|Array} key_or_listener Listener key or listener it self
+     * @param {string|Function|Array} remove Listener / listener key or array of them
      * @param {number} [priority]
      */
-    EventEmitter.prototype.removeListener = function (key_or_listener, priority) {
+    EventEmitter.prototype.removeListener = function (remove, priority) {
         var self = this;
-        key_or_listener = _.M.beArray(key_or_listener);
-        _.each(key_or_listener, function (remover) {
+        remove = _.M.beArray(remove);
+        _.each(remove, function (remover) {
             if (_.M.isLikeString(remover)) {
                 _.each(Object.keys(self._events), function (event_name) {
                     if (_.has(self._events[event_name].key_mapped, remover)) {
@@ -3365,7 +3425,7 @@
                     }
                 });
             } else {
-                throw new Error('Invalid remover, it must be key of added listener or listener it self');
+                throw new Error('Invalid key or listener, it must be key of added listener or listener it self');
             }
         });
     };

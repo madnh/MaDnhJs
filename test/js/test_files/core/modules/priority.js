@@ -32,6 +32,16 @@ describe('MODULE - Priority', function () {
             chai_assert.sameMembers(priority_instance.remove(key), [key]);
             chai_assert.isFalse(priority_instance.has(key));
         });
+        it('Remove by key and special repository', function () {
+            //
+            var key = priority_instance.addContent('ABC', 100);
+            chai_assert.isTrue(priority_instance.has(key));
+            chai_assert.equal(priority_instance.remove(key, 200).length, 0);
+            chai_assert.isTrue(priority_instance.has(key));
+            chai_assert.sameMembers(priority_instance.remove(key, [200, 100]), [key]);
+            chai_assert.isFalse(priority_instance.has(key));
+        });
+
         it('Remove by content', function () {
             var content = 'ABC',
                 key = priority_instance.addContent(content);

@@ -252,6 +252,47 @@ describe('CORE', function () {
             });
 
         });
+        describe('_.M.castItemsType', function () {
+            var arr = [];
+
+            beforeEach(function () {
+                arr = [1, 2, 'ABC', 0, false, {'name': 'Manh'}];
+            });
+
+            it('cast to string', function () {
+                chai_assert.deepEqual(_.M.castItemsType(arr, 'string'), ['1', '2', 'ABC', '0', 'false', "[object Object]"]);
+            });
+            it('cast to number', function () {
+                chai_assert.deepEqual(_.M.castItemsType(arr, 'number'), [1, 2, 0, 0, 0, 0]);
+            });
+            it('cast to boolean', function () {
+                chai_assert.deepEqual(_.M.castItemsType(arr, 'boolean'), [true, true, true, false, false, true]);
+            });
+            it('cast to array', function () {
+                var cast_result = _.M.castItemsType(arr, 'array'),
+                    result_expect = [[1], [2], ['ABC'], [0], [false], [{'name': 'Manh'}]];
+
+                chai_assert.isArray(cast_result);
+
+                for (var i = 0, len = cast_result.length; i < len; i++) {
+                    if (cast_result.hasOwnProperty(i)) {
+                        chai_assert.deepEqual(cast_result[i], result_expect[i]);
+                    }
+                }
+            });
+            it('cast to object', function () {
+                var cast_result = _.M.castItemsType(arr, 'object'),
+                    result_expect = [{0: 1}, {0: 2}, {0: 'ABC'}, {0: 0}, {0: false}, {'name': 'Manh'}];
+
+                chai_assert.isArray(cast_result);
+
+                for (var i = 0, len = cast_result.length; i < len; i++) {
+                    if (cast_result.hasOwnProperty(i)) {
+                        chai_assert.deepEqual(cast_result[i], result_expect[i]);
+                    }
+                }
+            });
+        });
         describe('_.M.chunk', function () {
             var arr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
                 chunked = _.M.chunk(arr, 3);

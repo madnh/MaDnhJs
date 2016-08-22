@@ -147,6 +147,51 @@
         return {};
     };
 
+    var cast_types = {};
+
+    cast_types['string'] = function (value) {
+        return value + '';
+    };
+    cast_types['boolean'] = function (value) {
+        return Boolean(value);
+    };
+
+    cast_types['number'] = function (value) {
+        return M.beNumber(value);
+    };
+    cast_types['integer'] = function (value) {
+        return Math.floor(M.beNumber(value));
+    };
+    cast_types['array'] = M.beArray;
+    cast_types['object'] = function (value) {
+        return M.beObject(value);
+    };
+
+    /**
+     * Convert array|object item to other type. Support types:
+     * - string
+     * - boolean
+     * - number
+     * - integer
+     * - array
+     * - object
+     *
+     * @param object
+     * @param type
+     * @return {Array|object}
+     * @throws Error when cast type is unsupported
+     */
+    M.castItemsType = function (object, type) {
+        if (!cast_types.hasOwnProperty(type)) {
+            throw new Error('Invalid cast type. Available types are: string, number, integer, array and object');
+        }
+        if (_.isArray(object)) {
+            return _.map(_.clone(object), cast_types[type]);
+        }
+
+        return _.mapObject(_.clone(object), cast_types[type]);
+    };
+
     /**
      * Loop over array or object like _.each but breakable
      * @param {object|array} obj Loop object
@@ -468,13 +513,14 @@
 
     /**
      * Get dirty of object with others object. Strict comparison
-     * @param callback
-     * @param object
-     * @param others
+     * @param {object} object
+     * @param {object} others
      * @return {*}
+     * @example
+     * _.M.diffObject({a: 0, b: 1}, {a: '0', b: 1}); //{a: 0}
      */
-    M.diffObject = function (callback, object, others) {
-        var args = _.toArray(arguments);
+    M.diffObject = function (object, others) {
+        var args = _.flatten(_.toArray(arguments));
 
         args.unshift(is_diff_strict_cb);
 
@@ -483,12 +529,13 @@
 
     /**
      * Get dirty of object with others object. Loose comparison
-     * @param callback
-     * @param object
-     * @param others
+     * @param {object} object
+     * @param {object} others
      * @return {*}
+     * @example
+     * _.M.diffObjectLoose({a: 0, b: 1}, {a: '0', b: 2}); //{b: 1}
      */
-    M.diffObjectLoose = function (callback, object, others) {
+    M.diffObjectLoose = function (object, others) {
         var args = _.toArray(arguments);
 
         args.unshift(is_diff_loose_cb);
@@ -496,6 +543,13 @@
         return diff_object.apply(null, args);
     };
 
+    /**
+     * Get dirty of object with others object, use callback
+     * @param {function} callback Callback with 2 parameters: base value, other object value. Return true when difference
+     * @param {object} object
+     * @param {object} others
+     * @return {*}
+     */
     M.diffObjectWithCallback = function (callback, object, others) {
         return diff_object.apply(null, slice.apply(arguments))
     };
