@@ -169,7 +169,7 @@
      * Add event listener
      * @param {string|string[]} events Array of events name
      * @param {(string|function|Array)} listeners Event listener
-     * @param {object} option Option is object with keys:
+     * @param {object} [option] Option is object with keys:
      * priority {@see _.M.PRIORITY_DEFAULT},
      * times (-1 - forever) - call times,
      * context (this event emitter instance) - context for callback,
@@ -178,6 +178,57 @@
      */
     EventEmitter.prototype.addListener = function (events, listeners, option) {
         var self = this;
+
+        listeners = _.M.beArray(listeners);
+        events = _.uniq(_.M.beArray(events));
+
+        if (!listeners.length) {
+            return false;
+        }
+
+        add_listener__prepare_events(this, events, listeners.length);
+        option = add_listener__get_option(option);
+
+        _.each(events, function (event) {
+            var event_detail = self._events[event];
+            var keys = add_listener__add_listeners(self, event, listeners, option);
+
+            if (!event_detail.key_mapped.hasOwnProperty(option.key)) {
+                event_detail.key_mapped[option.key] = keys;
+            } else {
+                event_detail.key_mapped[option.key] = event_detail.key_mapped[option.key].concat(keys);
+            }
+        });
+
+        return option.key;
+    };
+
+    function add_listener__prepare_events(ee, events, listener_length) {
+        _.each(events, function (event) {
+            if (!ee._events.hasOwnProperty(event)) {
+                ee._events[event] = {
+                    priority: new _.M.Priority(),
+                    key_mapped: {}
+                };
+            } else if (ee._limit != _.M.EVENT_EMITTER_EVENT_UNLIMITED) {
+                var status = ee._events[event].priority.status();
+
+                if (status.contents + listener_length > ee._limit) {
+                    console.warn('Possible _.M.EventEmitter memory leak detected. '
+                        + (status.contents + listeners.length) + ' listeners added (limit is ' + ee._limit
+                        + '). Use emitter.limit() or emitter.unlimited to resolve this warning.'
+                    );
+                }
+            }
+        });
+    }
+
+    /**
+     *
+     * @param option
+     * @return {{}}
+     */
+    function add_listener__get_option(option) {
         if (_.M.isNumeric(option)) {
             option = {
                 priority: option
@@ -191,60 +242,69 @@
             key: null,
             async: false
         });
-        listeners = _.M.beArray(listeners);
-        events = _.uniq(_.M.beArray(events));
+        if (option.key === null) {
+            option.key = _.M.nextID('event_emitter_listener');
+        }
 
-        _.each(events, function (event) {
-            if (!self._events.hasOwnProperty(event)) {
-                self._events[event] = {
-                    priority: new _.M.Priority(),
-                    key_mapped: {}
-                };
-            } else if (self._limit != _.M.EVENT_EMITTER_EVENT_UNLIMITED) {
-                var status = self._events[event].priority.status();
+        return option;
+    }
 
-                if (status.contents + listeners.length > self._limit) {
-                    console.warn('Possible _.M.EventEmitter memory leak detected. '
-                        + (status.contents + listeners.length) + ' listeners added (limit is ' + self._limit
-                        + '). Use emitter.limit() or emitter.unlimited to resolve this warning.'
-                    );
-                }
+    /**
+     *
+     * @param {EventEmitter} ee
+     * @param {string} event
+     * @param {callback|callback[]} listeners
+     * @param {{}} option
+     * @return {string[]}
+     */
+    function add_listener__add_listeners(ee, event, listeners, option) {
+        var keys = [],
+            event_detail = ee._events[event];
+
+        _.M.loop(_.M.beArray(listeners), function (listener) {
+            if (option.context) {
+                listener = listener.bind(option.context);
             }
+
+            if (option.times != -1) {
+                listener = _.before(option.times + 1, listener);
+            }
+
+            keys.push(event_detail.priority.addContent(listener, option.priority, {
+                listener_key: option.key,
+                async: option.async
+            }));
         });
 
-        if (!listeners.length) {
+        return keys;
+    }
+
+    /**
+     * Check if a key is exists
+     * @param {string} key
+     * @param {string|string[]} [events]
+     * @return {boolean}
+     */
+    EventEmitter.prototype.hasKey = function (key, events) {
+        if (!events) {
+            events = Object.keys(this._events);
+        } else {
+            events = _.intersection(_.M.beArray(key), Object.keys(this._events));
+        }
+        if (_.isEmpty(events)) {
             return false;
         }
-        if (option.key === null) {
-            option.key = _.M.nextID('event_emitter_listener', true);
-        }
 
-        var keys = [];
+        var found = false, self = this;
 
-        _.each(events, function (event) {
-            _.M.loop(listeners, function (listener) {
-                if (option.context) {
-                    listener = listener.bind(option.context);
-                }
-
-                if (option.times != -1) {
-                    listener = _.before(option.times + 1, listener);
-                }
-
-                keys.push(self._events[event].priority.addContent(listener, option.priority, {
-                    listener_key: option.key,
-                    async: option.async
-                }));
-            });
-
-            if (!_.has(self._events[event].key_mapped, option.key)) {
-                self._events[event].key_mapped[option.key] = keys;
-            } else {
-                self._events[event].key_mapped[option.key] = self._events[event].key_mapped[option.key].concat(keys);
+        _.M.loop(events, function (event) {
+            if (self._events[event].key_mapped.hasOwnProperty(key)) {
+                found = true;
+                return 'break';
             }
         });
 
-        return option.key;
+        return found;
     };
 
     /**
@@ -256,12 +316,12 @@
 
     /**
      * Add once time listener
-     * @param event
+     * @param events
      * @param listeners
      * @param option
      * @returns {string}
      */
-    EventEmitter.prototype.addOnceListener = function (event, listeners, option) {
+    EventEmitter.prototype.addOnceListener = function (events, listeners, option) {
         if (_.M.isNumeric(option)) {
             option = {
                 priority: option,
@@ -274,22 +334,23 @@
         }
 
 
-        return this.addListener(event, listeners, option);
+        return this.addListener(events, listeners, option);
     };
 
     /**
      * @see addOnceListener
      */
-    EventEmitter.prototype.once = function (event, listener, option) {
+    EventEmitter.prototype.once = function (events, listener, option) {
         return this.addOnceListener.apply(this, arguments);
     };
 
     /**
      * Add listeners by object
      * @param {{}} events Object of events: object key is name of event, object value is array of events
+     * @return {string[]} Listener keys
      */
     EventEmitter.prototype.addListeners = function (events) {
-        var events_arr = [], self = this;
+        var events_arr = [], self = this, keys = [];
 
         if (_.isObject(events)) {
             _.each(events, function (event_cbs, event_name) {
@@ -306,8 +367,10 @@
         }
 
         _.each(events_arr, function (event_info) {
-            self.addListener(event_info['name'], event_info['cb'], event_info['options']);
+            keys.push(self.addListener(event_info['name'], event_info['cb'], event_info['options']));
         });
+
+        return keys;
     };
 
     /**
@@ -394,7 +457,7 @@
      * @see emitEvent
      */
     EventEmitter.prototype.emit = function () {
-        return this.emitEvent.apply(this, arguments);
+        this.emitEvent.apply(this, arguments);
     };
 
     /**
@@ -408,11 +471,12 @@
         _.each(remove, function (remover) {
             if (_.M.isLikeString(remover)) {
                 _.each(Object.keys(self._events), function (event_name) {
-                    if (_.has(self._events[event_name].key_mapped, remover)) {
-                        self._events[event_name].priority.remove(self._events[event_name].key_mapped[remover]);
-                        delete self._events[event_name].key_mapped[remover];
+                    var event_detail = self._events[event_name];
+                    if (_.has(event_detail.key_mapped, remover)) {
+                        event_detail.priority.remove(event_detail.key_mapped[remover]);
+                        delete event_detail.key_mapped[remover];
 
-                        if (self._events[event_name].priority.status().contents == 0) {
+                        if (event_detail.priority.status().contents == 0) {
                             delete self._events[event_name];
                         }
                     }
