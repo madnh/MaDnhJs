@@ -9,32 +9,40 @@ describe('MODULE - Priority', function () {
     });
 
     describe('Add', function () {
-        it('Add, return true when check exists by key and content', function () {
-            var content = 'ABC',
-                key = priority_instance.addContent(content);
-            //
+        var content, key;
+        beforeEach(function () {
+            content = 'ABC';
+            key = priority_instance.add(content);
+        });
+        it('must return true when check exists by key', function () {
             chai_assert.isTrue(priority_instance.has(key));
+        });
+        it('must return true when check exists by content', function () {
             chai_assert.isTrue(priority_instance.hasContent(content));
+        });
+        it('must return true when check exists by ContentManager\'s "has" method', function () {
+            chai_assert.isTrue(priority_instance._super.has.call(priority_instance, key));
         });
         it('Add with special priority value', function () {
             var priority = 999;
             //
-            priority_instance.addContent(_.M.nowSecond(), priority);
+            priority_instance.add(_.M.nowSecond(), priority);
             //
             chai_assert.isTrue(priority_instance.hasPriority(priority));
         });
     });
+
     describe('Remove', function () {
         it('Remove by key', function () {
-            var key = priority_instance.addContent('ABC');
+            var key = priority_instance.add('ABC');
             //
             chai_assert.isTrue(priority_instance.has(key));
             chai_assert.sameMembers(priority_instance.remove(key), [key]);
             chai_assert.isFalse(priority_instance.has(key));
         });
-        it('Remove by key and special repository', function () {
+        it('Remove by key and special priority', function () {
             //
-            var key = priority_instance.addContent('ABC', 100);
+            var key = priority_instance.add('ABC', 100);
             chai_assert.isTrue(priority_instance.has(key));
             chai_assert.equal(priority_instance.remove(key, 200).length, 0);
             chai_assert.isTrue(priority_instance.has(key));
@@ -44,7 +52,7 @@ describe('MODULE - Priority', function () {
 
         it('Remove by content', function () {
             var content = 'ABC',
-                key = priority_instance.addContent(content);
+                key = priority_instance.add(content);
             //
             chai_assert.isTrue(priority_instance.has(key));
             chai_assert.isTrue(priority_instance.hasContent(content));
@@ -57,27 +65,35 @@ describe('MODULE - Priority', function () {
 
     });
     describe('Get contents', function () {
+        var keys = [];
         beforeEach(function () {
-            priority_instance.addContent('B', 10, {id: '1'});
-            priority_instance.addContent('A', 100, {id: '2'});
-            priority_instance.addContent('C', 1);
+            keys.push(priority_instance.add('B', 10, {id: '1'}));
+            keys.push(priority_instance.add('A', 100, {id: '2'}));
+            keys.push(priority_instance.add('C', 1));
         });
         it('Include meta info', function () {
+            var contents = priority_instance.export();
+            var expect_obj = [
+                {content: 'C', meta: undefined, key: keys[2]},
+                {content: 'B', meta: {id: '1'}, key: keys[0]},
+                {content: 'A', meta: {id: '2'}, key: keys[1]}
+            ];
+
             chai_assert.deepEqual(
-                priority_instance.getContents(),
-                [{content: 'C', meta: undefined}, {content: 'B', meta: {id: '1'}}, {content: 'A', meta: {id: '2'}}]
+                contents,
+                expect_obj
             );
         });
         it('Content only', function () {
-            chai_assert.deepEqual(priority_instance.getContents(true), ['C', 'B', 'A']);
+            chai_assert.deepEqual(priority_instance.export(true), ['C', 'B', 'A']);
         });
     });
     describe('Get status', function () {
         var status;
         beforeEach(function () {
-            priority_instance.addContent('A', 1);
-            priority_instance.addContent('B', 1);
-            priority_instance.addContent('A', 2);
+            priority_instance.add('A', 1);
+            priority_instance.add('B', 1);
+            priority_instance.add('A', 2);
 
             status = priority_instance.status();
         });

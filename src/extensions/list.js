@@ -175,13 +175,13 @@
          * @param {(string|function|Array)} name Item's name
          * @returns {boolean}
          */
-        removeItem: function (type, name) {
+        removeKeys: function (type, name) {
             var result = false;
             if (this.hasType(type)) {
                 name = _.M.beArray(name);
                 var old = _.clone(_list_system[type]), removed;
 
-                _.M.removeItem(_list_system[type], name);
+                _.M.removeKeys(_list_system[type], name);
                 removed = _.pick(old, _.difference(_.keys(old), _.keys(_list_system[type])));
                 if (!_.isEmpty(removed)) {
                     _.M.EVENT.trigger('madnh_list_remove_item', removed);
@@ -204,7 +204,7 @@
         toggleItem: function (type, item, data, status) {
             if (_.isUndefined(status) || _.isNull(status)) {
                 if (this.hasItem(type, item)) {
-                    this.removeItem(type, item);
+                    this.removeKeys(type, item);
                 } else {
                     this.addItem(type, item, data, false);
                 }
@@ -212,7 +212,7 @@
                 if (status) {
                     this.addItem(type, item, data, false);
                 } else {
-                    this.removeItem(type, item);
+                    this.removeKeys(type, item);
                 }
             }
         },
@@ -224,7 +224,7 @@
          * @returns {(*|boolean)}
          */
         removeByData: function (type, data) {
-            return this.removeItem(type, function (item_data) {
+            return this.removeKeys(type, function (item_data) {
                 return item_data === data;
             });
         },

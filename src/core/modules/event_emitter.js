@@ -226,7 +226,7 @@
     /**
      *
      * @param option
-     * @return {{}}
+     * @returns {{priority, times, context, key, async}}
      */
     function add_listener__get_option(option) {
         if (_.M.isNumeric(option)) {
@@ -242,6 +242,8 @@
             key: null,
             async: false
         });
+
+        option.times = _.M.beNumber(option.times, -1);
         if (option.key === null) {
             option.key = _.M.nextID('event_emitter_listener');
         }
@@ -262,18 +264,14 @@
             event_detail = ee._events[event];
 
         _.M.loop(_.M.beArray(listeners), function (listener) {
-            if (option.context) {
-                listener = listener.bind(option.context);
-            }
-
-            if (option.times != -1) {
-                listener = _.before(option.times + 1, listener);
-            }
-
-            keys.push(event_detail.priority.addContent(listener, option.priority, {
+            var key = event_detail.priority.add(listener, option.priority, {
                 listener_key: option.key,
-                async: option.async
-            }));
+                async: option.async,
+                times: option.times,
+                event: event
+            });
+
+            keys.push(key);
         });
 
         return keys;
@@ -386,7 +384,9 @@
             if (self._events.hasOwnProperty(event)) {
                 _emit_event(self, event, _.clone(data));
             }
-
+            if (event !== 'event_emitted') {
+                _emit_event(self, 'event_emitted', [event, _.clone(data)]);
+            }
             if (_is_need_to_notice(self, event)) {
                 _notice_event(self, event, _.clone(data));
             }
@@ -403,32 +403,53 @@
         var emitted = false,
             listeners;
 
-        if (instance._events.hasOwnProperty(event_name)) {
-            listeners = instance._events[event_name].priority.getContents();
+        if(instance._events.hasOwnProperty(event_name)){
+            listeners = instance._events[event_name].priority.export();
+
             if (listeners.length) {
                 emitted = true;
+                _.each(listeners, function (listener_detail) {
+                    if (listener_detail.meta.times == -1 || listener_detail.meta.times > 0) {
+                        if (listener_detail.meta.async) {
+                            _.M.async(listener_detail.content, data, listener_detail.meta.context || instance);
+                        } else {
+                            _.M.callFunc(listener_detail.content, data, listener_detail.meta.context || instance);
+                        }
 
-                _.each(listeners, function (listener) {
-                    if (listener.meta.async) {
-                        _.M.async(listener.content, data, listener.meta.context || instance);
-                    } else {
-                        _.M.callFunc(listener.content, data, listener.meta.context || instance);
+                        if (listener_detail.meta.times == -1) {
+                            return;
+                        }
+
+                        listener_detail.meta.times--;
+                        if (listener_detail.meta.times > 0) {
+                            instance._events[event_name].priority.updateMeta(listener_detail.key, listener_detail.meta);
+                            return;
+                        }
                     }
+
+                    _remove_listener(instance, event_name, listener_detail.meta.listener_key, listener_detail.key);
                 });
             }
         }
-
         if (!instance._event_emitted.hasOwnProperty(event_name)) {
             instance._event_emitted[event_name] = 1;
         } else {
             instance._event_emitted[event_name] += 1;
         }
 
-        if (event_name !== 'event_emitted') {
-            arguments.callee(instance, 'event_emitted', [event_name, _.clone(data)]);
-        }
-
         return emitted;
+    }
+
+    function _remove_listener(instance, event, listener_key, priority_key) {
+        if (!instance._events.hasOwnProperty(event) || !instance._events[event].key_mapped.hasOwnProperty(listener_key)) {
+            return;
+        }
+        instance._events[event].priority.remove(priority_key);
+        instance._events[event].key_mapped[listener_key] = _.without(instance._events[event].key_mapped[listener_key], priority_key);
+
+        if (!instance._events[event].key_mapped[listener_key].length) {
+            delete instance._events[event].key_mapped[listener_key];
+        }
     }
 
     function _is_need_to_notice(instance, event_name) {
@@ -462,28 +483,36 @@
 
     /**
      * Remove listener by key
-     * @param {string|Function|Array} remove Listener / listener key or array of them
+     * @param {string|Function|Array} removes Listener / listener key or array of them
+     * @param {string[]} [events]
      * @param {number} [priority]
      */
-    EventEmitter.prototype.removeListener = function (remove, priority) {
+    EventEmitter.prototype.removeListener = function (removes, events, priority) {
         var self = this;
-        remove = _.M.beArray(remove);
-        _.each(remove, function (remover) {
+        removes = _.M.beArray(removes);
+
+        if (!events) {
+            events = Object.keys(self._events);
+        } else {
+            events = _.intersection(_.M.beArray(events), Object.keys(self._events));
+        }
+        _.each(removes, function (remover) {
             if (_.M.isLikeString(remover)) {
-                _.each(Object.keys(self._events), function (event_name) {
+                _.each(events, function (event_name) {
                     var event_detail = self._events[event_name];
-                    if (_.has(event_detail.key_mapped, remover)) {
-                        event_detail.priority.remove(event_detail.key_mapped[remover]);
+
+                    if (event_detail.key_mapped.hasOwnProperty(remover)) {
+                        event_detail.priority.remove(event_detail.key_mapped[remover], priority ? priority : null);
                         delete event_detail.key_mapped[remover];
 
-                        if (event_detail.priority.status().contents == 0) {
+                        if (_.isEmpty(event_detail.key_mapped)) {
                             delete self._events[event_name];
                         }
                     }
                 });
             } else if (_.isFunction(remover)) {
-                _.each(Object.keys(self._events), function (event_name) {
-                    self._events[event_name].priority.removeContent(remover, priority);
+                _.each(events, function (event_name) {
+                    self._events[event_name].priority.removeContent(remover, priority ? priority : null);
 
                     if (self._events[event_name].priority.status().contents == 0) {
                         delete self._events[event_name];

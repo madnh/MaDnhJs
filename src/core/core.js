@@ -250,7 +250,7 @@
      * @param {string[]|loopCallback} args Array of item name or callback. If use callback then callback must return
      *     true/false to remove/keep item
      */
-    M.removeItem = function (obj, args) {
+    M.removeKeys = function (obj, args) {
         var keys = _.flatten(slice.call(arguments, 1));
         var removed = [], old_items = Object.keys(obj);
 
@@ -811,6 +811,33 @@
             var value = object.hasOwnProperty(value_field) ? object[value_field] : undefined;
 
             result[key] = value;
+        });
+
+        return result;
+    };
+
+    /**
+     * Returns a copy of the object where the key is original value, new value is an array of original keys which same original value
+     * @param object
+     * @return {{}}
+     * @example
+     * var obj = {a: 'A', ă: 'A', b: 'B', d: 'D', đ: 'D'}
+     * _.M.invertToArray(obj)
+     * => {
+     *  A: ['a', 'ă'],
+     *  B: ['b'],
+     *  D: ['d', 'đ']
+     * }
+     */
+    M.invertToArray = function (object) {
+        var result = {};
+
+        _.each(object, function (value, key) {
+            if (!result.hasOwnProperty(value)) {
+                result[value] = [key];
+            } else {
+                result[value].push(key);
+            }
         });
 
         return result;

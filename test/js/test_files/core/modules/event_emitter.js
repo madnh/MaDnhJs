@@ -58,10 +58,6 @@ describe('MODULE - EventEmitter', function () {
                     test: [_.M.logArgs, _.M.logArgs],
                     test2: [_.M.logArgs, [_.M.logArgs, {key: 'yahoo'}]]
                 });
-
-                console.log(keys);
-                console.log(ee);
-
             });
 
             it('return keys is array', function () {
@@ -85,20 +81,20 @@ describe('MODULE - EventEmitter', function () {
             ee.addListener('test', function (done, data_arg) {
                 done();
 
-                if(arguments.length > 1 && data !== data_arg){
+                if (arguments.length > 1 && data !== data_arg) {
                     throw new Error('Data and assigned data is difference');
                 }
             });
         });
 
         it('Run listener success', function (done) {
-            chai_assert.doesNotThrow(function(){
+            chai_assert.doesNotThrow(function () {
                 ee.emit('test', [done]);
             });
         });
 
         it('Listener must return correct result', function (done) {
-            chai_assert.doesNotThrow(function(){
+            chai_assert.doesNotThrow(function () {
                 ee.emit('test', [done, data]);
             });
         });
@@ -106,12 +102,40 @@ describe('MODULE - EventEmitter', function () {
             var times = 5,
                 done_cb = _.after(times, done);
 
-            for(var i = 0; i< times; i++){
-                chai_assert.doesNotThrow(function(){
+            for (var i = 0; i < times; i++) {
+                chai_assert.doesNotThrow(function () {
                     ee.emit('test', [done_cb]);
                 });
             }
         });
+    });
+    describe('Emit an event with limit of times', function () {
+        var ee, key;
+
+        before(function () {
+            ee = new _.M.EventEmitter();
+
+            key = ee.addOnceListener('test', function (done) {
+                done();
+            });
+            console.log(key, ee);
+        });
+
+        it('Key is string', function () {
+            chai_assert.isString(key);
+        });
+        it('Key is exists', function () {
+            chai_assert.isTrue(ee.hasKey(key));
+        });
+        it('Emit event success', function (done) {
+            _.M.debugging('test');
+            ee.emit('test', [done]);
+            _.M.debugComplete('test');
+        });
+        it('Key isn\'t exists after previous emit', function () {
+            chai_assert.isFalse(ee.hasKey(key));
+        });
+
     });
 
 

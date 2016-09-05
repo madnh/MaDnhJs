@@ -476,7 +476,7 @@
             before_send_cb = last_options.beforeSend;
         }
 
-        _.M.removeItem(last_options, ['success', 'done', 'error', 'fail', 'complete', 'always', 'beforeSend']);
+        _.M.removeKeys(last_options, ['success', 'done', 'error', 'fail', 'complete', 'always', 'beforeSend']);
 
         last_options['done'] = _ajax_done_cb.bind(instance);
         last_options['fail'] = _ajax_fail_cb.bind(instance);
@@ -524,7 +524,7 @@
             }
         }
 
-        _.M.removeItem(last_options, ['response_tasks', 'data_tasks', 'auto_abort', 'retry', 'retry_delay', 'is_continue']);
+        _.M.removeKeys(last_options, ['response_tasks', 'data_tasks', 'auto_abort', 'retry', 'retry_delay', 'is_continue']);
 
         return last_options;
     }

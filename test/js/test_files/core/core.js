@@ -791,7 +791,7 @@ describe('CORE', function () {
             });
 
         });
-        describe('_.M.removeItem', function () {
+        describe('_.M.removeKeys', function () {
             var obj = {};
             beforeEach(function () {
                 obj = {
@@ -807,7 +807,7 @@ describe('CORE', function () {
                 chai_assert.property(obj, 'baz');
                 chai_assert.propertyVal(obj, 'baz', 'B');
                 //
-                chai_assert.sameMembers(_.M.removeItem(obj, 'baz'), ['baz']);
+                chai_assert.sameMembers(_.M.removeKeys(obj, 'baz'), ['baz']);
                 //
                 chai_assert.notProperty(obj, 'baz');
             });
@@ -815,7 +815,7 @@ describe('CORE', function () {
                 chai_assert.property(obj, 'baz');
                 chai_assert.propertyVal(obj, 'baz', 'B');
                 //
-                chai_assert.sameMembers(_.M.removeItem(obj, ['baz']), ['baz']);
+                chai_assert.sameMembers(_.M.removeKeys(obj, ['baz']), ['baz']);
                 //
                 chai_assert.notProperty(obj, 'baz');
             });
@@ -825,7 +825,7 @@ describe('CORE', function () {
                 chai_assert.propertyVal(obj, 'foo', 'A');
                 chai_assert.propertyVal(obj, 'baz', 'B');
                 //
-                chai_assert.sameMembers(_.M.removeItem(obj, ['foo', 'baz']), ['foo', 'baz']);
+                chai_assert.sameMembers(_.M.removeKeys(obj, ['foo', 'baz']), ['foo', 'baz']);
                 //
                 chai_assert.notProperty(obj, 'foo');
                 chai_assert.notProperty(obj, 'baz');
@@ -835,7 +835,7 @@ describe('CORE', function () {
                 chai_assert.propertyVal(obj, 'foo', 'A');
                 chai_assert.propertyVal(obj, 'baz', 'B');
                 //
-                chai_assert.sameMembers(_.M.removeItem(obj, 'baz', 'foo'), ['foo', 'baz']);
+                chai_assert.sameMembers(_.M.removeKeys(obj, 'baz', 'foo'), ['foo', 'baz']);
                 //
                 chai_assert.notProperty(obj, 'foo');
                 chai_assert.notProperty(obj, 'baz');
@@ -845,7 +845,7 @@ describe('CORE', function () {
                 chai_assert.propertyVal(obj, 'foo', 'A');
                 chai_assert.notProperty(obj, 'name');
                 //
-                chai_assert.sameMembers(_.M.removeItem(obj, 'name', 'foo'), ['foo']);
+                chai_assert.sameMembers(_.M.removeKeys(obj, 'name', 'foo'), ['foo']);
                 //
                 chai_assert.notProperty(obj, 'foo');
                 chai_assert.notProperty(obj, 'name');
@@ -860,7 +860,7 @@ describe('CORE', function () {
                 chai_assert.propertyVal(obj, 'cee', 5);
                 chai_assert.propertyVal(obj, 'deep', true);
                 //
-                chai_assert.sameMembers(_.M.removeItem(obj, ['foo', 'baz'], ['deep', 'cee']), ['foo', 'baz', 'cee', 'deep']);
+                chai_assert.sameMembers(_.M.removeKeys(obj, ['foo', 'baz'], ['deep', 'cee']), ['foo', 'baz', 'cee', 'deep']);
                 //
                 chai_assert.notProperty(obj, 'foo');
                 chai_assert.notProperty(obj, 'baz');

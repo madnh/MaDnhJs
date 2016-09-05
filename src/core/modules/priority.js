@@ -110,21 +110,26 @@
     /**
      * Manage contents with priority
      * @class _.M.Priority
+     * @extends _.M.ContentManager
      */
     function Priority() {
-        /**
-         * Data holder
-         * @type {_.M.ContentManager}
-         * @private
-         */
-        this._content_manager = new _.M.ContentManager();
+        _.M.ContentManager.call(this);
+
         /**
          * Priority number and keys
          * @type {{}}
          * @private
          */
         this._priorities = {};
+
+        /**
+         * key => priority
+         * @type {{}}
+         * @private
+         */
+        this._key_mapped = {};
     }
+    _.M.inherit(Priority, _.M.ContentManager);
 
     /**
      * Check if a priority is exists
@@ -141,15 +146,7 @@
      * @returns {*|boolean}
      */
     Priority.prototype.has = function (key) {
-        return this._content_manager.has(key);
-    };
-    /**
-     * Check if a content has exists
-     * @param {*} content
-     * @returns {boolean}
-     */
-    Priority.prototype.hasContent = function (content) {
-        return this._content_manager.hasContent(content, 'priority')
+        return this._key_mapped.hasOwnProperty(key);
     };
 
     /**
@@ -178,16 +175,18 @@
      * @param {*} [meta] Content meta info
      * @returns {(string|boolean)} content key
      */
-    Priority.prototype.addContent = function (content, priority, meta) {
-        var key = this._content_manager.add(content, meta, 'priority');
+    Priority.prototype.add = function (content, priority, meta) {
+        var key = this._super.add.call(this, content, meta, 'priority');
 
-        this._content_manager.using(key);
+        this.using(key);
         priority = _.M.beNumber(priority, _.M.PRIORITY_DEFAULT);
 
         if (!_.has(this._priorities, priority)) {
             this._priorities[priority] = [];
         }
+
         this._priorities[priority].push(key);
+        this._key_mapped[key] = priority;
 
         return key;
     };
@@ -199,36 +198,55 @@
      * @returns {string[]} Removed content
      */
     Priority.prototype.remove = function (keys, priorities) {
-        var self = this, remove_keys = [];
+        var removed  = remove_keys.apply(null, [this].concat(_.toArray(arguments)));
+
+        return _.pluck(this._super.remove.call(this, removed), 'key');
+    };
+
+    /**
+     *
+     * @param instance
+     * @param {string[]} keys
+     * @param {number[]} priorities
+     */
+    function get_valid_priorities_by_keys(instance, keys, priorities) {
+        var priorities_and_keys = _.M.invertToArray(_.pick(instance._key_mapped, _.M.beArray(keys))),
+            priorities_from_keys_casted = _.M.castItemsType(Object.keys(priorities_and_keys), 'number');
 
         if (!priorities) {
-            priorities = Object.keys(this._priorities);
+            priorities = priorities_from_keys_casted;
         } else {
-            priorities = _.M.castItemsType(_.M.beArray(priorities), 'number');
-            priorities = _.intersection(priorities, _.M.castItemsType(Object.keys(this._priorities), 'number'));
+            priorities = _.intersection(_.M.castItemsType(_.M.beArray(priorities), 'number'), priorities_from_keys_casted);
         }
-        keys = _.M.beArray(keys);
-        _.M.loop(priorities, function (priority) {
-            var remove_keys_this_priority = _.intersection(keys, self._priorities[priority]);
+        priorities = get_valid_priorities(instance, priorities);
 
-            if(_.isEmpty(remove_keys_this_priority)){
-                return;
-            }
-
-            remove_keys = remove_keys.concat(remove_keys_this_priority);
-            self._priorities[priority] = _.difference(remove_keys_this_priority, self._priorities[priority]);
-            keys = _.difference(keys, remove_keys_this_priority);
-
-            if (_.isEmpty(keys)) {
-                return 'break';
-            }
+        return _.mapObject(_.pick(instance._priorities, priorities), function (priority_keys, priority) {
+            return _.intersection(priorities_and_keys[priority], priority_keys);
         });
-        if(_.isEmpty(remove_keys)){
-            return [];
-        }
+    }
+    /**
+     *
+     * @param {Priority} instance
+     * @param {number[]} priorities
+     * @return {number[]}
+     */
+    function get_valid_priorities(instance, priorities) {
+        return _.intersection(_.M.castItemsType(priorities, 'number'), _.M.castItemsType(Object.keys(instance._priorities), 'number'));
+    }
 
-        return _.pluck(this._content_manager.remove(remove_keys), 'key');
-    };
+    function remove_keys(instance, keys, priorities) {
+        var priorities_with_keys = get_valid_priorities_by_keys(instance, keys, priorities),
+            remove_keys;
+
+        _.M.loop(priorities_with_keys, function (priority_keys, priority) {
+            instance._priorities[priority] = _.without(instance._priorities[priority], priority_keys);
+        });
+
+        remove_keys = _.flatten(_.values(priorities_with_keys));
+        _.M.removeKeys(instance._key_mapped, remove_keys);
+
+        return remove_keys;
+    }
 
     /**
      * Remove content
@@ -237,7 +255,7 @@
      * @returns {string[]}
      */
     Priority.prototype.removeContent = function (content, priorities) {
-        var content_positions = this._content_manager.contentPositions(content, 'priority'),
+        var content_positions = this.contentPositions(content, 'priority'),
             keys = _.pluck(content_positions, 'key');
 
         if (priorities) {
@@ -250,27 +268,30 @@
     /**
      * Get priority data
      * @param {boolean} [content_only = false] return priority content only, default get content and meta
-     * @returns {Array}
+     * @returns {Array} List of objects with keys:
+     * - key: content key
+     * - meta: meta info
+     * - content: content
      */
-    Priority.prototype.getContents = function (content_only) {
+    Priority.prototype.export = function (content_only) {
         var contents = [],
             priority_keys = _.M.castItemsType(Object.keys(this._priorities), 'number'),
             self = this,
-            raw_contents = this._content_manager.getType('priority');
+            raw_contents = this.getType('priority');
 
         priority_keys.sort(_.M.SORT_NUMBER);
 
         _.each(priority_keys, function (priority) {
-            var content_picked = _.pick(raw_contents, self._priorities[priority]);
-
-            if (content_only) {
-                contents = contents.concat(_.pluck(
-                    _.values(content_picked),
-                    'content'
-                ));
-            } else {
-                contents = contents.concat(_.values(content_picked));
-            }
+            _.each(self._priorities[priority], function (key) {
+                if (!raw_contents.hasOwnProperty(key)) {
+                    return;
+                }
+                if (content_only) {
+                    contents.push(raw_contents[key]['content']);
+                } else {
+                    contents.push(_.extend({key: key}, raw_contents[key]));
+                }
+            });
         });
 
         return contents;
