@@ -462,18 +462,15 @@
     };
 
     M.mergeObject = function () {
-        var result = {}, next_index = 0;
+        var next_index = 0;
 
-        _.each(arguments, function (obj) {
-            if (_.isArray(obj) || !_.isObject(obj)) {
-                obj = M.beArray(obj);
-                obj = _.object(_.range(next_index, next_index += obj.length), obj);
+        for(var i = 0, length = arguments.length; i < length; i++){
+            if (_.isArray(arguments[i]) || !_.isObject(arguments[i])) {
+                arguments[i] = M.beArray(arguments[i]);
+                arguments[i] = _.object(_.range(next_index, next_index += arguments[i].length), arguments[i]);
             }
-
-            _.extend(result, obj);
-        });
-
-        return result;
+        }
+        return _.extend.apply(_, arguments);
     };
 
     function is_diff_strict_cb(value_1, value_2) {

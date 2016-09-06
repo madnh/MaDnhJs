@@ -81,7 +81,7 @@ describe('CORE', function () {
         });
     });
 
-    describe('Functions', function () {
+    describe.only('Functions', function () {
         describe('Debugging', function () {
             beforeEach(function () {
                 _.M.debugComplete('test');
@@ -605,7 +605,40 @@ describe('CORE', function () {
                 chai_assert.deepEqual(merged, target);
             });
         });
+        describe('_.M.mergeObject', function () {
+            var result,
+                object = {a: 'A', b: 'B'},
+                object2 = {b: 'BB', c: 'C'},
+                array = ['D', 'E', 'F'],
+                string = 'foo',
+                array_cloned = _.clone(array),
+                string_cloned = string;
 
+            before(function () {
+                result = _.M.mergeObject(object, array, object2, string);
+                console.log('result', result);
+                console.log('obj', object);
+                console.log('arr', array_cloned);
+                console.log('string', string_cloned);
+            });
+
+            it('result must contain all of data', function () {
+                chai_assert.deepEqual(result, {
+                    a: 'A', b: 'BB',
+                    c: 'C',
+                    0: 'D', 1: 'E', 2: 'F',
+                    3: 'foo'
+                });
+            });
+            it('result is first object assigned to function', function () {
+                chai_assert.deepEqual(result, object);
+            });
+            it('except first object, all of other parameter will be reserved', function () {
+                chai_assert.deepEqual(array, array_cloned);
+                chai_assert.isTrue(string === string_cloned);
+            });
+
+        });
         describe('_.M.left', function () {
             it('First 2 characters', function () {
                 chai_assert.strictEqual(_.M.left('ABC', 2), 'AB');
