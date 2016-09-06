@@ -128,7 +128,7 @@
 
         _.M.loop(types, function (type) {
             _.M.loop(Object.keys(self._contents[type]), function (key) {
-                if (callback(_.clone(self._contents[type][key].content), _.clone(self._contents[type][key].meta), key, type)) {
+                if (callback(self._contents[type][key].content, self._contents[type][key].meta, key, type)) {
                     result.push({
                         type: type,
                         key: key,

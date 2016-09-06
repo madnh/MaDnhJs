@@ -283,7 +283,7 @@
      * @param {string|string[]} [events]
      * @return {boolean}
      */
-    EventEmitter.prototype.hasKey = function (key, events) {
+    EventEmitter.prototype.has = function (key, events) {
         if (!events) {
             events = Object.keys(this._events);
         } else {
@@ -504,6 +504,8 @@
                     if (event_detail.key_mapped.hasOwnProperty(remover)) {
                         event_detail.priority.remove(event_detail.key_mapped[remover], priority ? priority : null);
                         delete event_detail.key_mapped[remover];
+
+                        self._events[event_name] = event_detail;
 
                         if (_.isEmpty(event_detail.key_mapped)) {
                             delete self._events[event_name];

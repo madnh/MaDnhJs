@@ -2120,7 +2120,7 @@
 
         _.M.loop(types, function (type) {
             _.M.loop(Object.keys(self._contents[type]), function (key) {
-                if (callback(_.clone(self._contents[type][key].content), _.clone(self._contents[type][key].meta), key, type)) {
+                if (callback(self._contents[type][key].content, self._contents[type][key].meta, key, type)) {
                     result.push({
                         type: type,
                         key: key,
@@ -2889,6 +2889,9 @@
         var content_positions = this.contentPositions(content, 'priority'),
             keys = _.pluck(content_positions, 'key');
 
+        if(!keys.length){
+            return [];
+        }
         if (priorities) {
             return this.remove(keys, priorities);
         }
@@ -3340,7 +3343,7 @@
      * @param {string|string[]} [events]
      * @return {boolean}
      */
-    EventEmitter.prototype.hasKey = function (key, events) {
+    EventEmitter.prototype.has = function (key, events) {
         if (!events) {
             events = Object.keys(this._events);
         } else {
@@ -3561,6 +3564,8 @@
                     if (event_detail.key_mapped.hasOwnProperty(remover)) {
                         event_detail.priority.remove(event_detail.key_mapped[remover], priority ? priority : null);
                         delete event_detail.key_mapped[remover];
+
+                        self._events[event_name] = event_detail;
 
                         if (_.isEmpty(event_detail.key_mapped)) {
                             delete self._events[event_name];

@@ -15,7 +15,7 @@ describe('MODULE - EventEmitter', function () {
                 chai_assert.isString(key);
             });
             it('key must be exists', function () {
-                chai_assert.isTrue(ee.hasKey(key));
+                chai_assert.isTrue(ee.has(key));
             });
         });
         describe('Add multiple listeners, one event', function () {
@@ -30,7 +30,7 @@ describe('MODULE - EventEmitter', function () {
                 chai_assert.isString(key);
             });
             it('key must be exists', function () {
-                chai_assert.isTrue(ee.hasKey(key));
+                chai_assert.isTrue(ee.has(key));
             });
         });
         describe('Add multiple listeners, multiple events', function () {
@@ -45,7 +45,7 @@ describe('MODULE - EventEmitter', function () {
                 chai_assert.isString(key);
             });
             it('key must be exists', function () {
-                chai_assert.isTrue(ee.hasKey(key));
+                chai_assert.isTrue(ee.has(key));
             });
         });
         describe('Add multiple listeners, multiple events by object', function () {
@@ -68,7 +68,7 @@ describe('MODULE - EventEmitter', function () {
             });
             it('return keys must be exists', function () {
                 keys.forEach(function (key) {
-                    chai_assert.isTrue(ee.hasKey(key));
+                    chai_assert.isTrue(ee.has(key));
                 });
             });
         });
@@ -125,7 +125,7 @@ describe('MODULE - EventEmitter', function () {
             chai_assert.isString(key);
         });
         it('Key is exists', function () {
-            chai_assert.isTrue(ee.hasKey(key));
+            chai_assert.isTrue(ee.has(key));
         });
         it('Emit event success', function (done) {
             _.M.debugging('test');
@@ -133,10 +133,64 @@ describe('MODULE - EventEmitter', function () {
             _.M.debugComplete('test');
         });
         it('Key isn\'t exists after previous emit', function () {
-            chai_assert.isFalse(ee.hasKey(key));
+            chai_assert.isFalse(ee.has(key));
         });
 
     });
 
+    describe('Remove', function () {
+        var ee, key, key2, key3;
+
+        beforeEach(function () {
+            ee = new _.M.EventEmitter();
+            key = ee.addListener('test', _.M.logArgs);
+            key2 = ee.addListener('test2', _.M.logArgs);
+            key3 = ee.addListener('test3', _.M.warnArgs);
+
+            chai_assert.isTrue(ee.has(key));
+            chai_assert.isTrue(ee.has(key2));
+            chai_assert.isTrue(ee.has(key3));
+        });
+
+        it('remove by key', function () {
+            chai_assert.doesNotThrow(function () {
+                ee.removeListener(key);
+            });
+            chai_assert.isFalse(ee.has(key));
+            chai_assert.isTrue(ee.has(key2));
+            chai_assert.isTrue(ee.has(key3));
+        });
+        it('remove by listener', function () {
+            chai_assert.doesNotThrow(function () {
+                ee.removeListener(_.M.logArgs);
+                console.log(ee);
+                debugger;
+            });
+
+            chai_assert.isFalse(ee.has(key));
+            chai_assert.isFalse(ee.has(key2));
+            chai_assert.isTrue(ee.has(key3));
+        });
+        it('remove by listeners', function () {
+            chai_assert.doesNotThrow(function () {
+                ee.removeListener([_.M.logArgs, _.M.warnArgs]);
+            });
+            chai_assert.isFalse(ee.has(key));
+            chai_assert.isFalse(ee.has(key2));
+            chai_assert.isFalse(ee.has(key3));
+        });
+        it('remove by key, special event name', function () {
+            chai_assert.doesNotThrow(function () {
+                ee.removeListener(_.M.logArgs, 'test');
+            });
+            chai_assert.isFalse(ee.has(key));
+            chai_assert.isTrue(ee.has(key2));
+            chai_assert.isTrue(ee.has(key3));
+        });
+
+
+
+
+    });
 
 });

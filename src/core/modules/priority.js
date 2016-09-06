@@ -258,6 +258,9 @@
         var content_positions = this.contentPositions(content, 'priority'),
             keys = _.pluck(content_positions, 'key');
 
+        if(!keys.length){
+            return [];
+        }
         if (priorities) {
             return this.remove(keys, priorities);
         }
