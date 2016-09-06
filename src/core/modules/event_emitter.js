@@ -403,7 +403,7 @@
         var emitted = false,
             listeners;
 
-        if(instance._events.hasOwnProperty(event_name)){
+        if (instance._events.hasOwnProperty(event_name)) {
             listeners = instance._events[event_name].priority.export();
 
             if (listeners.length) {
@@ -488,43 +488,150 @@
      * @param {number} [priority]
      */
     EventEmitter.prototype.removeListener = function (removes, events, priority) {
-        var self = this;
+        var self = this, removed = {}, removes_by_keys, remove_by_listeners;
+
         removes = _.M.beArray(removes);
+        events = _get_valid_events(self, events);
 
-        if (!events) {
-            events = Object.keys(self._events);
-        } else {
-            events = _.intersection(_.M.beArray(events), Object.keys(self._events));
+        removes_by_keys = _.filter(removes, _.M.isLikeString);
+        remove_by_listeners = _.filter(removes, _.isFunction);
+
+        if (removes_by_keys.length) {
+            removed = _remove_listener_by_keys(self, removes_by_keys, events, priority);
         }
-        _.each(removes, function (remover) {
-            if (_.M.isLikeString(remover)) {
-                _.each(events, function (event_name) {
-                    var event_detail = self._events[event_name];
+        if (remove_by_listeners.length) {
+            _merge_object_item(removed, _remove_listener_by_listeners(self, remove_by_listeners, events, priority));
+        }
 
-                    if (event_detail.key_mapped.hasOwnProperty(remover)) {
-                        event_detail.priority.remove(event_detail.key_mapped[remover], priority ? priority : null);
-                        delete event_detail.key_mapped[remover];
-
-                        self._events[event_name] = event_detail;
-
-                        if (_.isEmpty(event_detail.key_mapped)) {
-                            delete self._events[event_name];
-                        }
-                    }
-                });
-            } else if (_.isFunction(remover)) {
-                _.each(events, function (event_name) {
-                    self._events[event_name].priority.removeContent(remover, priority ? priority : null);
-
-                    if (self._events[event_name].priority.status().contents == 0) {
-                        delete self._events[event_name];
-                    }
-                });
-            } else {
-                throw new Error('Invalid key or listener, it must be key of added listener or listener it self');
+        _.each(events, function (event) {
+            if (_.isEmpty(self._events[event].key_mapped)) {
+                delete self._events[event];
             }
         });
+
+        return removed;
     };
+
+    /**
+     *
+     * @param instance
+     * @param {Array} [events]
+     * @return {Array}
+     * @private
+     */
+    function _get_valid_events(instance, events) {
+        if (!events) {
+            return Object.keys(instance._events);
+        }
+
+        return _.M.validKeys(instance._events, _.M.beArray(events));
+    }
+
+    /**
+     *
+     * @param instance
+     * @param keys
+     * @param {Array} events Valid events
+     * @return {{}}
+     * @private
+     */
+    function _group_keys_by_event(instance, keys, events) {
+        var grouped = {}, event, found, events_cloned = _.clone(events);
+
+        while (keys.length && (event = events_cloned.shift())) {
+            found = _.M.validKeys(instance._events[event].key_mapped, keys);
+
+            if (found.length) {
+                grouped[event] = found;
+                keys = _.difference(keys, found);
+            }
+        }
+
+        return grouped;
+    }
+
+    function _remove_listener_by_keys(instance, keys, events, priority) {
+        var keys_grouped_by_event = _group_keys_by_event(instance, keys, events),
+            event_detail;
+
+        _.each(keys_grouped_by_event, function (keys, event) {
+            event_detail = instance._events[event];
+            event_detail.priority.remove(_.flatten(
+                _.values(
+                    _.pick(event_detail.key_mapped, keys))),
+                priority ? priority : null);
+
+            _.M.removeKeys(event_detail.key_mapped, keys);
+            instance._events[event] = event_detail;
+        });
+
+        return keys_grouped_by_event;
+    }
+
+    function _remove_listener_by_listeners(instance, listeners, events, priority) {
+        var removed = {}, priority_keys_removed;
+
+        priority = priority || null;
+
+        _.each(listeners, function (listener) {
+            _.each(events, function (event) {
+                priority_keys_removed = instance._events[event].priority.removeContent(listener, priority);
+
+                if (priority_keys_removed.length) {
+                    var removed_grouped_by_listener_key = _remove_key_mapped_by_priority_keys(instance._events[event].key_mapped, priority_keys_removed);
+
+                    _merge_object_item(removed, _.M.beObject(event, Object.keys(removed_grouped_by_listener_key)));
+                }
+            });
+        });
+
+        return removed;
+    }
+
+
+    /**
+     *
+     * @param key_mapped
+     * @param priority_keys
+     * @return {{}} Object, Event key => priority keys
+     * @private
+     */
+    function _remove_key_mapped_by_priority_keys(key_mapped, priority_keys) {
+        var found, keys = Object.keys(key_mapped), key, removed = {};
+
+        while (priority_keys.length && (key = keys.shift())) {
+            found = _.intersection(priority_keys, key_mapped[key]);
+
+            if (found.length) {
+                key_mapped[key] = _.difference(key_mapped[key], found);
+                if (!key_mapped[key].length) {
+                    delete key_mapped[key];
+                }
+
+                priority_keys = _.difference(priority_keys, found);
+                removed[key] = found;
+            }
+        }
+
+        return removed;
+    }
+
+    /**
+     * Merge each item of an object with item of other object
+     * @param {{}} target
+     * @param {{}} object
+     */
+    function _merge_object_item(target, object) {
+        _.each(object, function (value, key) {
+            value = _.M.beArray(value);
+
+            if (!target.hasOwnProperty(key)) {
+                target[key] = value;
+            } else {
+                _.M.mergeArray(target[key], value);
+            }
+        });
+    }
 
     /**
      * Alias of `removeListener`

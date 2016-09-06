@@ -195,7 +195,7 @@
      * Remove content by keys
      * @param {string|string[]} keys
      * @param {number|number[]} [priorities] Special priorities, default is all priorities
-     * @returns {string[]} Removed content
+     * @returns {string[]} Removed keys
      */
     Priority.prototype.remove = function (keys, priorities) {
         var removed  = remove_keys.apply(null, [this].concat(_.toArray(arguments)));
@@ -238,8 +238,9 @@
         var priorities_with_keys = get_valid_priorities_by_keys(instance, keys, priorities),
             remove_keys;
 
+
         _.M.loop(priorities_with_keys, function (priority_keys, priority) {
-            instance._priorities[priority] = _.without(instance._priorities[priority], priority_keys);
+            instance._priorities[priority] = _.difference(instance._priorities[priority], priority_keys);
         });
 
         remove_keys = _.flatten(_.values(priorities_with_keys));
@@ -252,7 +253,7 @@
      * Remove content
      * @param {*} content
      * @param {number|number[]} [priorities] Special priorities, default is all priorities
-     * @returns {string[]}
+     * @returns {string[]} Removed keys
      */
     Priority.prototype.removeContent = function (content, priorities) {
         var content_positions = this.contentPositions(content, 'priority'),

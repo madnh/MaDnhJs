@@ -160,25 +160,6 @@ describe('MODULE - EventEmitter', function () {
             chai_assert.isTrue(ee.has(key2));
             chai_assert.isTrue(ee.has(key3));
         });
-        it('remove by listener', function () {
-            chai_assert.doesNotThrow(function () {
-                ee.removeListener(_.M.logArgs);
-                console.log(ee);
-                debugger;
-            });
-
-            chai_assert.isFalse(ee.has(key));
-            chai_assert.isFalse(ee.has(key2));
-            chai_assert.isTrue(ee.has(key3));
-        });
-        it('remove by listeners', function () {
-            chai_assert.doesNotThrow(function () {
-                ee.removeListener([_.M.logArgs, _.M.warnArgs]);
-            });
-            chai_assert.isFalse(ee.has(key));
-            chai_assert.isFalse(ee.has(key2));
-            chai_assert.isFalse(ee.has(key3));
-        });
         it('remove by key, special event name', function () {
             chai_assert.doesNotThrow(function () {
                 ee.removeListener(_.M.logArgs, 'test');
@@ -187,10 +168,31 @@ describe('MODULE - EventEmitter', function () {
             chai_assert.isTrue(ee.has(key2));
             chai_assert.isTrue(ee.has(key3));
         });
+        it('remove by listener', function () {
+            chai_assert.doesNotThrow(function () {
+                ee.removeListener(_.M.logArgs);
+            });
+
+            chai_assert.isFalse(ee.has(key));
+            chai_assert.isFalse(ee.has(key2));
+            chai_assert.isTrue(ee.has(key3));
+        });
+        it('remove by listeners', function () {
+            var removed;
+            chai_assert.doesNotThrow(function () {
+                removed = ee.removeListener([_.M.logArgs, _.M.warnArgs]);
+            });
 
 
-
-
+            chai_assert.deepEqual(removed, {
+                test: [key],
+                test2: [key2],
+                test3: [key3]
+            });
+            chai_assert.isFalse(ee.has(key));
+            chai_assert.isFalse(ee.has(key2));
+            chai_assert.isFalse(ee.has(key3));
+        });
     });
 
 });

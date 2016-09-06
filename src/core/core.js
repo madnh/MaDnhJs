@@ -252,11 +252,12 @@
      */
     M.removeKeys = function (obj, args) {
         var keys = _.flatten(slice.call(arguments, 1));
-        var removed = [], old_items = Object.keys(obj);
+        var removed = [], old_items;
 
         if (keys.length == 1 && _.isFunction(keys[0])) {
+            old_items = Object.keys(obj);
             obj = _.omit(obj, keys[0]);
-            removed = _.difference(old_items, _.keys(obj));
+            removed = _.difference(old_items, Object.keys(obj));
         } else {
             _.each(keys, function (key) {
                 if (_.has(obj, key)) {
@@ -419,7 +420,7 @@
      * _.M.isInstanceOf(new _.M.EventEmitter(), 'EventEmitter'); //true
      */
     M.isInstanceOf = function (obj, class_name) {
-        return this.className(obj, true) === class_name;
+        return M.className(obj, true) === class_name;
     };
 
     /**
@@ -440,19 +441,24 @@
 
 
     /**
-     * Merge multiple array
+     * Merge multiple array to first array
      * @return {Array}
      */
     M.mergeArray = function () {
-        var result = [];
+        switch (arguments.length) {
+            case 0:
+                return [];
+            case 1:
+                return arguments[0];
+        }
 
-        _.each(arguments, function (arr) {
-            _.each(arr, function (item) {
-                result.push(item);
-            });
-        });
+        for (var i = 1; i < arguments.length; i++) {
+            for (var j = 0; j < arguments[i].length; j += 1000) {
+                arguments[0].push.apply(arguments[0], arguments[i].slice(j, j + 1000));
+            }
+        }
 
-        return result;
+        return arguments[0];
     };
 
     M.mergeObject = function () {
@@ -747,6 +753,26 @@
     };
 
     /**
+     * Get all of valid keys that exists in object.
+     *
+     * @param {object} object
+     * @param {Array} keys
+     * @return {Array}
+     */
+    M.validKeys = function (object, keys) {
+        var result = [];
+
+        keys = M.beArray(keys);
+        for (var i = 0, length = keys.length; i < length; i++) {
+            if (object.hasOwnProperty(keys[i])) {
+                result.push(keys[i]);
+            }
+        }
+
+        return result;
+    };
+
+    /**
      * Return first value of arguments that isn't empty
      * @returns {*}
      * @example
@@ -944,7 +970,7 @@
      */
     M.padNumber = function (num, place, sign, base) {
         var str = Math.abs(num).toString(base || 10);
-        str = this.repeat('0', place - str.replace(/\.\d+/, '').length) + str;
+        str = M.repeat('0', place - str.replace(/\.\d+/, '').length) + str;
         if (sign || num < 0) {
             str = (num < 0 ? '-' : '+') + str;
         }
@@ -1076,7 +1102,7 @@
      * _.M.isLikeString(true); // false
      */
     M.isLikeString = function (value) {
-        return _.isString(value) || this.isNumeric(value);
+        return _.isString(value) || M.isNumeric(value);
     };
 
     /**
@@ -1289,7 +1315,7 @@
      * _.M.isDefinedConstant('TEST') => false
      */
     M.isDefinedConstant = function (name) {
-        return _.has(this, name.trim().toUpperCase());
+        return _.has(M, name.trim().toUpperCase());
     };
 
     /**
@@ -1302,7 +1328,7 @@
     M.defineConstant = function (name, value) {
         var obj = {},
             result = [],
-            self = this;
+            self = M;
 
         if (!_.isObject(name)) {
             obj[name] = value;
@@ -1550,7 +1576,7 @@
      * @param {function} callback
      */
     M.onDebugging = function (type, callback) {
-        if (this.isDebugging(type)) {
+        if (M.isDebugging(type)) {
             M.callFunc(callback);
         }
     };

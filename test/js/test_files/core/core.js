@@ -81,7 +81,7 @@ describe('CORE', function () {
         });
     });
 
-    describe('METHODS', function () {
+    describe('Functions', function () {
         describe('Debugging', function () {
             beforeEach(function () {
                 _.M.debugComplete('test');
@@ -593,6 +593,19 @@ describe('CORE', function () {
                 chai_assert.isFalse(_.M.isPrimitiveType(_.App));
             });
         });
+        describe('_.M.mergeArray', function () {
+            it('test', function () {
+                var arr1 = _.range(1, 5),
+                    arr2 = _.range(5, 10),
+                    arr3 = _.range(10, 15);
+
+                var target = _.flatten([arr1, arr2, arr3]);
+                var merged = _.M.mergeArray(arr1, arr2, arr3);
+
+                chai_assert.deepEqual(merged, target);
+            });
+        });
+
         describe('_.M.left', function () {
             it('First 2 characters', function () {
                 chai_assert.strictEqual(_.M.left('ABC', 2), 'AB');
@@ -895,6 +908,25 @@ describe('CORE', function () {
                 chai_assert.deepEqual(_.M.setup(obj, {b: 'Yahoo', c: 'ASD'}), {a: 'A', b: 'Yahoo', c: 'ASD'});
             });
 
+        });
+        describe('_.M.validKeys', function () {
+            it('object', function () {
+                var obj = {a: 'A', b: 'B', c: 'C', đ: 'Đ'},
+                    check_keys = ['a', 'c', 'đ'];
+                chai_assert.sameMembers(_.M.validKeys(obj, check_keys), check_keys)
+            });
+            it('array', function () {
+                var array = _.range(1, 10),
+                    check_keys = [0, 5, 7];
+
+                chai_assert.sameMembers(_.M.validKeys(array, check_keys), check_keys)
+            });
+            it('string', function () {
+                var string = _.M.randomString(10),
+                    check_keys = [0, 5, 7];
+
+                chai_assert.sameMembers(_.M.validKeys(string, check_keys), check_keys)
+            });
         });
         describe('_.M.span', function () {
             it('test', function () {
