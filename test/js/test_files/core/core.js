@@ -81,7 +81,7 @@ describe('CORE', function () {
         });
     });
 
-    describe.only('Functions', function () {
+    describe('Functions', function () {
         describe('Debugging', function () {
             beforeEach(function () {
                 _.M.debugComplete('test');
