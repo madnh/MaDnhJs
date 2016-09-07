@@ -4778,8 +4778,9 @@
      */
     EventEmitter.prototype.emitted = function (event) {
         if (!_.isUndefined(event)) {
-            return _.has(this._event_emitted, event) ? parseInt(this._event_emitted[event]) : 0;
+            return this._event_emitted.hasOwnProperty(event) ? this._event_emitted[event] : 0;
         }
+
         return _.clone(this._event_emitted);
     };
 
@@ -4829,7 +4830,7 @@
             if (!event_detail.key_mapped.hasOwnProperty(option.key)) {
                 event_detail.key_mapped[option.key] = keys;
             } else {
-                event_detail.key_mapped[option.key] = event_detail.key_mapped[option.key].concat(keys);
+                _.M.mergeArray(event_detail.key_mapped[option.key], keys);
             }
         });
 
@@ -5093,16 +5094,16 @@
 
     function _notice_event(instance, event_name, data) {
         _.each(instance._event_followers, function (follower) {
-            function cb(source_id, source_event, source_data) {
-                follower.target.notice(source_id, source_event, source_data);
-            }
-
             if (follower.async) {
-                _.M.async(cb, [instance.id, event_name, data], instance);
+                _.M.async(_.partial(_notice_event_cb, follower), [instance.id, event_name, data], instance);
             } else {
-                _.M.callFunc(cb, [instance.id, event_name, data], instance);
+                _.M.callFunc(_.partial(_notice_event_cb, follower), [instance.id, event_name, data], instance);
             }
         });
+    }
+
+    function _notice_event_cb(follower, source_id, source_event, source_data) {
+        follower.target.notice(source_id, source_event, source_data);
     }
 
 
@@ -5278,14 +5279,14 @@
      * Set events is private
      */
     EventEmitter.prototype.private = function () {
-        this._event_privates = this._event_privates.concat(_.flatten(_.toArray(arguments)));
+        _.M.mergeArray(this._event_privates, _.flatten(_.toArray(arguments)));
     };
 
     /**
      * Set events is mimic
      */
     EventEmitter.prototype.mimic = function () {
-        this._event_mimics = this._event_mimics.concat(_.flatten(_.toArray(arguments)));
+        _.M.mergeArray(this._event_mimics, _.flatten(_.toArray(arguments)));
     };
 
     /**
@@ -5313,6 +5314,16 @@
 
         throw new Error('Invalid _.M.EventEmitter instance');
     };
+
+    /**
+     * Check if has an EE instance is attached to this
+     * @param {_.M.EventEmitter} eventEmitter
+     * @return {boolean}
+     */
+    EventEmitter.prototype.hasFollower = function (eventEmitter) {
+        return _.M.isEventEmitter(eventEmitter) && this._event_followers.hasOwnProperty(eventEmitter.id);
+    };
+
     /**
      * Attach other event emitter to this. Notice sync
      * @param eventEmitter
@@ -5326,7 +5337,7 @@
 
     /**
      * Attach this to other event emitter instance. Notice async
-     * @param {EventEmitter} eventEmitter
+     * @param {_.M.EventEmitter} eventEmitter
      * @param {Array} [only]
      * @param {Array} [excepts]
      * @param {boolean} [hard=false] Hard attach to other, other notice will call immediate. Default is false
@@ -5351,12 +5362,22 @@
             return eventEmitter.attach(this);
 
         }
+
         return true;
     };
 
     /**
-     * Hard Attach this to other event emitter instance. Notice sync
+     * Check if this one is following another EE instance
      * @param {EventEmitter} eventEmitter
+     * @return {boolean}
+     */
+    EventEmitter.prototype.isFollowing = function (eventEmitter) {
+        return _.M.isEventEmitter(eventEmitter) && this._event_following.hasOwnProperty(eventEmitter.id);
+    };
+
+    /**
+     * Hard Attach this to other event emitter instance. Notice sync
+     * @param {_.M.EventEmitter} eventEmitter
      * @param {Array} [only]
      * @param {Array} [excepts]
      * @returns {boolean}
@@ -5366,7 +5387,7 @@
     };
 
     /**
-     * Notice following event emitter emitted
+     * Notice following event emitter emitted. If noticed event is a mimic event then do not emit any notice events.
      * Emit events:
      * - <source id>.<event name>
      * - <source type>.<event name>,
@@ -5388,40 +5409,41 @@
      */
     EventEmitter.prototype.notice = function (sourceID, eventName, data) {
         if (this._event_following.hasOwnProperty(sourceID)) {
-            var info = this._event_following[sourceID],
+            var following_info = this._event_following[sourceID],
                 self = this;
 
-            if ((_.isEmpty(info.only) || -1 !== info.only.indexOf(eventName))
-                && (_.isEmpty(info.excepts) || -1 === info.excepts.indexOf(eventName))) {
+            if ((_.isEmpty(following_info.only) || -1 !== following_info.only.indexOf(eventName))
+                && (_.isEmpty(following_info.excepts) || -1 === following_info.excepts.indexOf(eventName))) {
 
-                var notice_data = {
-                    id: info.id,
-                    type: info.type,
-                    event: eventName,
-                    data: data
-                };
-
-                var notices = [
-                    info.id + '.' + eventName,
-                    info.type + '.' + eventName,
-                    'noticed.' + info.id + '.' + eventName,
-                    'noticed.' + info.id,
-                    'noticed.' + info.type + '.' + eventName,
-                    'noticed.' + info.type,
-                    'noticed'
+                var mimic_events = [
+                    eventName,
+                    following_info.type + '.*',
+                    following_info.type + '.' + eventName
                 ];
 
-                var mimic = null;
-                _.M.loop([eventName, info.type + '.*', info.type + '.' + eventName], function (mimic_event_name) {
-                    if (-1 != self._event_mimics.indexOf(mimic_event_name)) {
-                        mimic = mimic_event_name;
-                        self.emitEvent(eventName, data);
+                if (!_.isEmpty(_.intersection(mimic_events, self._event_mimics))) {
+                    self.emitEvent(eventName, data);
 
-                        return 'break';
-                    }
-                });
+                    return;
+                }
 
-                this.emitEvent(mimic ? _.omit(notices, mimic) : notices, _.clone(notice_data));
+                var notice_data = {
+                        id: following_info.id,
+                        type: following_info.type,
+                        event: eventName,
+                        data: data
+                    },
+                    notice_events = [
+                        following_info.id + '.' + eventName,
+                        following_info.type + '.' + eventName,
+                        'noticed.' + following_info.id + '.' + eventName,
+                        'noticed.' + following_info.id,
+                        'noticed.' + following_info.type + '.' + eventName,
+                        'noticed.' + following_info.type,
+                        'noticed'
+                    ];
+
+                this.emitEvent(notice_events, notice_data);
             }
         }
     };
@@ -5470,7 +5492,7 @@
 
     /**
      *
-     * @type {EventEmitter}
+     * @type {_.M.EventEmitter}
      */
     _.M.EventEmitter = EventEmitter;
 
