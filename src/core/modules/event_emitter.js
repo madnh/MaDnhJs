@@ -816,7 +816,7 @@
     };
 
     /**
-     * Detach followed event emitter
+     * Detach a followed event emitter
      * @param {EventEmitter} eventEmitter
      * @returns {boolean}
      */
@@ -837,7 +837,7 @@
     };
 
     /**
-     * Detach following event emitter
+     * Detach a following event emitter
      * @param {EventEmitter} eventEmitter
      * @returns {boolean}
      */

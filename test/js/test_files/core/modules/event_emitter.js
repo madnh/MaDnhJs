@@ -230,7 +230,7 @@ describe('MODULE - EventEmitter', function () {
             chai_assert.isFalse(ee.has(key3));
         });
     });
-    describe('Attach to other EventEmitter instance', function () {
+    describe('Listen to other EventEmitter instance (attach)', function () {
         var base_ee, other_ee;
 
         before(function () {
@@ -333,6 +333,27 @@ describe('MODULE - EventEmitter', function () {
             it('Mimic event with type and event name', function (done) {
                 testMimic(done, base_ee.type_prefix + '.' + event_name);
             });
+        });
+    });
+    describe('Un-listen to other EventEmitter instance (detach)', function () {
+        var base_ee, other_ee;
+
+        beforeEach(function () {
+            base_ee = new _.M.EventEmitter();
+            other_ee = new _.M.EventEmitter();
+
+            other_ee.attachTo(base_ee);
+        });
+
+        it('BaseEE detach OtherEE', function () {
+            chai_assert.isTrue(base_ee.detach(other_ee));
+            chai_assert.isFalse(other_ee.isFollowing(base_ee));
+            chai_assert.isFalse(base_ee.hasFollower(other_ee));
+        });
+        it('OtherEE detach from BaseEE', function () {
+            chai_assert.isTrue(other_ee.detachFrom(base_ee));
+            chai_assert.isFalse(other_ee.isFollowing(base_ee));
+            chai_assert.isFalse(base_ee.hasFollower(other_ee));
         });
     });
 
