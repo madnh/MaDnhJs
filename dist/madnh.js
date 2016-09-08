@@ -390,7 +390,8 @@
      * _.M.contentType('Yahooooooo'); //string
      * _.M.contentType(true); //boolean
      * _.M.contentType(true); //boolean
-     * _.M.contentType([1,2]); //array
+     * _.M.contentType([1,2]); //Array
+     * _.M.contentType({}); //Object
      * _.M.contentType(_.App); //App
      */
     M.contentType = function (content) {
@@ -3178,6 +3179,7 @@
             this.private(_.M.beArray(options['event_privates']));
         }
     }
+    _.M.inherit(EventEmitter, _.M.BaseClass);
 
     /**
      * Reset events
@@ -4337,7 +4339,7 @@
      * @constructor
      */
     function Task(handler) {
-        this.type_prefix = 'task';
+        this.type_prefix = 'Task';
         _.M.BaseClass.call(this);
         /**
          * Task name
@@ -4378,7 +4380,7 @@
      * @returns {Task}
      */
     Task.prototype.option = function (name, value) {
-        this.options = _.M.setup.apply(_.M, [this.options].concat(Array.prototype.slice.apply(arguments)));
+        this.options = _.M.setup.apply(_.M, [this.options].concat(_.M.sliceArguments(arguments)));
 
         return this;
     };
@@ -4388,11 +4390,11 @@
      * @returns {boolean}
      */
     Task.prototype.isError = function () {
-        return this._error;
+        return !_.isNull(this._error);
     };
 
     /**
-     * @return {void|{}} void when process is ok. Object with error code and message
+     * @return {null|{}} void when process is ok. Object with error code and message
      */
     Task.prototype.getError = function () {
         if (this.isError()) {
@@ -4401,6 +4403,8 @@
                 message: ''
             }, _.isObject(this._error) ? this._error : {}), 'code', 'message');
         }
+
+        return null;
     };
 
     /**
@@ -4434,9 +4438,9 @@
     };
 
     /**
-     *
+     * Process data
      * @param {*} data
-     * @returns {boolean}
+     * @returns {boolean} Success (true) or not (false)?
      */
     Task.prototype.process = function (data) {
         var self = this;
@@ -4448,25 +4452,20 @@
             this.handler = _.M.beArray(this.handler);
         }
         if (_.isFunction(this.handler)) {
-            this.handler.bind(this)(data, this.setProcessResult.bind(this), this.setProcessError.bind(this));
+            _process_handler_as_function(this, this.handler, data);
         } else if (this.handler instanceof Task) {
-            this.handler.process(self._result);
-
-            self._result = this.handler.getResult();
-            self._error = this.handler.getError();
+            _process_handler_as_task(this, this.handler, self._result);
         } else if (_.isArray(this.handler)) {
             _.M.loop(this.handler, function (handle) {
-                var tmp_task_instance;
+                var task_instance;
 
                 if (_.isString(handle)) {
-                    tmp_task_instance = Task.factory(handle);
+                    task_instance = Task.factory(handle);
                 } else {
-                    tmp_task_instance = new Task(handle);
+                    task_instance = new Task(handle);
                 }
 
-                tmp_task_instance.process(self._result);
-                self._result = tmp_task_instance.getResult();
-                self._error = tmp_task_instance.getError();
+                _process_handler_as_task(self, task_instance, self._result);
 
                 if (self.isError()) {
                     return 'break';
@@ -4474,15 +4473,13 @@
             });
         } else if (_.isObject(this.handler)) {
             _.M.loop(this.handler, function (options, handle) {
-                var tmp_task_instance = Task.factory(handle);
+                var task_instance = Task.factory(handle);
 
                 if (!_.isEmpty(options)) {
-                    tmp_task_instance.options(options);
+                    task_instance.options(options);
                 }
 
-                tmp_task_instance.process(self._result);
-                self._result = tmp_task_instance.getResult();
-                self._error = tmp_task_instance.getError();
+                _process_handler_as_task(self, task_instance, self._result);
 
                 if (self.isError()) {
                     return 'break';
@@ -4493,12 +4490,28 @@
         return !this.isError();
     };
 
+    function _process_handler_as_function(instance, handler, data) {
+        try {
+            handler.bind(instance)(data, instance.setProcessResult.bind(instance), instance.setProcessError.bind(instance));
+        } catch (e) {
+            instance.setProcessError(e.message || e.description, e.number || 0);
+        }
+    }
+
+    function _process_handler_as_task(instance, task, data) {
+        task.process(data);
+
+        instance._result = data.getResult();
+        instance._error = data.getError();
+    }
+
+
     /**
      * Check if task is exists
      * @param {string} name
      * @returns {boolean}
      */
-    Task.has = function (name) {
+    Task.isRegistered = function (name) {
         return tasks.hasOwnProperty(name);
     };
 
@@ -4517,10 +4530,10 @@
      * @param {{}} [options] Task options
      */
     Task.register = function (name, handler, options) {
-        var info = _.M.optionalArgs(Array.prototype.slice.call(arguments, 0), ['name', 'handler', 'options'], {
-            name: 'string', handler: [
-                'string', 'function', 'array', 'Task'
-            ], options: 'object'
+        var info = _.M.optionalArgs(_.M.sliceArguments(arguments), ['name', 'handler', 'options'], {
+            name: 'string',
+            handler: ['string', 'Function', 'Array', 'Task'],
+            options: 'Object'
         });
 
         if (info.handler instanceof Task) {
@@ -4540,7 +4553,7 @@
      * @returns {Task}
      */
     Task.factory = function (name, options) {
-        if (Task.has(name)) {
+        if (Task.isRegistered(name)) {
             var task_info = tasks[name],
                 task = new Task();
 
@@ -4554,7 +4567,7 @@
             return task;
         }
 
-        throw new Error('Create unregistered task: ' + name);
+        throw new Error('Create an unregistered task: ' + name);
     };
 
     Task.apply = function (data, tasks) {
@@ -4562,8 +4575,8 @@
             data: _.clone(data)
         };
 
-        if(tasks){
-            if(_.isString(tasks)){
+        if (tasks) {
+            if (_.isString(tasks)) {
                 tasks = [tasks];
             }
             if (_.isArray(tasks)) {
@@ -5256,8 +5269,8 @@
             };
 
         args = _.M.optionalArgs(Array.prototype.slice.call(arguments, 3), ['data', 'callback', 'dataType'], {
-            data: ['string', 'object'],
-            callback: 'function',
+            data: ['string', 'Object'],
+            callback: 'Function',
             dataType: 'string'
         });
 
@@ -5283,8 +5296,8 @@
         AJAX.prototype[method + 'JSON'] = function (url, data, callback) {
             var args = _.M.optionalArgs(Array.prototype.slice.call(arguments, 0, 3), ['url', 'data', 'callback'], {
                     url: 'string',
-                    data: ['string', 'object'],
-                    callback: 'function'
+                    data: ['string', 'Object'],
+                    callback: 'Function'
                 }),
                 options = {
                     dataType: 'json'

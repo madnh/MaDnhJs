@@ -586,8 +586,8 @@
             };
 
         args = _.M.optionalArgs(Array.prototype.slice.call(arguments, 3), ['data', 'callback', 'dataType'], {
-            data: ['string', 'object'],
-            callback: 'function',
+            data: ['string', 'Object'],
+            callback: 'Function',
             dataType: 'string'
         });
 
@@ -613,8 +613,8 @@
         AJAX.prototype[method + 'JSON'] = function (url, data, callback) {
             var args = _.M.optionalArgs(Array.prototype.slice.call(arguments, 0, 3), ['url', 'data', 'callback'], {
                     url: 'string',
-                    data: ['string', 'object'],
-                    callback: 'function'
+                    data: ['string', 'Object'],
+                    callback: 'Function'
                 }),
                 options = {
                     dataType: 'json'

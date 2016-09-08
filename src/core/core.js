@@ -390,7 +390,8 @@
      * _.M.contentType('Yahooooooo'); //string
      * _.M.contentType(true); //boolean
      * _.M.contentType(true); //boolean
-     * _.M.contentType([1,2]); //array
+     * _.M.contentType([1,2]); //Array
+     * _.M.contentType({}); //Object
      * _.M.contentType(_.App); //App
      */
     M.contentType = function (content) {

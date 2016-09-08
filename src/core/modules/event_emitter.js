@@ -94,6 +94,7 @@
             this.private(_.M.beArray(options['event_privates']));
         }
     }
+    _.M.inherit(EventEmitter, _.M.BaseClass);
 
     /**
      * Reset events
