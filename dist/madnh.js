@@ -4501,8 +4501,8 @@
     function _process_handler_as_task(instance, task, data) {
         task.process(data);
 
-        instance._result = data.getResult();
-        instance._error = data.getError();
+        instance._result = task.getResult();
+        instance._error = task.getError();
     }
 
 
