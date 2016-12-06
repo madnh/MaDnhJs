@@ -4,7 +4,7 @@ describe('MODULES - WAITER', function () {
 
     describe('Add', function () {
         it('once', function (done) {
-            var key = _.M.WAITER.add(function (name) {
+            var key = _.M.WAITER.addOnce(function (name) {
                 done();
 
                 return name;
@@ -38,7 +38,7 @@ describe('MODULES - WAITER', function () {
         });
         it('Add function', function () {
             _.M.debugging('test');
-            var key = _.M.WAITER.createFunc(function (name) {
+            var key = _.M.WAITER.createFuncOnce(function (name) {
                 return name;
             });
             _.M.debugComplete('test');
@@ -58,7 +58,7 @@ describe('MODULES - WAITER', function () {
 
     describe('Remove', function () {
         it('test', function () {
-            var key = _.M.WAITER.add(function () {
+            var key = _.M.WAITER.addOnce(function () {
             });
             //
             chai_assert.isTrue(_.M.WAITER.has(key));

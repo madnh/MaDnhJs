@@ -6,7 +6,7 @@
         if (_pre_options.hasOwnProperty(dest_name)) {
             throw new Error('Destination Pre Options is already exists');
         }
-        sources = _.M.beArray(sources);
+        sources = _.castArray(sources);
         var not_founds = _.filter(sources, function (source) {
             return !_pre_options.hasOwnProperty(source);
         });
@@ -99,7 +99,7 @@
 
             var result = {};
 
-            _.each(_.M.beArray(_pre_options[name].base), function (base) {
+            _.each(_.castArray(_pre_options[name].base), function (base) {
                 _.extend(result, _.M.PreOptions.get(base));
             });
             _.extend(result, _.clone(_pre_options[name].options), _.isObject(custom) ? custom : {});

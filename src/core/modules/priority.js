@@ -200,7 +200,7 @@
     Priority.prototype.remove = function (keys, priorities) {
         var removed  = remove_keys.apply(null, [this].concat(_.toArray(arguments)));
 
-        return _.pluck(this._super.remove.call(this, removed), 'key');
+        return _.map(this._super.remove.call(this, removed), 'key');
     };
 
     /**
@@ -210,17 +210,17 @@
      * @param {number[]} priorities
      */
     function get_valid_priorities_by_keys(instance, keys, priorities) {
-        var priorities_and_keys = _.M.invertToArray(_.pick(instance._key_mapped, _.M.beArray(keys))),
+        var priorities_and_keys = _.invertBy(_.pick(instance._key_mapped, _.castArray(keys))),
             priorities_from_keys_casted = _.M.castItemsType(Object.keys(priorities_and_keys), 'number');
 
         if (!priorities) {
             priorities = priorities_from_keys_casted;
         } else {
-            priorities = _.intersection(_.M.castItemsType(_.M.beArray(priorities), 'number'), priorities_from_keys_casted);
+            priorities = _.intersection(_.M.castItemsType(_.castArray(priorities), 'number'), priorities_from_keys_casted);
         }
         priorities = get_valid_priorities(instance, priorities);
 
-        return _.mapObject(_.pick(instance._priorities, priorities), function (priority_keys, priority) {
+        return _.mapValues(_.pick(instance._priorities, priorities), function (priority_keys, priority) {
             return _.intersection(priorities_and_keys[priority], priority_keys);
         });
     }
@@ -257,7 +257,7 @@
      */
     Priority.prototype.removeContent = function (content, priorities) {
         var content_positions = this.contentPositions(content, 'priority'),
-            keys = _.pluck(content_positions, 'key');
+            keys = _.map(content_positions, 'key');
 
         if(!keys.length){
             return [];

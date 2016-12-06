@@ -94,7 +94,7 @@
 
         data['close_func'] = _.M.WAITER.createFunc(function () {
             this.getDialog().close();
-        }.bind(this), false, 'Modal: ' + dialog.id + ' >>> Header close button');
+        }.bind(this), true, 'Modal: ' + dialog.id + ' >>> Header close button');
 
         this.waiter_keys.push(data['close_func']);
 
@@ -145,6 +145,10 @@
     }
 
     function Bootstrap() {
+        if (!$.fn.modal) {
+            throw new Error('Dialog Bootstrap template require Bootstrap Modal to work');
+        }
+
         this.type_prefix = 'template_dialog_bootstrap';
         _.M.Template.call(this);
         this.options = _.M.PreOptions.get(_.M.DIALOG_TEMPLATE_BOOTSTRAP_PRE_OPTIONS_NAME);

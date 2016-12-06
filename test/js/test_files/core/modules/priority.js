@@ -26,7 +26,7 @@ describe('MODULE - Priority', function () {
         it('Add with special priority value', function () {
             var priority = 999;
             //
-            priority_instance.add(_.M.nowSecond(), priority);
+            priority_instance.add(_.now(), priority);
             //
             chai_assert.isTrue(priority_instance.hasPriority(priority));
         });

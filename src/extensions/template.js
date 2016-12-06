@@ -181,7 +181,7 @@
             });
         }
 
-        sub_sections = _.object(sub_sections, _.M.repeat('', sub_sections.length, true));
+        sub_sections = _.zipObject(sub_sections, _.fill(new Array(sub_sections.length), ''));
         if (!_.isEmpty(sub_sections)) {
             _.each(sub_sections, function (sub_section_value, sub_section_name) {
                 sections[sub_section_name] = renderContent(sections[sub_section_name], instance, sections, data);

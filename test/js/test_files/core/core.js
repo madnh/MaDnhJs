@@ -111,36 +111,8 @@ describe('CORE', function () {
             });
 
         });
-        describe('_.M.appendDeep', function () {
-            it('Test', function () {
-                var obj = {a: 1, b: 2, c: {}, x: [456], y: true};
-                //
-                _.M.defineDeep(obj, 'c.d.e', 123);
-                chai_assert.deepProperty(obj, 'c.d.e');
-                //
-                _.M.appendDeep(obj, 'c.d.e', 'yahoo');
-                chai_assert.deepProperty(obj, 'c.d.e');
-                chai_assert.strictEqual(obj.c.d.e, '123yahoo');
-                //
-                _.M.appendDeep(obj, 'x', 'ahihi');
-                chai_assert.isArray(obj.x);
-                chai_assert.deepEqual(obj.x, [456, "ahihi"]);
-                //
-                _.M.appendDeep(obj, 'y', 789);
-                chai_assert.isArray(obj.y);
-                chai_assert.deepEqual(obj.y, [true, 789]);
-            });
-        });
         describe('_.M.async', function () {
 
-        });
-        describe('_.M.beArray', function () {
-            it('Parameter is array', function () {
-                chai_assert.isArray(_.M.beArray([123]));
-            });
-            it('Parameter is not array', function () {
-                chai_assert.isArray(_.M.beArray(123));
-            });
         });
         describe('_.M.beNumber', function () {
             it('Parameter is number', function () {
@@ -236,21 +208,10 @@ describe('CORE', function () {
                     return old + 1;
                 }
 
-                var waiter_key = _.M.WAITER.add(test);
+                var waiter_key = _.M.WAITER.addOnce(test);
                 //
                 chai_assert.strictEqual(_.M.callFunc(waiter_key, 10), 11);
             });
-        });
-        describe('_.M.capitalize', function () {
-            var string = 'xin chao';
-
-            it('All of words', function () {
-                chai_assert.strictEqual(_.M.capitalize(string), 'Xin Chao');
-            });
-            it('Only first word', function () {
-                chai_assert.strictEqual(_.M.capitalize(string, false), 'Xin chao');
-            });
-
         });
         describe('_.M.castItemsType', function () {
             var arr = [];
@@ -293,20 +254,7 @@ describe('CORE', function () {
                 }
             });
         });
-        describe('_.M.chunk', function () {
-            var arr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
-                chunked = _.M.chunk(arr, 3);
 
-            it('test', function () {
-                chai_assert.isArray(chunked);
-                chai_assert.lengthOf(chunked, 4);
-                chai_assert.deepEqual(chunked[0], [0, 1, 2]);
-                chai_assert.deepEqual(chunked[1], [3, 4, 5]);
-                chai_assert.deepEqual(chunked[2], [6, 7, 8]);
-                chai_assert.deepEqual(chunked[3], [9]);
-            });
-
-        });
         describe('_.M.chunks', function () {
             var arr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
                 chunked = _.M.chunks(arr, 3);
@@ -384,25 +332,6 @@ describe('CORE', function () {
                 chai_assert.propertyVal(_.M, 'Y', 'B');
             });
         });
-        describe('_.M.defineDeep', function () {
-            it('test', function () {
-                var obj = {a: 1, b: 2, c: {}};
-                //
-                _.M.defineDeep(obj, 'c.d.e', 123);
-                //
-                chai_assert.property(obj, 'a');
-                chai_assert.propertyVal(obj, 'a', 1);
-                //
-                chai_assert.property(obj, 'b');
-                chai_assert.propertyVal(obj, 'b', 2);
-                //
-                chai_assert.property(obj, 'c');
-                chai_assert.isObject(obj.c);
-                //
-                chai_assert.deepProperty(obj, 'c.d.e');
-                chai_assert.deepPropertyVal(obj, 'c.d.e', 123);
-            });
-        });
         describe('_.M.defineObject', function () {
             it('test', function () {
                 var obj = _.M.defineObject({
@@ -420,47 +349,10 @@ describe('CORE', function () {
                 chai_assert.propertyVal(obj, 'old', 123);
             });
         });
-        describe('_.M.escapeHTML', function () {
-            it('test', function () {
-                chai_assert.strictEqual(_.M.escapeHTML('<b>Yahoo</b>'), '&lt;b&gt;Yahoo&lt;&#x2f;b&gt;');
-            });
-        });
         describe('_.M.firstNotEmpty', function () {
             it('test', function () {
                 chai_assert.strictEqual(_.M.firstNotEmpty(['', 0, false, 123]), 123);
             })
-        });
-        describe('_.M.getDeep', function () {
-            var obj = {
-                a: 1,
-                b: 2,
-                c: {
-                    d: {
-                        e: 123
-                    }
-                }
-            };
-
-            it('Default', function () {
-                chai_assert.strictEqual(_.M.getDeep(obj, 'c.d.e'), 123);
-                chai_assert.isUndefined(_.M.getDeep(obj, 'c.d.e.f'));
-            });
-            it('Default value', function () {
-                chai_assert.strictEqual(_.M.getDeep(obj, 'c.d.e', 'ABC'), 123);
-                chai_assert.strictEqual(_.M.getDeep(obj, 'c.d.e.f', 'ABC'), 'ABC');
-            });
-
-
-        });
-        describe('_.M.hasDeep', function () {
-            it('test', function () {
-                var obj = {a: {a1: {a2: true}}, b: 'hihi'};
-                //
-                chai_assert.isTrue(_.M.hasDeep(obj, 'a.a1'));
-                chai_assert.isFalse(_.M.hasDeep(obj, 'a.yahoo'));
-                chai_assert.isTrue(_.M.hasDeep([obj, 123], 1));
-                chai_assert.isFalse(_.M.hasDeep([obj, 123], 10));
-            });
         });
         describe('_.M.inherit', function () {
             function SourceClass() {
@@ -511,14 +403,6 @@ describe('CORE', function () {
                 chai_assert.strictEqual(obj_foo.constructor.prototype._super.test.call(obj_foo), 'SourceClass.foo: Ohoho');
             });
         });
-        describe('_.M.isBlank', function () {
-            it('test', function () {
-                chai_assert.isTrue(_.M.isBlank(''));
-                chai_assert.isTrue(_.M.isBlank('    '));
-                chai_assert.isTrue(_.M.isBlank("\n"));
-                chai_assert.isFalse(_.M.isBlank("abc\n\n"));
-            });
-        });
         describe('_.M.isDefinedConstant', function () {
             it('test', function () {
                 chai_assert.isTrue(_.M.isDefinedConstant('VERSION'));
@@ -551,22 +435,6 @@ describe('CORE', function () {
                 chai_assert.isFalse(_.M.isInteger(true));
                 chai_assert.isFalse(_.M.isInteger([]));
             })
-        });
-        describe('_.M.isLikeString', function () {
-            it('test', function () {
-                chai_assert.isTrue(_.M.isLikeString('yahoo'));
-                chai_assert.isTrue(_.M.isLikeString(123));
-                chai_assert.isFalse(_.M.isLikeString({}));
-                chai_assert.isFalse(_.M.isLikeString(true));
-            })
-        });
-        describe('_.M.isMultiple', function () {
-            it('test', function () {
-                chai_assert.isTrue(_.M.isMultiple(12, 3));
-                chai_assert.isTrue(_.M.isMultiple(12, '4'));
-                chai_assert.isFalse(_.M.isMultiple(12, 0));
-                chai_assert.isFalse(_.M.isMultiple(12, 5));
-            });
         });
         describe('_.M.isNumeric', function () {
             it('test', function () {
@@ -639,14 +507,6 @@ describe('CORE', function () {
             });
 
         });
-        describe('_.M.left', function () {
-            it('First 2 characters', function () {
-                chai_assert.strictEqual(_.M.left('ABC', 2), 'AB');
-            });
-            it('Legth is < 0', function () {
-                chai_assert.strictEqual(_.M.left('ABC', -2), '');
-            });
-        });
         describe('_.M.loop', function () {
             it('Loop over array', function () {
                 var array = [1, 2, 3, 4, 5],
@@ -699,17 +559,6 @@ describe('CORE', function () {
                 chai_assert.deepEqual(array_looped, [1, 2, 3]);
             });
         });
-        describe('_.M.minMax', function () {
-            it('Value in range', function () {
-                chai_assert.strictEqual(_.M.minMax(10, -15, 50), 10);
-            });
-            it('Value less than min of range', function () {
-                chai_assert.strictEqual(_.M.minMax(10, 20, 50), 20);
-            });
-            it('Value greater than max of range', function () {
-                chai_assert.strictEqual(_.M.minMax(100, 20, 50), 50);
-            });
-        });
         describe('_.M.nextID', function () {
             before(function () {
                 _.M.resetID();
@@ -725,11 +574,6 @@ describe('CORE', function () {
                 chai_assert.strictEqual(_.M.nextID('superman'), 'superman_1');
                 chai_assert.strictEqual(_.M.nextID('superman'), 'superman_2');
                 chai_assert.strictEqual(_.M.nextID('superman', false), 3);
-            });
-        });
-        describe('_.M.nowSecond', function () {
-            it('test', function () {
-                expect(_.M.nowSecond()).to.be.a('number').with.to.be.at.least(0);
             });
         });
         describe('_.M.oneOf', function () {
@@ -774,15 +618,6 @@ describe('CORE', function () {
                 expect(_.M.optionalArgs([[], []], order, rules)).to.be.a('object').with.eql({int: [], bool: []});
             })
         });
-        describe('_.M.padNumber', function () {
-            it('test', function () {
-                chai_assert.strictEqual(_.M.padNumber(2, 2), '02');
-                chai_assert.strictEqual(_.M.padNumber(2, 15), '000000000000002');
-                chai_assert.strictEqual(_.M.padNumber(-2, 2), '-02');
-                chai_assert.strictEqual(_.M.padNumber(-2, 2, true), '-02');
-                chai_assert.strictEqual(_.M.padNumber(2, 2, true), '+02');
-            });
-        });
         describe('_.M.pairsAsObject', function () {
             it('test', function () {
                 chai_assert.deepEqual(_.M.pairsAsObject({one: 1, two: 2, three: 3}), [
@@ -804,25 +639,6 @@ describe('CORE', function () {
                     1: "moe", 2: "larry", 4: "curly"
                 });
             });
-        });
-        describe('_.M.randomInteger', function () {
-            it('test', function () {
-                var num_1 = _.M.randomInteger(10),
-                    num_2 = _.M.randomInteger(0, 10),
-                    num_3 = _.M.randomInteger(20, 8);
-
-                chai_assert.isNumber(num_1);
-                chai_assert.isAtLeast(num_1, 0);
-                chai_assert.isAtMost(num_1, 10);
-                //
-                chai_assert.isNumber(num_2);
-                chai_assert.isAtLeast(num_2, 0);
-                chai_assert.isAtMost(num_2, 10);
-                //
-                chai_assert.isNumber(num_3);
-                chai_assert.isAtLeast(num_3, 8);
-                chai_assert.isAtMost(num_3, 20);
-            })
         });
         describe('_.M.randomString', function () {
             it('default chars', function () {
@@ -922,11 +738,6 @@ describe('CORE', function () {
                 chai_assert.deepEqual(_.M.repeat('a', 5, true), ['a', 'a', 'a', 'a', 'a']);
             });
         });
-        describe('_.M.reverseString', function () {
-            it('test', function () {
-                chai_assert.equal(_.M.reverseString('yahoo'), 'oohay');
-            });
-        });
         describe('_.M.setup', function () {
             var obj = {};
 
@@ -961,13 +772,6 @@ describe('CORE', function () {
                 chai_assert.sameMembers(_.M.validKeys(string, check_keys), check_keys)
             });
         });
-        describe('_.M.span', function () {
-            it('test', function () {
-                chai_assert.strictEqual(_.M.span(123, 5, '_'), '__123');
-                chai_assert.strictEqual(_.M.span(123, 5, '_', false), '123__');
-                chai_assert.strictEqual(_.M.span('ABCDEF', 5, '_'), 'ABCDEF');
-            });
-        });
         describe('_.M.toggle', function () {
             var arr = [];
 
@@ -983,44 +787,6 @@ describe('CORE', function () {
             });
             it('Toogle', function () {
                 chai_assert.sameMembers(_.M.toggle(arr, ['A', 'V']), ['B', 'C', 'D', 'V']);
-            });
-        });
-        describe('_.M.updateDeep', function () {
-            it('test', function () {
-                var obj = {
-                    a: 1, b: 2, c: {
-                        d: {
-                            e: 123
-                        }
-                    }
-                };
-                var callback = function () {
-                    _.M.updateDeep(obj, 'c.d.e', function (current_value) {
-                        current_value = _.M.beArray(current_value);
-                        current_value.push('yahoo');
-                        return current_value;
-                    });
-                };
-                //
-                chai_assert.doesNotThrow(callback);
-                chai_assert.deepProperty(obj, 'c.d.e');
-                chai_assert.sameMembers(obj.c.d.e, [123, "yahoo"]);
-            });
-        });
-        describe('_.M.valueAt', function () {
-            it('array', function () {
-                var arr = ['a', 'b', 'c'];
-                //
-                chai_assert.strictEqual(_.M.valueAt(arr, 1), 'b');
-                chai_assert.strictEqual(_.M.valueAt(arr, 4), 'b');
-                chai_assert.strictEqual(_.M.valueAt(arr, -1), 'c');
-                chai_assert.strictEqual(_.M.valueAt(arr, -2), 'b');
-            });
-            it('string', function () {
-                var str = 'Yahoo';
-                //
-                chai_assert.strictEqual(_.M.valueAt(str, 2), 'h');
-                chai_assert.strictEqual(_.M.valueAt(str, -2), 'o');
             });
         });
     });

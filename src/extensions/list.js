@@ -178,7 +178,7 @@
         removeKeys: function (type, name) {
             var result = false;
             if (this.hasType(type)) {
-                name = _.M.beArray(name);
+                name = _.castArray(name);
                 var old = _.clone(_list_system[type]), removed;
 
                 _.M.removeKeys(_list_system[type], name);

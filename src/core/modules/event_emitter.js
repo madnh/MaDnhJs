@@ -88,10 +88,10 @@
             this.addListeners(_.M.beObject(options['events']));
         }
         if (!_.isEmpty(options['event_mimics'])) {
-            this.mimic(_.M.beArray(options['event_mimics']));
+            this.mimic(_.castArray(options['event_mimics']));
         }
         if (!_.isEmpty(options['event_privates'])) {
-            this.private(_.M.beArray(options['event_privates']));
+            this.private(_.castArray(options['event_privates']));
         }
     }
     _.M.inherit(EventEmitter, _.M.BaseClass);
@@ -181,8 +181,8 @@
     EventEmitter.prototype.addListener = function (events, listeners, option) {
         var self = this;
 
-        listeners = _.M.beArray(listeners);
-        events = _.uniq(_.M.beArray(events));
+        listeners = _.castArray(listeners);
+        events = _.uniq(_.castArray(events));
 
         if (!listeners.length) {
             return false;
@@ -265,7 +265,7 @@
         var keys = [],
             event_detail = ee._events[event];
 
-        _.M.loop(_.M.beArray(listeners), function (listener) {
+        _.M.loop(_.castArray(listeners), function (listener) {
             var key = event_detail.priority.add(listener, option.priority, {
                 listener_key: option.key,
                 async: option.async,
@@ -289,7 +289,7 @@
         if (!events) {
             events = Object.keys(this._events);
         } else {
-            events = _.intersection(_.M.beArray(key), Object.keys(this._events));
+            events = _.intersection(_.castArray(key), Object.keys(this._events));
         }
         if (_.isEmpty(events)) {
             return false;
@@ -354,9 +354,9 @@
 
         if (_.isObject(events)) {
             _.each(events, function (event_cbs, event_name) {
-                event_cbs = _.M.beArray(event_cbs);
+                event_cbs = _.castArray(event_cbs);
                 _.each(event_cbs, function (event_cb) {
-                    event_cb = _.M.beArray(event_cb);
+                    event_cb = _.castArray(event_cb);
                     events_arr.push({
                         name: event_name,
                         cb: event_cb[0],
@@ -382,7 +382,7 @@
     EventEmitter.prototype.emitEvent = function (events, data, final_cb) {
         var self = this;
 
-        _.each(_.M.beArray(events), function (event) {
+        _.each(_.castArray(events), function (event) {
             if (self._events.hasOwnProperty(event)) {
                 _emit_event(self, event, _.clone(data));
             }
@@ -492,10 +492,10 @@
     EventEmitter.prototype.removeListener = function (removes, events, priority) {
         var self = this, removed = {}, removes_by_keys, remove_by_listeners;
 
-        removes = _.M.beArray(removes);
+        removes = _.castArray(removes);
         events = _get_valid_events(self, events);
 
-        removes_by_keys = _.filter(removes, _.M.isLikeString);
+        removes_by_keys = _.filter(removes, _.isString);
         remove_by_listeners = _.filter(removes, _.isFunction);
 
         if (removes_by_keys.length) {
@@ -526,7 +526,7 @@
             return Object.keys(instance._events);
         }
 
-        return _.M.validKeys(instance._events, _.M.beArray(events));
+        return _.M.validKeys(instance._events, _.castArray(events));
     }
 
     /**
@@ -625,7 +625,7 @@
      */
     function _merge_object_item(target, object) {
         _.each(object, function (value, key) {
-            value = _.M.beArray(value);
+            value = _.castArray(value);
 
             if (!target.hasOwnProperty(key)) {
                 target[key] = value;
@@ -719,8 +719,8 @@
             this._event_following[eventEmitter.id] = {
                 id: eventEmitter.id,
                 type: eventEmitter.type_prefix,
-                only: _.M.beArray(only || []),
-                excepts: _.M.beArray(excepts || [])
+                only: _.castArray(only || []),
+                excepts: _.castArray(excepts || [])
             };
             this.emitEvent('attached', [eventEmitter, only, excepts]);
             if (hard) {

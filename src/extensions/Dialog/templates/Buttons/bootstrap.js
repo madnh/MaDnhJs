@@ -18,8 +18,8 @@
     }
 
     function _layout(instance, data_source, data) {
-        var size = _.M.minMax(data_source.options.size - 1, 0, 4),
-            padding_space = _.M.repeat('&nbsp;&nbsp;', size * 3),
+        var size = _.clamp(data_source.options.size - 1, 0, 4),
+            padding_space = _.repeat('&nbsp;&nbsp;', size * 3),
             template = '',
             style = [];
 
@@ -57,7 +57,7 @@
 
         this.click_key = _.M.WAITER.createFunc(function () {
             self.getButton().click();
-        }, false);
+        });
 
         this.mimic('toggle', 'toggle_enable');
 

@@ -251,7 +251,7 @@
             });
         }
 
-        sub_sections = _.object(sub_sections, _.M.repeat('', sub_sections.length, true));
+        sub_sections = _.zipObject(sub_sections, _.fill(new Array(sub_sections.length), ''));
         if (!_.isEmpty(sub_sections)) {
             _.each(sub_sections, function (sub_section_value, sub_section_name) {
                 sections[sub_section_name] = renderContent(sections[sub_section_name], instance, sections, data);
@@ -540,7 +540,7 @@
 
 
     jForm.getSelectOptionTagByValue = function (name, values, container) {
-        var queries = _.map(_.M.beArray(values), function (value) {
+        var queries = _.map(_.castArray(values), function (value) {
             return 'option[value="' + value + '"]';
         });
 
@@ -548,7 +548,7 @@
     };
 
     jForm.setSelectTagValue = function (name, values, container) {
-        $(container || 'body').find('select[name="' + name + '"]').val(_.M.beArray(values));
+        $(container || 'body').find('select[name="' + name + '"]').val(_.castArray(values));
     };
 
     jForm.removeSelectOptionTags = function (name, values, container) {
@@ -585,7 +585,7 @@
     };
 
     jForm.getCheckboxTagsByValue = function (name, values, container) {
-        var queries = _.map(_.M.beArray(values), function (value) {
+        var queries = _.map(_.castArray(values), function (value) {
             return 'input[type="checkbox"][name="' + name + '"][value="' + value + '"]';
         });
 
@@ -598,7 +598,7 @@
         var checkboxes = container.find('input[type="checkbox"][name="' + name + '"]');
 
 
-        if (checkboxes.length === 1 && (_.M.isLikeString(values) || _.isBoolean(values))) {
+        if (checkboxes.length === 1 && (_.isString(values) || _.isNumber(values) || _.isBoolean(values))) {
             if (_is_checked_value(values)) {
                 checkboxes.attr('checked', 'checked').prop('checked', true);
             } else {
@@ -632,19 +632,19 @@
                         try{
                             _.M.appendDeep(result, name_as_deep, checkbox_value);
                         }catch (ex){
-                            _.M.defineDeep(result, name_as_deep, [checkbox_value]);
+                            _.set(result, name_as_deep, [checkbox_value]);
                         }
                     }
                 } else {
                     if(_.isBoolean(checkbox_value)){
-                        _.M.defineDeep(result, name_as_deep, 'on');
+                        _.set(result, name_as_deep, 'on');
                     } else {
-                        _.M.defineDeep(result, name_as_deep + '.' + checkbox_value, 'on');
+                        _.set(result, name_as_deep + '.' + checkbox_value, 'on');
                     }
                 }
             }
         } else {
-            _.M.defineDeep(result, name_as_deep, value);
+            _.set(result, name_as_deep, value);
         }
     }
 
@@ -1064,7 +1064,7 @@
         if (!_.M.isDialogButton(button)) {
             if (_.isObject(button)) {
                 button = new _.M.DialogButton(button);
-            } else if (_.M.isLikeString(button) && _.M.DialogButton.has(button)) {
+            } else if ((_.isString(button) || _.isNumber(button)) && _.M.DialogButton.has(button)) {
                 button = _.M.DialogButton.factory(button);
             } else {
                 throw new Error('Invalid button');
@@ -1711,7 +1711,7 @@
             button_options = {};
         }
 
-        var buttons = _.M.beArray(types).map(function (type) {
+        var buttons = _.castArray(types).map(function (type) {
             var options, type_options;
 
             if (!DialogButton.isDefined(type)) {
@@ -1884,13 +1884,12 @@
 
     /**
      *
-     * @param message
-     * @param title
-     * @param options
+     * @param {string} message
+     * @param {string|object} options String: title, object: options
      * @returns {*|Dialog}
      */
     _.M.Dialog.alert = function (message, options) {
-        if (_.M.isLikeString(options)) {
+        if (!_.isObject(options)) {
             options = {
                 title: options + ''
             }
@@ -1937,10 +1936,13 @@
     _.M.Dialog.confirm = function (message, callback, options) {
         var dialog;
 
-        if (_.M.isLikeString(options)) {
+        if (!_.isObject(options)) {
             options = {
                 title: options + ''
             }
+        }
+        if (!_.isFunction(callback)) {
+            callback = _.noop;
         }
 
         options = _.extend(_.M.PreOptions.get(_.M.DIALOG_CONFIRM_PRE_OPTIONS_NAME, options), {
@@ -2006,7 +2008,7 @@
             attrs = [],
             template = [];
 
-        if (_.M.isLikeString(options)) {
+        if (!_.isObject(options)) {
             options = {
                 title: options + ''
             }
@@ -2113,6 +2115,9 @@
     _.M.Dialog.form = function (content, callback, options) {
         var dialog = new _.M.Dialog();
 
+        if (!_.isFunction(callback)) {
+            callback = _.noop;
+        }
         options = _.extend(_.M.PreOptions.get(_.M.DIALOG_FORM_PRE_OPTIONS_NAME, options), {
             content: content,
             content_handler: dialogFormContentHandler
@@ -2195,7 +2200,7 @@
         if (!_.isArray(classes)) {
             (classes + '').split(' ');
         }
-        classes = _.flatten(_.M.beArray(classes));
+        classes = _.flatten(_.castArray(classes));
 
         if (!_.isEmpty(classes)) {
             return _.map(classes, function (class_name) {
@@ -2315,10 +2320,13 @@
         var content = [],
             dialog;
 
-        if (_.M.isLikeString(options)) {
+        if (!_.isObject(options)) {
             options = {
                 title: options + ''
             };
+        }
+        if (!_.isFunction(callback)) {
+            callback = _.noop;
         }
 
         options = _.M.PreOptions.get(_.M.DIALOG_PROMPT_PRE_OPTIONS_NAME, options);
@@ -2331,11 +2339,11 @@
             '/>');
 
         function prompt_cb(btn_name, form, btn) {
-            if(!form){
+            if (!form) {
                 callback(false);
                 return;
             }
-            
+
             var value = options.default_value;
 
             if ('submit' === btn_name) {
@@ -2447,7 +2455,7 @@
 
         data['close_func'] = _.M.WAITER.createFunc(function () {
             this.getDialog().close();
-        }.bind(this), false, 'Modal: ' + dialog.id + ' >>> Header close button');
+        }.bind(this), true, 'Modal: ' + dialog.id + ' >>> Header close button');
 
         this.waiter_keys.push(data['close_func']);
 
@@ -2498,6 +2506,10 @@
     }
 
     function Bootstrap() {
+        if (!$.fn.modal) {
+            throw new Error('Dialog Bootstrap template require Bootstrap Modal to work');
+        }
+
         this.type_prefix = 'template_dialog_bootstrap';
         _.M.Template.call(this);
         this.options = _.M.PreOptions.get(_.M.DIALOG_TEMPLATE_BOOTSTRAP_PRE_OPTIONS_NAME);
@@ -2591,8 +2603,8 @@
     }
 
     function _layout(instance, data_source, data) {
-        var size = _.M.minMax(data_source.options.size - 1, 0, 4),
-            padding_space = _.M.repeat('&nbsp;&nbsp;', size * 3),
+        var size = _.clamp(data_source.options.size - 1, 0, 4),
+            padding_space = _.repeat('&nbsp;&nbsp;', size * 3),
             template = '',
             style = [];
 
@@ -2630,7 +2642,7 @@
 
         this.click_key = _.M.WAITER.createFunc(function () {
             self.getButton().click();
-        }, false);
+        });
 
         this.mimic('toggle', 'toggle_enable');
 

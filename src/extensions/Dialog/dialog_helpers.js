@@ -90,13 +90,12 @@
 
     /**
      *
-     * @param message
-     * @param title
-     * @param options
+     * @param {string} message
+     * @param {string|object} options String: title, object: options
      * @returns {*|Dialog}
      */
     _.M.Dialog.alert = function (message, options) {
-        if (_.M.isLikeString(options)) {
+        if (!_.isObject(options)) {
             options = {
                 title: options + ''
             }
@@ -143,10 +142,13 @@
     _.M.Dialog.confirm = function (message, callback, options) {
         var dialog;
 
-        if (_.M.isLikeString(options)) {
+        if (!_.isObject(options)) {
             options = {
                 title: options + ''
             }
+        }
+        if (!_.isFunction(callback)) {
+            callback = _.noop;
         }
 
         options = _.extend(_.M.PreOptions.get(_.M.DIALOG_CONFIRM_PRE_OPTIONS_NAME, options), {
@@ -212,7 +214,7 @@
             attrs = [],
             template = [];
 
-        if (_.M.isLikeString(options)) {
+        if (!_.isObject(options)) {
             options = {
                 title: options + ''
             }
@@ -319,6 +321,9 @@
     _.M.Dialog.form = function (content, callback, options) {
         var dialog = new _.M.Dialog();
 
+        if (!_.isFunction(callback)) {
+            callback = _.noop;
+        }
         options = _.extend(_.M.PreOptions.get(_.M.DIALOG_FORM_PRE_OPTIONS_NAME, options), {
             content: content,
             content_handler: dialogFormContentHandler
@@ -401,7 +406,7 @@
         if (!_.isArray(classes)) {
             (classes + '').split(' ');
         }
-        classes = _.flatten(_.M.beArray(classes));
+        classes = _.flatten(_.castArray(classes));
 
         if (!_.isEmpty(classes)) {
             return _.map(classes, function (class_name) {
@@ -521,10 +526,13 @@
         var content = [],
             dialog;
 
-        if (_.M.isLikeString(options)) {
+        if (!_.isObject(options)) {
             options = {
                 title: options + ''
             };
+        }
+        if (!_.isFunction(callback)) {
+            callback = _.noop;
         }
 
         options = _.M.PreOptions.get(_.M.DIALOG_PROMPT_PRE_OPTIONS_NAME, options);
@@ -537,11 +545,11 @@
             '/>');
 
         function prompt_cb(btn_name, form, btn) {
-            if(!form){
+            if (!form) {
                 callback(false);
                 return;
             }
-            
+
             var value = options.default_value;
 
             if ('submit' === btn_name) {

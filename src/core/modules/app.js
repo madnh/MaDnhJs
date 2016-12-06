@@ -41,7 +41,7 @@
                 return this;
             }
 
-            _.M.defineDeep(this, deep, value);
+            _.set(this, deep, value);
         }
 
         return this;

@@ -16,13 +16,13 @@
          * @param {string} waiter_key
          */
         has: function (waiter_key) {
-            return _waiters.hasOwnProperty(waiter_key) && _waiters[waiter_key].times > 0;
+            return _waiters.hasOwnProperty(waiter_key) && (!_.isNumber(_waiters[waiter_key].times) || _waiters[waiter_key].times > 0);
         },
 
         /**
          * Add callback
          * @param {(string|function)} callback Callback
-         * @param {int} [times = 1] Run times
+         * @param {int|boolean} [times = true] Run times. Use true for forever
          * @param {string} [description = ''] Waiter description
          * @returns string Callback key
          */
@@ -31,7 +31,7 @@
 
             _waiters[key] = {
                 callback: callback,
-                times: _.isUndefined(times) ? 1 : times,
+                times: _.isNumber(times) ? Math.max(_.parseInt(times), 1) : true,
                 description: description || ''
             };
 
@@ -39,9 +39,19 @@
         },
 
         /**
+         * Add once time callback
+         * @param {(string|function)} callback Callback
+         * @param {string} [description = ''] Waiter description
+         * @returns string Callback key
+         */
+        addOnce: function (callback, description) {
+            return this.add(callback, 1, description);
+        },
+
+        /**
          * Similar to "add" but add waiter key to window as function
          * @param {(string|function)} callback Callback
-         * @param {int} [times = 1] Run times
+         * @param {int|boolean} [times = true] Run times. Use true for forever
          * @param {string} [description] Waiter description
          * @returns {(string|number)} Waiter key/function name
          */
@@ -56,6 +66,16 @@
             })(key);
 
             return key;
+        },
+
+        /**
+         * Similar of method createFunc, once time
+         * @param {(string|function)} callback Callback
+         * @param {string} [description] Waiter description
+         * @returns {(string|number)} Waiter key/function name
+         */
+        createFuncOnce: function (callback, description) {
+            return this.createFunc(callback, 1, description);
         },
 
         /**
@@ -88,14 +108,14 @@
         run: function (waiter_key, args, this_arg) {
             var result;
 
-            if (this.has(waiter_key)) {
-                result = _waiters[waiter_key].callback.apply(this_arg || null, _.M.beArray(args));
-
-                if (--_waiters[waiter_key].times < 1) {
-                    this.remove(waiter_key);
-                }
-            } else {
+            if (!this.has(waiter_key)) {
                 throw new Error('Waiter key is non-exists: ' + waiter_key);
+            }
+
+            result = _waiters[waiter_key].callback.apply(this_arg || null, _.castArray(args));
+
+            if (this.has(waiter_key) && _.isNumber(_waiters[waiter_key].times) && --_waiters[waiter_key].times < 1) {
+                this.remove(waiter_key);
             }
 
             return result;
@@ -108,11 +128,7 @@
          */
         list: function (description) {
             if (description) {
-                var result = {};
-                _.each(_waiters, function (detail, name) {
-                    result[name] = detail.description;
-                });
-                return result;
+                return _.mapValues(_waiters, 'description');
             }
 
             return Object.keys(_waiters);

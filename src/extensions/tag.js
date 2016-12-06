@@ -80,7 +80,7 @@
         } else {
             tag_arr.push('>');
 
-            _.each(_.M.beArray(this.content), function (tmp_children) {
+            _.each(_.castArray(this.content), function (tmp_children) {
                 tag_arr.push(tmp_children + '');
             });
 
@@ -119,7 +119,7 @@
         _.each(this._data, function (data_value, data_name) {
             element.setAttribute('data-' + data_name, _.clone(data_value));
         });
-        _.each(_.M.beArray(this.content), function (tmp_children) {
+        _.each(_.castArray(this.content), function (tmp_children) {
             element.appendChild(document.createTextNode(tmp_children.toString()));
         });
 
@@ -303,7 +303,7 @@
         var content = '';
 
         if (arguments.length == 0) {
-            _.each(_.M.beArray(this.content), function (tmp_children) {
+            _.each(_.castArray(this.content), function (tmp_children) {
                 content += tmp_children.toString();
             });
             return content;
@@ -322,14 +322,15 @@
      */
     TAG.prototype.text = function () {
         if (arguments.length == 0) {
-            return _.M.escapeHTML(this.html());
+            return _.escape(this.html());
         }
+
         var content = [];
         _.each(arguments, function (value) {
             content += value.toString();
         });
 
-        this.content = _.M.escapeHTML(content);
+        this.content = _.escape(content);
         return this;
     };
 
@@ -345,7 +346,7 @@
         if (arguments[0] === true) {
             arguments[0] = 'tag_' + _.M.randomString(10);
         }
-        if (_.M.isLikeString(arguments[0])) {
+        if (_.isString(arguments[0]) || _.isNumber(arguments[0])) {
             this.attr('id', arguments[0].toString());
             return this;
         }
@@ -397,7 +398,7 @@
     TAG.prototype.toggleClass = function (classes, status) {
         var curr_classes = this.class();
 
-        classes = _.uniq(_.M.beArray(classes));
+        classes = _.uniq(_.castArray(classes));
         if (_.isUndefined(status)) {
             var exclude = _.intersection(curr_classes, classes);
             var include = _.difference(classes, curr_classes);
@@ -450,7 +451,7 @@
                 }
                 return undefined;
             }
-        } else if (_.M.isLikeString(arguments[0]) && _.M.isLikeString(arguments[1])) {
+        } else if ((_.isString(arguments[0]) || _.isNumber(arguments[0])) && (_.isString(arguments[1]) || _.isNumber(arguments[1]) )) {
             this._attr['style'][arguments[0]] = arguments[1];
             return this;
         }

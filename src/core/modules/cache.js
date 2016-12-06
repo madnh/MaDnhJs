@@ -62,7 +62,7 @@
     function _has_cache(name) {
         if (_.has(_cache_data, name)) {
             //-1 to ensure this cache is valid when get right after check
-            if (_cache_data[name].expire_time === true || (_cache_data[name].expire_time - 1) > _.M.nowSecond()) {
+            if (_cache_data[name].expire_time === true || (_cache_data[name].expire_time - 1) > parseInt(Math.floor(_.now() / 1000))) {
                 return true;
             }
             _expire_cache(name);
@@ -84,7 +84,7 @@
         _cache_data[name] = {
             value: value,
             live_time: live_time,
-            expire_time: live_time === true ? true : _.M.nowSecond() + live_time
+            expire_time: live_time === true ? true : parseInt(Math.floor(_.now() / 1000)) + live_time
         }
     }
 
@@ -186,7 +186,7 @@
      */
     function _clean_cache() {
         var removes = [];
-        var now_second = _.M.nowSecond();
+        var now_second = parseInt(Math.floor(_.now() / 1000));
         _.each(_cache_data, function (data, name) {
             if (data.expire_time !== true && data.expire_time <= now_second) {
                 removes.push(name);
@@ -224,7 +224,7 @@
          */
         get: function (name, default_value) {
             if (_.has(_cache_data, name)) {
-                if (_cache_data[name].expire_time === true || _cache_data[name].expire_time > _.M.nowSecond()) {
+                if (_cache_data[name].expire_time === true || _cache_data[name].expire_time > parseInt(Math.floor(_.now() / 1000))) {
                     return _cache_data[name].value;
                 }
                 delete _cache_data[name];
@@ -248,7 +248,7 @@
                         live_time = cache.live_time;
                     }
 
-                    cache.expire_time = Math.max(cache.expire_time, _.M.nowSecond() + live_time);
+                    cache.expire_time = Math.max(cache.expire_time, parseInt(Math.floor(_.now() / 1000)) + live_time);
 
                     return cache.expire_time;
                 }
@@ -270,7 +270,7 @@
              * @type {({}|Array)}
              */
             var result;
-            var now_second = _.M.nowSecond();
+            var now_second = parseInt(Math.floor(_.now() / 1000));
 
             /**
              * @type {function}

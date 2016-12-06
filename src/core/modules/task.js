@@ -117,7 +117,7 @@
         this._error = null;
 
         if (_.isString(this.handler)) {
-            this.handler = _.M.beArray(this.handler);
+            this.handler = _.castArray(this.handler);
         }
         if (_.isFunction(this.handler)) {
             _process_handler_as_function(this, this.handler, data);
@@ -248,7 +248,7 @@
                 tasks = [tasks];
             }
             if (_.isArray(tasks)) {
-                tasks = _.object(tasks, _.M.repeat({}, tasks.length, true));
+                tasks = _.zipObject(tasks, _.fill(new Array(tasks.length), {}));
             }
 
             _.M.loop(tasks, function (options, name) {

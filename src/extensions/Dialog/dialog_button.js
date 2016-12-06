@@ -406,7 +406,7 @@
             button_options = {};
         }
 
-        var buttons = _.M.beArray(types).map(function (type) {
+        var buttons = _.castArray(types).map(function (type) {
             var options, type_options;
 
             if (!DialogButton.isDefined(type)) {

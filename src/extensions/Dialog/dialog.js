@@ -352,7 +352,7 @@
         if (!_.M.isDialogButton(button)) {
             if (_.isObject(button)) {
                 button = new _.M.DialogButton(button);
-            } else if (_.M.isLikeString(button) && _.M.DialogButton.has(button)) {
+            } else if ((_.isString(button) || _.isNumber(button)) && _.M.DialogButton.has(button)) {
                 button = _.M.DialogButton.factory(button);
             } else {
                 throw new Error('Invalid button');

@@ -123,7 +123,7 @@
         if (_.isUndefined(types)) {
             types = Object.keys(this._contents);
         } else {
-            types = _.intersection(_.M.beArray(types), Object.keys(this._contents));
+            types = _.intersection(_.castArray(types), Object.keys(this._contents));
         }
 
         _.M.loop(types, function (type) {
@@ -159,7 +159,7 @@
         if (_.isUndefined(types)) {
             types = Object.keys(this._contents);
         } else {
-            types = _.intersection(_.M.beArray(types), Object.keys(this._contents));
+            types = _.intersection(_.castArray(types), Object.keys(this._contents));
         }
 
         _.M.loop(types, function (type) {
@@ -321,7 +321,7 @@
             }
         }
         if (!_.isEmpty(keys)) {
-            var type_grouped = _.groupBy(_.M.beArray(keys), _.partial(getContentTypeFromKey, this));
+            var type_grouped = _.groupBy(_.castArray(keys), _.partial(getContentTypeFromKey, this));
 
             for (type in type_grouped) {
                 if (type_grouped.hasOwnProperty(type)) {
@@ -365,7 +365,7 @@
         var positions = this.contentPositions(content, type);
 
         if (!_.isEmpty(positions)) {
-            return !_.isEmpty(_.intersection(_.pluck(positions, 'key'), Object.keys(this._usings)));
+            return !_.isEmpty(_.intersection(_.map(positions, 'key'), Object.keys(this._usings)));
         }
 
         return false;

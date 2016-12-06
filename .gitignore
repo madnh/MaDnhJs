@@ -2,3 +2,5 @@
 /node_modules
 /test/vendor/*
 !/test/vendor/.gitkeep
+/vendor/
+!/vendor/.gitkeep

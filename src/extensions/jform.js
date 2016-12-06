@@ -21,7 +21,7 @@
 
 
     jForm.getSelectOptionTagByValue = function (name, values, container) {
-        var queries = _.map(_.M.beArray(values), function (value) {
+        var queries = _.map(_.castArray(values), function (value) {
             return 'option[value="' + value + '"]';
         });
 
@@ -29,7 +29,7 @@
     };
 
     jForm.setSelectTagValue = function (name, values, container) {
-        $(container || 'body').find('select[name="' + name + '"]').val(_.M.beArray(values));
+        $(container || 'body').find('select[name="' + name + '"]').val(_.castArray(values));
     };
 
     jForm.removeSelectOptionTags = function (name, values, container) {
@@ -66,7 +66,7 @@
     };
 
     jForm.getCheckboxTagsByValue = function (name, values, container) {
-        var queries = _.map(_.M.beArray(values), function (value) {
+        var queries = _.map(_.castArray(values), function (value) {
             return 'input[type="checkbox"][name="' + name + '"][value="' + value + '"]';
         });
 
@@ -79,7 +79,7 @@
         var checkboxes = container.find('input[type="checkbox"][name="' + name + '"]');
 
 
-        if (checkboxes.length === 1 && (_.M.isLikeString(values) || _.isBoolean(values))) {
+        if (checkboxes.length === 1 && (_.isString(values) || _.isNumber(values) || _.isBoolean(values))) {
             if (_is_checked_value(values)) {
                 checkboxes.attr('checked', 'checked').prop('checked', true);
             } else {
@@ -113,19 +113,19 @@
                         try{
                             _.M.appendDeep(result, name_as_deep, checkbox_value);
                         }catch (ex){
-                            _.M.defineDeep(result, name_as_deep, [checkbox_value]);
+                            _.set(result, name_as_deep, [checkbox_value]);
                         }
                     }
                 } else {
                     if(_.isBoolean(checkbox_value)){
-                        _.M.defineDeep(result, name_as_deep, 'on');
+                        _.set(result, name_as_deep, 'on');
                     } else {
-                        _.M.defineDeep(result, name_as_deep + '.' + checkbox_value, 'on');
+                        _.set(result, name_as_deep + '.' + checkbox_value, 'on');
                     }
                 }
             }
         } else {
-            _.M.defineDeep(result, name_as_deep, value);
+            _.set(result, name_as_deep, value);
         }
     }
 

@@ -92,20 +92,6 @@
 
         return M.isNumeric(default_value) ? parseFloat(default_value) : M.beNumber(default_value, 0);
     };
-    /**
-     * Make sure function parameter is array
-     * @param {*} value
-     * @returns {Array}
-     * @example
-     * _.M.beArray([123]) => [123]
-     * _.M.beArray(123) => [123]
-     */
-    M.beArray = function (value) {
-        if (_.isArray(value)) {
-            return value;
-        }
-        return [value];
-    };
 
     /**
      * Make sure first argument is object or arguments are name and value of object
@@ -127,7 +113,7 @@
                 if (_.isObject(name)) {
                     return name;
                 } else if (_.isArray(name) || _.isArguments(name)) {
-                    return _.object(Object.keys(name), name);
+                    return _.zipObject(Object.keys(name), name);
                 }
 
                 return {0: name};
@@ -162,7 +148,7 @@
     cast_types['integer'] = function (value) {
         return Math.floor(M.beNumber(value));
     };
-    cast_types['array'] = M.beArray;
+    cast_types['array'] = _.castArray;
     cast_types['object'] = function (value) {
         return M.beObject(value);
     };
@@ -426,7 +412,7 @@
 
     /**
      * Check if object is primitive type: null, string, number, boolean
-     * @param obj
+     * @param value
      * @returns {boolean}
      * @example
      * _.M.isPrimitiveType(123); //true
@@ -435,9 +421,12 @@
      * _.M.isPrimitiveType(); //true
      * _.M.isPrimitiveType(_.App); //false
      */
-    M.isPrimitiveType = function (obj) {
-        var type = typeof obj;
-        return obj == null || type === 'string' || type === 'number' || type === 'boolean';
+    M.isPrimitiveType = function (value) {
+        if (_.isObject(value)) {
+            return false;
+        }
+        var type = typeof value;
+        return value == null || type === 'string' || type === 'number' || type === 'boolean';
     };
 
 
@@ -454,7 +443,7 @@
         }
 
         for (var i = 1; i < arguments.length; i++) {
-            for (var j = 0; j < arguments[i].length; j += 1000) {
+            for (var j = 0, len = arguments[i].length; j < len; j += 1000) {
                 arguments[0].push.apply(arguments[0], arguments[i].slice(j, j + 1000));
             }
         }
@@ -465,12 +454,13 @@
     M.mergeObject = function () {
         var next_index = 0;
 
-        for(var i = 0, length = arguments.length; i < length; i++){
+        for (var i = 0, length = arguments.length; i < length; i++) {
             if (_.isArray(arguments[i]) || !_.isObject(arguments[i])) {
-                arguments[i] = M.beArray(arguments[i]);
-                arguments[i] = _.object(_.range(next_index, next_index += arguments[i].length), arguments[i]);
+                arguments[i] = _.castArray(arguments[i]);
+                arguments[i] = _.zipObject(_.range(next_index, next_index += arguments[i].length), arguments[i]);
             }
         }
+
         return _.extend.apply(_, arguments);
     };
 
@@ -558,105 +548,9 @@
         return diff_object.apply(null, slice.apply(arguments))
     };
 
-    /**
-     * Check if value has a deep path
-     * @param {*} object
-     * @param {string|number|[]} deep
-     * @param {string} [separator='.'] Character to split deep string to array of deeps
-     * @returns {boolean}
-     * @example
-     * var obj = {a: {a1: {a2: true}}, b: 'hihi'};
-     * _.M.hasDeep(obj, 'a.a1'); //true
-     * _.M.hasDeep(obj, 'a.yahoo'); //false
-     * _.M.hasDeep([obj, 123], 1); //true
-     * _.M.hasDeep([obj, 123], 10); //false
-     */
-    M.hasDeep = function (object, deep, separator) {
-        if (!_.isArray(deep)) {
-            deep = (deep + '').split(separator || '.');
-        }
-
-        var pointer = object, field;
-
-        while (field = deep.shift()) {
-            if (pointer.hasOwnProperty(field)) {
-                pointer = pointer[field];
-                continue;
-            }
-
-            return false;
-        }
-
-        return true;
-    };
-
-    /**
-     * Define object value in a deep path
-     * @param {*} object
-     * @param {string|[]} deep
-     * @param {*} value
-     * @param {string} [separator='.']
-     */
-    M.defineDeep = function (object, deep, value, separator) {
-        if (!_.isArray(deep)) {
-            deep = (deep + '').split(separator || '.');
-        }
-        var pointer = object, field, last_field = deep.pop();
-
-        while (field = deep.shift()) {
-            if (!pointer.hasOwnProperty(field)) {
-                pointer[field] = {};
-            }
-            pointer = pointer[field];
-        }
-
-        pointer[last_field] = value;
-    };
-
-    /**
-     * Get object's value at a deep path
-     * @param {*} object
-     * @param {string|[]} deep
-     * @param {*} [default_value=undefined]
-     * @param {string} [separator='.']
-     * @returns {*}
-     */
-    M.getDeep = function (object, deep, default_value, separator) {
-        if (!_.isArray(deep)) {
-            deep = (deep + '').split(separator || '.');
-        }
-
-        var pointer = object, field, found = true;
-
-        while (field = deep.shift()) {
-            if (pointer.hasOwnProperty(field)) {
-                pointer = pointer[field];
-                continue;
-            }
-
-            found = false;
-            break;
-        }
-
-        if (found) {
-            return pointer;
-        }
-
-        return default_value;
-    };
-
-    M.updateDeep = function (object, deep, callback) {
-        if (!M.hasDeep(object, deep)) {
-            throw new Error('Update undefined deep');
-        }
-        var deep_value = _.M.getDeep(object, deep);
-
-        M.defineDeep(object, deep, callback(deep_value));
-    };
-
     M.appendDeep = function (object, deep, value) {
-        M.updateDeep(object, deep, function (current_value) {
-            if (M.isLikeString(current_value)) {
+        return _.update(object, deep, function (current_value) {
+            if (M.isString(current_value) || _.isNumber(current_value)) {
                 current_value += value + '';
             } else if (_.isArray(current_value)) {
                 current_value.push(value);
@@ -666,21 +560,6 @@
 
             return current_value;
         });
-    };
-
-    /**
-     * Make sure that a value is in a range
-     * @param {number} value
-     * @param {number} min
-     * @param {number} max
-     * @returns {number}
-     * @example
-     * _.M.minMax(10, -15, 50); //10
-     * _.M.minMax(10, 20, 50); //20
-     * _.M.minMax(100, 20, 50); //50
-     */
-    M.minMax = function (value, min, max) {
-        return Math.max(min, Math.min(value, max));
     };
 
     /**
@@ -707,20 +586,6 @@
         return result;
     };
 
-    M.randomInteger = function (min, max) {
-        if (arguments.length == 0) {
-            min = 0;
-            max = 10;
-        } else if (arguments.length == 1) {
-            max = 0;
-        }
-        var tmp = max;
-
-        max = Math.max(Math.floor(min), Math.floor(max));
-        min = Math.min(Math.floor(tmp), Math.floor(min));
-
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    };
 
     /**
      * Setup a object with field name and value or object of fields
@@ -760,7 +625,7 @@
     M.validKeys = function (object, keys) {
         var result = [];
 
-        keys = M.beArray(keys);
+        keys = _.castArray(keys);
         for (var i = 0, length = keys.length; i < length; i++) {
             if (object.hasOwnProperty(keys[i])) {
                 result.push(keys[i]);
@@ -779,46 +644,50 @@
     M.firstNotEmpty = function () {
         var arr = _.flatten(_.toArray(arguments));
 
-        return _.find(arr, function (value) {
-            if (_.isString(value)) {
-                return value.trim().length > 0;
-            }
-            if (M.isNumeric(value)) {
-                var parsedValue = parseFloat(value);
+        var index = -1,
+            length = arr.length;
 
-                return parsedValue !== 0 && !_.isNaN(parsedValue) && _.isFinite(parsedValue);
-            }
-            if (value === true) {
-                return true;
-            }
+        while (++index < length) {
+            var value = arr[index];
 
-            return !_.isEmpty(value);
-        });
+            if (value) {
+                return value;
+            }
+        }
+
+        return null;
     };
 
     /**
      * Like _.pairs but array item is an object with field is "key", "value"
-     * @param object
+     * @param {{}} object
+     * @param {string} [key = 'key']
+     * @param {string} [value = 'value']
      * @returns {Array}
      * @example
      * _.M.pairsAsObject({one: 1, two: 2, three: 3});
      * => [{key: 'one', value: 1},{key: 'two', value: 2},{key: 'three', value: 3}]
      */
-    M.pairsAsObject = function (object) {
-        var result = [];
+    M.pairsAsObject = function (object, key, value) {
+        var result = [],
+            field_key = key || 'key',
+            field_value = value || 'value';
 
         _.each(object, function (value, key) {
-            result.push({
-                key: key,
-                value: value
-            });
+            var item = {};
+
+            item[field_key] = key;
+            item[field_value] = value;
+
+            result.push(item);
         });
 
         return result;
     };
+
     /**
      * A convenient version of what is perhaps the most common use-case for map: extracting a list of property values, with a column as key.
-     * @param {object[]} collection
+     * @param {Array} collection
      * @param {string} key_field If key field not found then use as "undefined"
      * @param {string} value_field If value field not found then use as "undefined"
      * @returns {{}}
@@ -832,36 +701,8 @@
 
         _.each(collection, function (object) {
             var key = object.hasOwnProperty(key_field) ? object[key_field] : undefined;
-            var value = object.hasOwnProperty(value_field) ? object[value_field] : undefined;
 
-            result[key] = value;
-        });
-
-        return result;
-    };
-
-    /**
-     * Returns a copy of the object where the key is original value, new value is an array of original keys which same original value
-     * @param object
-     * @return {{}}
-     * @example
-     * var obj = {a: 'A', ă: 'A', b: 'B', d: 'D', đ: 'D'}
-     * _.M.invertToArray(obj)
-     * => {
-     *  A: ['a', 'ă'],
-     *  B: ['b'],
-     *  D: ['d', 'đ']
-     * }
-     */
-    M.invertToArray = function (object) {
-        var result = {};
-
-        _.each(object, function (value, key) {
-            if (!result.hasOwnProperty(value)) {
-                result[value] = [key];
-            } else {
-                result[value].push(key);
-            }
+            result[key] = object.hasOwnProperty(value_field) ? object[value_field] : undefined;
         });
 
         return result;
@@ -881,98 +722,12 @@
     M.repeat = function (value, times, as_array) {
         var result = [];
         times = Math.max(0, times);
+
         for (var i = 0; i < times; i++) {
             result.push(value);
         }
+
         return as_array ? result : result.join('');
-    };
-
-    /**
-     * Add missing value to fit value's length
-     * @param {string|number} value
-     * @param {number} length Number of result need to fit
-     * @param {string} span_character add value
-     * @param {boolean} [before = true]
-     * @returns {string}
-     * @example
-     * _.M.span(123, 5, '_'); //'__123'
-     * _.M.span(123, 5, '_', false); //'123__'
-     * _.M.span('ABCDEF', 5, '_'); //'ABCDEF'
-     */
-    M.span = function (value, length, span_character, before) {
-        if (_.isUndefined(before)) {
-            before = true;
-        }
-        value += '';
-        if (value.length < length) {
-            span_character = M.repeat((span_character + '').charAt(0), length - value.length);
-            value = before ? span_character + '' + value : value + '' + span_character;
-        }
-        return value;
-    };
-
-    /**
-     * Get n characters from left of string
-     * @param {string} string
-     * @param {number} [length = 1] Number of characters
-     * @returns {string}
-     * @example
-     * _.M.left('ABC', 2); //'AB'
-     */
-    M.left = function (string, length) {
-        if (_.isUndefined(length)) {
-            length = 1;
-        }
-
-        if (length < 1) {
-            return '';
-        }
-        return string.toString().substr(0, length);
-    };
-
-    /**
-     * Get n characters from right of value
-     * @param {string} string
-     * @param {number} [length = 1] Number of characters, default is 1
-     * @returns {string}
-     * @example
-     * _.M.right('ABC', 2); //'BC'
-     */
-    M.right = function (string, length) {
-        var tmpVal = string.toString();
-
-        if (_.isUndefined(length)) {
-            length = 1;
-        }
-        if (length < 1) {
-            return '';
-        }
-
-        return tmpVal.substr(Math.max(0, tmpVal.length - length), length);
-    };
-
-    /**
-     * Padding number with 0 and sign
-     * @param {number} num
-     * @param {number} place
-     * @param {boolean} sign Include number sign. If number is less than 0 then include sign, override this parameter
-     * @param {number} [base=10] Base of number
-     * @returns {string}
-     * @example
-     * _.M.padNumber(2,2); //"02"
-     * _.M.padNumber(2,15); //"000000000000002"
-     * _.M.padNumber(-2,2) //"-02"
-     * _.M.padNumber(-2,2, true) //"-02"
-     * _.M.padNumber(2,2, true); //"+02"
-     *
-     */
-    M.padNumber = function (num, place, sign, base) {
-        var str = Math.abs(num).toString(base || 10);
-        str = M.repeat('0', place - str.replace(/\.\d+/, '').length) + str;
-        if (sign || num < 0) {
-            str = (num < 0 ? '-' : '+') + str;
-        }
-        return str;
     };
 
     /**
@@ -1003,24 +758,6 @@
     };
 
     /**
-     * Check if a numeric is multiple of other
-     * @param {number} n1
-     * @param {number} n2
-     * @returns {boolean}
-     * @example
-     * _.M.isMultiple(12, 3); //true
-     * _.M.isMultiple(12, 5); // false
-     * _.M.isMultiple(12, '4'); // true
-     * _.M.isMultiple(12, 0); //false
-     */
-    M.isMultiple = function (n1, n2) {
-        try {
-            return n1 % n2 === 0;
-        } catch (e) {
-            return false;
-        }
-    };
-    /**
      * Check if a numeric is odd
      * @param number
      * @returns {boolean}
@@ -1031,7 +768,7 @@
      * _.M.isOdd('8'); //true
      */
     M.isOdd = function (number) {
-        return M.isMultiple(number, 2);
+        return 0 === number % 2;
     };
     /**
      * Check if a number is even
@@ -1044,7 +781,7 @@
      * _.M.isEven('8'); //false
      */
     M.isEven = function (number) {
-        return !M.isMultiple(number, 2);
+        return 0 !== number % 2;
     };
 
     /**
@@ -1073,70 +810,6 @@
     };
 
     /**
-     * Capitalize a string
-     * @param {string} str
-     * @param {boolean} [all = true] True - all words of string, False - Only first word
-     * @returns {string}
-     * @example
-     * _.M.capitalize('xin chao'); //'Xin Chao'
-     * _.M.capitalize('xin chao', false); //'Xin chao'
-     */
-    M.capitalize = function (str, all) {
-        all = _.isUndefined(all) ? true : Boolean(all);
-
-        return str.replace(all ? /(^|\s)[a-z]/g : /(^|\s)[a-z]/, function (text) {
-            return text.toUpperCase();
-        });
-    };
-
-    /**
-     * Check input is string or number
-     * @param {*} value
-     * @returns {boolean}
-     * @example
-     * _.M.isLikeString('yahoo'); // true
-     * _.M.isLikeString(123); // true
-     * _.M.isLikeString({}); // false
-     * _.M.isLikeString(true); // false
-     */
-    M.isLikeString = function (value) {
-        return _.isString(value) || M.isNumeric(value);
-    };
-
-    /**
-     * Return reverse of string
-     * @param {string} str
-     * @returns {string}
-     * @example
-     * _.M.reverseString('yahoo'); // 'oohay'
-     */
-    M.reverseString = function (str) {
-        return str.split('').reverse().join('');
-    };
-    /**
-     * Check if a trimmed string is empty
-     * @param {string} str
-     * @returns {boolean}
-     * @example
-     * _.M.isBlank('abc'); // false
-     * _.M.isBlank(''); // true
-     * _.M.isBlank('    '); // true
-     */
-    M.isBlank = function (str) {
-        return String(str).trim().length === 0;
-    };
-
-    /**
-     * Return current unix timestamp as seconds
-     * @returns {Number}
-     * @example
-     * _.M.nowSecond(); // 1450622822
-     */
-    M.nowSecond = function () {
-        return parseInt(Math.floor(_.now() / 1000));
-    };
-
-    /**
      * Escape URL
      * @param {string} url
      * @param {boolean} [param = false] Include param?
@@ -1156,75 +829,6 @@
         return param ? decodeURI(url) : decodeURIComponent(url);
     };
 
-    /**
-     * Escape HTML
-     * @param content
-     * @returns {string}
-     * @example
-     * _.M.escapeHTML('<b>Yahoo</b>'); //&lt;b&gt;Yahoo&lt;&#x2f;b&gt;"
-     */
-    M.escapeHTML = function (content) {
-        return (content + '').replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&apos;')
-            .replace(/\//g, '&#x2f;').toString();
-    };
-
-    /**
-     * Return array value at index
-     * @param {string|number|Array} array String or array of items
-     * @param {number} index
-     * @returns {*}
-     * @example
-     * var arr = ['a', 'b', 'c'];
-     * var str = 'Yahoo';
-     * _.M.valueAt(a, 1); //'b'
-     * _.M.valueAt(a, 5); //'c'
-     * _.M.valueAt(a, -1); //'c'
-     * _.M.valueAt(a, -2); //'b'
-     * _.M.valueAt(str, 2); //'h'
-     * _.M.valueAt(str, -2); //'o'
-     */
-    M.valueAt = function (array, index) {
-        if (M.isLikeString(array)) {
-            array = (array + '').split('');
-        }
-        if (!_.isArray(array)) {
-            array += '';
-        }
-
-        var arr_len = array.length;
-        index = index % arr_len;
-        if (index < 0) {
-            index += arr_len;
-        }
-        return array[index];
-    };
-
-    /**
-     * Split array to chunks, each chunk has n element
-     * @param {Array} array Items
-     * @param {number} n Items per chunk
-     * @returns {Array}
-     * @example
-     * var arr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-     * _.M.chunk(arr, 3)
-     * => [
-     *  [0, 1, 2],
-     *  [3, 4, 5],
-     *  [6, 7, 8],
-     *  [9],
-     * ]
-     *
-     */
-    M.chunk = function (array, n) {
-        var lists = _.groupBy(array, function (element, index) {
-            return Math.floor(index / n);
-        });
-        return _.toArray(lists);
-    };
 
     /**
      * Split array to n of chunks
@@ -1241,7 +845,7 @@
      * ]
      */
     M.chunks = function (array, chunks) {
-        return M.chunk(array, Math.ceil(array.length / chunks));
+        return _.chunk(array, Math.ceil(array.length / chunks));
     };
 
     /**
@@ -1250,7 +854,7 @@
      * @param {Array} elements
      * @param {boolean} status If this param is boolean then add/remove base on it value. By default it is undefined -
      *     add if none exists, remove if existed
-     * @returns {array}
+     * @returns {Array}
      * @example
      * var arr = ['A', 'B', 'C', 'D'];
      * _.M.toggle(arr, ['A', 'V']) => ['B', 'C', 'D', 'V']
@@ -1258,7 +862,7 @@
      * _.M.toggle(arr, ['A', 'V'], false) => ['B', 'C', 'D']
      */
     M.toggle = function (array, elements, status) {
-        elements = _.uniq(M.beArray(elements));
+        elements = _.uniq(_.castArray(elements));
         if (_.isUndefined(status)) {
             var exclude = _.intersection(array, elements);
             var include = _.difference(elements, array);
@@ -1391,7 +995,7 @@
      */
     M.callFunc = function (callback, args, context) {
         if (arguments.length >= 2) {
-            args = M.beArray(args);
+            args = _.castArray(args);
         } else {
             args = [];
         }
@@ -1588,7 +1192,7 @@
     M.getDebugString = function (details, glue) {
         var result = [];
 
-        _.each(M.beArray(details), function (item) {
+        _.each(_.castArray(details), function (item) {
             result.push(JSON.stringify(item));
         });
 
@@ -1634,7 +1238,7 @@
             return result;
         }
         if (args.length >= order.length) {
-            result = _.object(order, args.slice(0, order.length));
+            result = _.zipObject(order, args.slice(0, order.length));
         } else {
             args_cloned = args.slice(0);
 
@@ -1658,7 +1262,7 @@
                 })(arg, type));
 
                 if (!found) {
-                    result = _.object(order.slice(0, args.length), args);
+                    result = _.zipObject(order.slice(0, args.length), args);
                     break;
                 }
 

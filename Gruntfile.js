@@ -12,8 +12,8 @@ module.exports = function (grunt) {
         },
         copy: {
             main: {
-                src: 'src/underscore.js',
-                dest: 'dist/underscore.js'
+                src: 'vendor/lodash/dist/lodash.js',
+                dest: 'dist/lodash.js'
             }
         },
         concat: {
@@ -32,9 +32,9 @@ module.exports = function (grunt) {
                     'src/core/modules/ajax.js'],
                 dest: 'dist/madnh.js'
             },
-            madnh_with_underscore: {
-                src: ['src/underscore.js', 'dist/madnh.js'],
-                dest: 'dist/underscore_madnh.js'
+            madnh_with_lodash: {
+                src: ['vendor/lodash/dist/lodash.js', 'dist/madnh.js'],
+                dest: 'dist/lodash_madnh.js'
             },
             dialog: {
                 src: ['src/extensions/Dialog/dialog.js',
@@ -64,9 +64,9 @@ module.exports = function (grunt) {
                 src: 'dist/madnh.js',
                 dest: 'dist/madnh.min.js'
             },
-            madnh_with_underscore: {
-                src: 'dist/underscore_madnh.js',
-                dest: 'dist/underscore_madnh.min.js'
+            madnh_with_lodash: {
+                src: 'dist/lodash_madnh.js',
+                dest: 'dist/lodash_madnh.min.js'
             },
             extensions: {
                 src: 'dist/madnh_extensions.js',
