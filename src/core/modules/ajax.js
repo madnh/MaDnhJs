@@ -193,7 +193,7 @@
     };
 
     AJAX.prototype.option = function (option, value) {
-        this.options = _.M.setup.apply(_.M, [this.options].concat(Array.prototype.slice.apply(arguments)));
+        this.options = _.M.setup.apply(_.M, [this.options].concat(_.toArray(arguments)));
 
         return this;
     };
@@ -476,7 +476,7 @@
             before_send_cb = last_options.beforeSend;
         }
 
-        _.M.removeKeys(last_options, ['success', 'done', 'error', 'fail', 'complete', 'always', 'beforeSend']);
+        last_options = _.omit(last_options, ['success', 'done', 'error', 'fail', 'complete', 'always', 'beforeSend']);
 
         last_options['done'] = _ajax_done_cb.bind(instance);
         last_options['fail'] = _ajax_fail_cb.bind(instance);
@@ -524,9 +524,7 @@
             }
         }
 
-        _.M.removeKeys(last_options, ['response_tasks', 'data_tasks', 'auto_abort', 'retry', 'retry_delay', 'is_continue']);
-
-        return last_options;
+        return _.omit(last_options, ['response_tasks', 'data_tasks', 'auto_abort', 'retry', 'retry_delay', 'is_continue']);
     }
 
     /**

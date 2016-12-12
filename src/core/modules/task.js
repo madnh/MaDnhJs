@@ -48,7 +48,7 @@
      * @returns {Task}
      */
     Task.prototype.option = function (name, value) {
-        this.options = _.M.setup.apply(_.M, [this.options].concat(_.M.sliceArguments(arguments)));
+        this.options = _.M.setup.apply(_.M, [this.options].concat(_.toArray(arguments)));
 
         return this;
     };

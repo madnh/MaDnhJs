@@ -129,6 +129,7 @@
          */
         this._key_mapped = {};
     }
+
     _.M.inherit(Priority, _.M.ContentManager);
 
     /**
@@ -198,7 +199,7 @@
      * @returns {string[]} Removed keys
      */
     Priority.prototype.remove = function (keys, priorities) {
-        var removed  = remove_keys.apply(null, [this].concat(_.toArray(arguments)));
+        var removed = remove_keys.apply(null, [this].concat(_.toArray(arguments)));
 
         return _.map(this._super.remove.call(this, removed), 'key');
     };
@@ -224,6 +225,7 @@
             return _.intersection(priorities_and_keys[priority], priority_keys);
         });
     }
+
     /**
      *
      * @param {Priority} instance
@@ -244,7 +246,7 @@
         });
 
         remove_keys = _.flatten(_.values(priorities_with_keys));
-        _.M.removeKeys(instance._key_mapped, remove_keys);
+        instance._key_mapped = _.omit(instance._key_mapped, remove_keys);
 
         return remove_keys;
     }
@@ -259,7 +261,7 @@
         var content_positions = this.contentPositions(content, 'priority'),
             keys = _.map(content_positions, 'key');
 
-        if(!keys.length){
+        if (!keys.length) {
             return [];
         }
         if (priorities) {

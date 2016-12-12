@@ -1,108 +1,136 @@
-/**
- * @module _.M.FLAG
- * @memberOf _.M
- */
-;(function (_) {
-    var _flags = {};
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define([], function () {
+            return factory();
+        });
+    } else {
+        // Browser globals
+        root.Flag = factory();
+    }
+}(this, function () {
+    function Flag() {
+        this._flags = {};
+
+    }
 
     /**
-     * @lends _.M.FLAG
-     * @type {{}}
+     * Check if a flag is exists
+     * @param {string} name
+     * @return {boolean}
      */
-    _.M.FLAG = _.M.defineObject({
-        /**
-         * Check if a flag is exists
-         * @param {string} name
-         */
-        has: function (name) {
-            return _.has(_flags, name);
-        },
+    Flag.prototype.hasFlag = function (name) {
+        return this._flags && this._flags.hasOwnProperty(name);
+    };
 
-        /**
-         * Set a flag
-         * @param {string} name
-         * @param {boolean} [is_active=true] Flag status, default is True
-         */
-        flag: function (name, is_active) {
-            is_active = _.isUndefined(is_active) ? true : Boolean(is_active);
+    /**
+     * Set a flag
+     * @param {string} name
+     * @param {boolean} [is_active=true] Flag status, default is True
+     * @return {Flag}
+     */
+    Flag.prototype.flag = function (name, is_active) {
+        is_active = (is_active || typeof is_active == 'undefined') ? true : Boolean(is_active);
 
-            if (_.isArray(name)) {
-                _.each(name, function (tmp_name) {
-                    _flags[tmp_name] = is_active;
-                });
-            } else {
-                _flags[name] = is_active;
+        if (!this._flags) {
+            this._flags = {};
+        }
+        if (name instanceof Array) {
+            for (var i = 0, len = name.length; i < len; i++) {
+                this._flags[name[i]] = is_active;
             }
-        },
-
-        /**
-         * Get flags
-         * @param {boolean} [detail=false] If true then return flags with detail of it, else only return flags name
-         */
-        flags: function (detail) {
-            if (detail) {
-                return _.clone(_flags);
-            }
-            return _.keys(_flags);
-        },
-
-        /**
-         * Get flag by name
-         * @param {string} name
-         * @returns {(*|boolean)}
-         */
-        get: function (name) {
-            return this.has(name) && Boolean(_flags[name]);
-        },
-
-        /**
-         * Check if a flag is exists
-         * @param {string} name
-         * @returns {*}
-         */
-        isFlagged: function (name) {
-            var result, self = this;
-
-            if (_.isArray(name)) {
-                result = [];
-                _.each(name, function (tmp_name) {
-                    if (self.get(tmp_name)) {
-                        result.push(tmp_name);
-                    }
-                })
-            } else {
-                result = this.get(name);
-            }
-
-            return result;
-        },
-
-        /**
-         *
-         * @param {string|string[]} name
-         * @param {boolean} [status] Missing - On/off when current flag's status is off/on.
-         * Boolean - On/off when status is true/false
-         */
-        toggle: function (name, status) {
-            var thisFunc = arguments.callee;
-            var self = this;
-
-            if (_.isArray(name)) {
-                _.each(name, function (tmp_name) {
-                    thisFunc.apply(self, [tmp_name, status]);
-                })
-            } else {
-                if (!_.isUndefined(status)) {
-                    this.flag(name, Boolean(status));
-                } else {
-                    this.flag(name, !this.isFlagged(name));
+        } else if (name instanceof Object) {
+            for (var tmp_name in name) {
+                if (name.hasOwnProperty(tmp_name)) {
+                    this._flags[tmp_name] = Boolean(name[tmp_name]);
                 }
             }
-        },
-
-        reset: function () {
-            _flags = {};
+        } else {
+            this._flags[name] = is_active;
         }
 
-    });
-})(_);
+        return this;
+    };
+
+    /**
+     * Get flag status is on (true) or off (false)
+     * @param {string} name
+     * @return {boolean} true -> on, false -> off
+     */
+    Flag.prototype.flagStatus = function (name) {
+        return this._flags && this._flags.hasOwnProperty(name) && Boolean(this._flags[name]);
+    };
+
+    /**
+     * Check if a flag is exists and it's status is on
+     * @param {string} name
+     * @return {boolean}
+     */
+    Flag.prototype.isFlagged = function (name) {
+        return true === this.flagStatus(name);
+    };
+
+    /**
+     *
+     * @param {string|Array} flags
+     * @param {boolean} [status] Missing - On/off when current flag's status is off/on.
+     * Boolean - On/off when status is true/false
+     *
+     * @return {Flag}
+     */
+    Flag.prototype.toggleFlag = function (flags, status) {
+        if (flags instanceof Array) {
+            for (var index in flags) {
+                this.toggleFlag(flags[index], status);
+            }
+
+            return this;
+        }
+        if (typeof status != 'undefined') {
+            this.flag(flags, Boolean(status));
+        } else {
+            this.flag(flags, !this.isFlagged(flags));
+        }
+
+        return this;
+    };
+
+    /**
+     *
+     * @return {Flag}
+     */
+    Flag.prototype.resetFlagStatus = function () {
+        this._flags = {};
+
+        return this;
+    };
+
+    Flag.mixin = function (destObject) {
+        var props = ['hasFlag', 'flag', 'flagStatus', 'isFlagged', 'toggleFlag', 'resetFlagStatus'];
+
+        for (var i = 0; i < props.length; i++) {
+            if (typeof destObject === 'function') {
+                destObject.prototype[props[i]] = Flag.prototype[props[i]];
+            } else {
+                destObject[props[i]] = Flag.prototype[props[i]];
+            }
+        }
+
+        return destObject;
+    };
+
+
+    var static_instance = new Flag();
+
+    var methods = ['hasFlag', 'flag', 'flagStatus', 'isFlagged', 'toggleFlag', 'resetFlagStatus'];
+
+    for (var i = 0, len = methods.length; i < len; i++) {
+        Flag[methods[i]] = (function (method) {
+            return function () {
+                return static_instance[method].apply(static_instance, Array.prototype.slice.call(arguments));
+            };
+        })(methods[i]);
+    }
+
+
+    return Flag;
+}));

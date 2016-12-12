@@ -62,23 +62,6 @@ describe('CORE', function () {
 
         });
 
-        describe('IS_STRICT_EQUAL', function () {
-            it('Number vs number: 1 vs 1', function () {
-                chai_assert.isTrue(_.M.IS_STRICT_EQUAL(1, 1));
-            });
-            it('Number vs number as string: 1 vs `1`', function () {
-                chai_assert.isFalse(_.M.IS_STRICT_EQUAL(1, '1'));
-            });
-            it('Number vs boolean (true): 1 vs true', function () {
-                chai_assert.isFalse(_.M.IS_STRICT_EQUAL(1, true));
-            });
-            it('Number vs boolean (false): 1 vs false', function () {
-                chai_assert.isFalse(_.M.IS_STRICT_EQUAL(1, false));
-            });
-            it('Number (0) vs empty string: 0 vs ``', function () {
-                chai_assert.isFalse(_.M.IS_STRICT_EQUAL(0, ''));
-            });
-        });
     });
 
     describe('Functions', function () {
@@ -349,11 +332,6 @@ describe('CORE', function () {
                 chai_assert.propertyVal(obj, 'old', 123);
             });
         });
-        describe('_.M.firstNotEmpty', function () {
-            it('test', function () {
-                chai_assert.strictEqual(_.M.firstNotEmpty(['', 0, false, 123]), 123);
-            })
-        });
         describe('_.M.inherit', function () {
             function SourceClass() {
                 this.foo = 'bar';
@@ -427,15 +405,6 @@ describe('CORE', function () {
                 chai_assert.isTrue(_.M.isInstanceOf('123', 'String'));
             });
         });
-        describe('_.M.isInteger', function () {
-            it('test', function () {
-                chai_assert.isTrue(_.M.isInteger(123));
-                chai_assert.isTrue(_.M.isInteger('123'));
-                chai_assert.isFalse(_.M.isInteger(123.4));
-                chai_assert.isFalse(_.M.isInteger(true));
-                chai_assert.isFalse(_.M.isInteger([]));
-            })
-        });
         describe('_.M.isNumeric', function () {
             it('test', function () {
                 chai_assert.isTrue(_.M.isNumeric(123));
@@ -444,14 +413,6 @@ describe('CORE', function () {
                 chai_assert.isFalse(_.M.isNumeric('123.5 yahoo'));
             })
         });
-        describe('_.M.isOdd', function () {
-            it('test', function () {
-                chai_assert.isTrue(_.M.isOdd(4));
-                chai_assert.isTrue(_.M.isOdd('8'));
-                chai_assert.isFalse(_.M.isOdd(5));
-                chai_assert.isFalse(_.M.isOdd('11'));
-            });
-        });
         describe('_.M.isPrimitiveType', function () {
             it('test', function () {
                 chai_assert.isTrue(_.M.isPrimitiveType(123));
@@ -459,18 +420,6 @@ describe('CORE', function () {
                 chai_assert.isTrue(_.M.isPrimitiveType(null));
                 chai_assert.isTrue(_.M.isPrimitiveType());
                 chai_assert.isFalse(_.M.isPrimitiveType(_.App));
-            });
-        });
-        describe('_.M.mergeArray', function () {
-            it('test', function () {
-                var arr1 = _.range(1, 5),
-                    arr2 = _.range(5, 10),
-                    arr3 = _.range(10, 15);
-
-                var target = _.flatten([arr1, arr2, arr3]);
-                var merged = _.M.mergeArray(arr1, arr2, arr3);
-
-                chai_assert.deepEqual(merged, target);
             });
         });
         describe('_.M.mergeObject', function () {
@@ -653,91 +602,6 @@ describe('CORE', function () {
             });
 
         });
-        describe('_.M.removeKeys', function () {
-            var obj = {};
-            beforeEach(function () {
-                obj = {
-                    foo: 'A',
-                    baz: 'B',
-                    bar: 'C',
-                    cee: 5,
-                    deep: true
-                };
-            });
-
-            it('1 parameter, string', function () {
-                chai_assert.property(obj, 'baz');
-                chai_assert.propertyVal(obj, 'baz', 'B');
-                //
-                chai_assert.sameMembers(_.M.removeKeys(obj, 'baz'), ['baz']);
-                //
-                chai_assert.notProperty(obj, 'baz');
-            });
-            it('1 parameter, array of a string', function () {
-                chai_assert.property(obj, 'baz');
-                chai_assert.propertyVal(obj, 'baz', 'B');
-                //
-                chai_assert.sameMembers(_.M.removeKeys(obj, ['baz']), ['baz']);
-                //
-                chai_assert.notProperty(obj, 'baz');
-            });
-            it('1 parameter, array of strings', function () {
-                chai_assert.property(obj, 'foo');
-                chai_assert.property(obj, 'baz');
-                chai_assert.propertyVal(obj, 'foo', 'A');
-                chai_assert.propertyVal(obj, 'baz', 'B');
-                //
-                chai_assert.sameMembers(_.M.removeKeys(obj, ['foo', 'baz']), ['foo', 'baz']);
-                //
-                chai_assert.notProperty(obj, 'foo');
-                chai_assert.notProperty(obj, 'baz');
-            });
-            it('Multiple parameters, string', function () {
-                chai_assert.property(obj, 'foo');
-                chai_assert.propertyVal(obj, 'foo', 'A');
-                chai_assert.propertyVal(obj, 'baz', 'B');
-                //
-                chai_assert.sameMembers(_.M.removeKeys(obj, 'baz', 'foo'), ['foo', 'baz']);
-                //
-                chai_assert.notProperty(obj, 'foo');
-                chai_assert.notProperty(obj, 'baz');
-            });
-            it('Multiple parameters, string, have an non-exists member', function () {
-                chai_assert.property(obj, 'foo');
-                chai_assert.propertyVal(obj, 'foo', 'A');
-                chai_assert.notProperty(obj, 'name');
-                //
-                chai_assert.sameMembers(_.M.removeKeys(obj, 'name', 'foo'), ['foo']);
-                //
-                chai_assert.notProperty(obj, 'foo');
-                chai_assert.notProperty(obj, 'name');
-            });
-            it('Multiple parameters, multiple array of strings', function () {
-                chai_assert.property(obj, 'foo');
-                chai_assert.property(obj, 'baz');
-                chai_assert.property(obj, 'cee');
-                chai_assert.property(obj, 'deep');
-                chai_assert.propertyVal(obj, 'foo', 'A');
-                chai_assert.propertyVal(obj, 'baz', 'B');
-                chai_assert.propertyVal(obj, 'cee', 5);
-                chai_assert.propertyVal(obj, 'deep', true);
-                //
-                chai_assert.sameMembers(_.M.removeKeys(obj, ['foo', 'baz'], ['deep', 'cee']), ['foo', 'baz', 'cee', 'deep']);
-                //
-                chai_assert.notProperty(obj, 'foo');
-                chai_assert.notProperty(obj, 'baz');
-                chai_assert.notProperty(obj, 'cee');
-                chai_assert.notProperty(obj, 'deep');
-            });
-        });
-        describe('_.M.repeat', function () {
-            it('return a string', function () {
-                chai_assert.strictEqual(_.M.repeat('a', 5), 'aaaaa');
-            });
-            it('return an array', function () {
-                chai_assert.deepEqual(_.M.repeat('a', 5, true), ['a', 'a', 'a', 'a', 'a']);
-            });
-        });
         describe('_.M.setup', function () {
             var obj = {};
 
@@ -752,25 +616,6 @@ describe('CORE', function () {
                 chai_assert.deepEqual(_.M.setup(obj, {b: 'Yahoo', c: 'ASD'}), {a: 'A', b: 'Yahoo', c: 'ASD'});
             });
 
-        });
-        describe('_.M.validKeys', function () {
-            it('object', function () {
-                var obj = {a: 'A', b: 'B', c: 'C', đ: 'Đ'},
-                    check_keys = ['a', 'c', 'đ'];
-                chai_assert.sameMembers(_.M.validKeys(obj, check_keys), check_keys)
-            });
-            it('array', function () {
-                var array = _.range(1, 10),
-                    check_keys = [0, 5, 7];
-
-                chai_assert.sameMembers(_.M.validKeys(array, check_keys), check_keys)
-            });
-            it('string', function () {
-                var string = _.M.randomString(10),
-                    check_keys = [0, 5, 7];
-
-                chai_assert.sameMembers(_.M.validKeys(string, check_keys), check_keys)
-            });
         });
         describe('_.M.toggle', function () {
             var arr = [];

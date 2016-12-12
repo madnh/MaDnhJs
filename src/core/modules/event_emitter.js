@@ -94,6 +94,7 @@
             this.private(_.castArray(options['event_privates']));
         }
     }
+
     _.M.inherit(EventEmitter, _.M.BaseClass);
 
     /**
@@ -198,7 +199,7 @@
             if (!event_detail.key_mapped.hasOwnProperty(option.key)) {
                 event_detail.key_mapped[option.key] = keys;
             } else {
-                _.M.mergeArray(event_detail.key_mapped[option.key], keys);
+                event_detail.key_mapped[option.key] = _.concat(event_detail.key_mapped[option.key], keys);
             }
         });
 
@@ -523,10 +524,10 @@
      */
     function _get_valid_events(instance, events) {
         if (!events) {
-            return Object.keys(instance._events);
+            return _.keys(instance._events);
         }
 
-        return _.M.validKeys(instance._events, _.castArray(events));
+        return _.intersection(_.castArray(events), _.keys(instance._events));
     }
 
     /**
@@ -541,7 +542,7 @@
         var grouped = {}, event, found, events_cloned = _.clone(events);
 
         while (keys.length && (event = events_cloned.shift())) {
-            found = _.M.validKeys(instance._events[event].key_mapped, keys);
+            found = _.intersection(keys, _.keys(instance._events[event].key_mapped));
 
             if (found.length) {
                 grouped[event] = found;
@@ -558,12 +559,9 @@
 
         _.each(keys_grouped_by_event, function (keys, event) {
             event_detail = instance._events[event];
-            event_detail.priority.remove(_.flatten(
-                _.values(
-                    _.pick(event_detail.key_mapped, keys))),
-                priority ? priority : null);
+            event_detail.priority.remove(_.flatten(_.values(_.pick(event_detail.key_mapped, keys))), priority ? priority : null);
 
-            _.M.removeKeys(event_detail.key_mapped, keys);
+            event_detail.key_mapped = _.omit(event_detail.key_mapped, keys);
             instance._events[event] = event_detail;
         });
 
@@ -630,7 +628,7 @@
             if (!target.hasOwnProperty(key)) {
                 target[key] = value;
             } else {
-                _.M.mergeArray(target[key], value);
+                target[key] = _.concat(target[key], value);
             }
         });
     }
@@ -647,14 +645,14 @@
      * Set events is private
      */
     EventEmitter.prototype.private = function () {
-        _.M.mergeArray(this._event_privates, _.flatten(_.toArray(arguments)));
+        this._event_mimics = _.concat(this._event_privates, _.flatten(_.toArray(arguments)));
     };
 
     /**
      * Set events is mimic
      */
     EventEmitter.prototype.mimic = function () {
-        _.M.mergeArray(this._event_mimics, _.flatten(_.toArray(arguments)));
+        this._event_mimics = _.concat(this._event_mimics, _.flatten(_.toArray(arguments)));
     };
 
     /**

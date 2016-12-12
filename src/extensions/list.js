@@ -181,7 +181,7 @@
                 name = _.castArray(name);
                 var old = _.clone(_list_system[type]), removed;
 
-                _.M.removeKeys(_list_system[type], name);
+                _list_system[type] = _.omit(_list_system[type], name);
                 removed = _.pick(old, _.difference(_.keys(old), _.keys(_list_system[type])));
                 if (!_.isEmpty(removed)) {
                     _.M.EVENT.trigger('madnh_list_remove_item', removed);

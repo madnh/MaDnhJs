@@ -1,13 +1,18 @@
-/**
- *
- * @namespace _.M
- */
-;(function (_) {
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(['lodash'], function (_) {
+            return (root.M = factory(_));
+        });
+    } else {
+        root.M = factory(root._);
+    }
+}(this, function (_) {
     /*
      |--------------------------------------------------------------------------
      | Type Definitions
      |--------------------------------------------------------------------------
      */
+
     /**
      * Loop callback. Useful in _.each, _.map, _.omit,...
      * @callback loopCallback
@@ -45,29 +50,12 @@
     var version = '1.2.8';
 
     var M = {};
+
     Object.defineProperty(M, 'VERSION', {
         value: version
     });
 
     var slice = Array.prototype.slice;
-
-
-    /** Mixin method "module" to UnderscoreJS
-     * This method help us to structure UnderscoreJS extensions as module
-     */
-    _.mixin({
-        /**
-         * @memberOf _
-         * @param name Name of module, UPPER CASE
-         * @param exports Module export object
-         */
-        module: function (name, exports) {
-            Object.defineProperty(_, name.toString(), {
-                value: exports
-            });
-        }
-    });
-    _.module('M', M);
 
     /**
      * Slice arguments of a function as array
@@ -180,7 +168,7 @@
 
     /**
      * Loop over array or object like _.each but breakable
-     * @param {object|array} obj Loop object
+     * @param {object|Array} obj Loop object
      * @param {loopCallback} callback callback apply on every item, return break value to break the loop
      * @param {string} [break_on=break] Value of callback result that break the loop, default is 'break'
      * @returns {*}
@@ -228,33 +216,6 @@
             }
         }
         return obj;
-    };
-
-    /**
-     * Remove object keys
-     * @param {object} obj Object
-     * @param {string[]|loopCallback} args Array of item name or callback. If use callback then callback must return
-     *     true/false to remove/keep item
-     */
-    M.removeKeys = function (obj, args) {
-        var keys = _.flatten(slice.call(arguments, 1));
-        var removed = [], old_items;
-
-        if (keys.length == 1 && _.isFunction(keys[0])) {
-            old_items = Object.keys(obj);
-            obj = _.omit(obj, keys[0]);
-            removed = _.difference(old_items, Object.keys(obj));
-        } else {
-            _.each(keys, function (key) {
-                if (_.has(obj, key)) {
-                    removed.push(key);
-                    obj[key] = undefined;
-                    delete  obj[key];
-                }
-            });
-        }
-
-        return removed;
     };
 
     var unique_id_current_status = {};
@@ -425,30 +386,9 @@
         if (_.isObject(value)) {
             return false;
         }
+
         var type = typeof value;
         return value == null || type === 'string' || type === 'number' || type === 'boolean';
-    };
-
-
-    /**
-     * Merge multiple array to first array
-     * @return {Array}
-     */
-    M.mergeArray = function () {
-        switch (arguments.length) {
-            case 0:
-                return [];
-            case 1:
-                return arguments[0];
-        }
-
-        for (var i = 1; i < arguments.length; i++) {
-            for (var j = 0, len = arguments[i].length; j < len; j += 1000) {
-                arguments[0].push.apply(arguments[0], arguments[i].slice(j, j + 1000));
-            }
-        }
-
-        return arguments[0];
     };
 
     M.mergeObject = function () {
@@ -530,7 +470,7 @@
      * _.M.diffObjectLoose({a: 0, b: 1}, {a: '0', b: 2}); //{b: 1}
      */
     M.diffObjectLoose = function (object, others) {
-        var args = _.toArray(arguments);
+        var args = _.flatten(_.toArray(arguments));
 
         args.unshift(is_diff_loose_cb);
 
@@ -544,23 +484,10 @@
      * @param {object} others
      * @return {*}
      */
-    M.diffObjectWithCallback = function (callback, object, others) {
+    M.diffObjectWith = function (callback, object, others) {
         return diff_object.apply(null, slice.apply(arguments))
     };
 
-    M.appendDeep = function (object, deep, value) {
-        return _.update(object, deep, function (current_value) {
-            if (M.isString(current_value) || _.isNumber(current_value)) {
-                current_value += value + '';
-            } else if (_.isArray(current_value)) {
-                current_value.push(value);
-            } else {
-                current_value = [current_value, value];
-            }
-
-            return current_value;
-        });
-    };
 
     /**
      * Get random string
@@ -605,11 +532,14 @@
         switch (arguments.length) {
             case 2:
                 if (_.isObject(option)) {
-                    object = _.extend({}, object, option);
+                    _.each(option, function (val, path) {
+                        _.set(object, path, val);
+                    });
                 }
                 break;
+
             case 3:
-                object[option] = value;
+                _.set(object, option, value);
         }
 
         return object;
@@ -635,28 +565,6 @@
         return result;
     };
 
-    /**
-     * Return first value of arguments that isn't empty
-     * @returns {*}
-     * @example
-     * _.M.firstNotEmpty(['', 0, false, 123]); //123
-     */
-    M.firstNotEmpty = function () {
-        var arr = _.flatten(_.toArray(arguments));
-
-        var index = -1,
-            length = arr.length;
-
-        while (++index < length) {
-            var value = arr[index];
-
-            if (value) {
-                return value;
-            }
-        }
-
-        return null;
-    };
 
     /**
      * Like _.pairs but array item is an object with field is "key", "value"
@@ -700,34 +608,12 @@
         var result = {};
 
         _.each(collection, function (object) {
-            var key = object.hasOwnProperty(key_field) ? object[key_field] : undefined;
-
-            result[key] = object.hasOwnProperty(value_field) ? object[value_field] : undefined;
+            if (object.hasOwnProperty(key_field)) {
+                result[object[key_field]] = object.hasOwnProperty(value_field) ? object[value_field] : undefined;
+            }
         });
 
         return result;
-    };
-
-    /**
-     * Repeat value by times
-     * @param {*} value
-     * @param {number} times Repeat times, >= 0
-     * @param {boolean} [as_array = false] Return result as array, default is return as string
-     * @returns {*}
-     * @example
-     * _.M.repeat('a', 5); //'aaaaa'
-     * _.M.repeat('a', 5, true); //['a', 'a', 'a', 'a', 'a']
-     *
-     */
-    M.repeat = function (value, times, as_array) {
-        var result = [];
-        times = Math.max(0, times);
-
-        for (var i = 0; i < times; i++) {
-            result.push(value);
-        }
-
-        return as_array ? result : result.join('');
     };
 
     /**
@@ -742,46 +628,6 @@
      */
     M.isNumeric = function (value) {
         return !_.isArray(value) && (value - parseFloat(value) + 1) >= 0;
-    };
-
-    /**
-     * Check if numeric value is integer
-     * @param {number} number
-     * @returns {boolean}
-     * @example
-     * _.M.isInteger(123); //true
-     * _.M.isInteger(123.5); //false
-     * _.M.isInteger('123'); //true
-     */
-    M.isInteger = function (number) {
-        return M.isNumeric(number) && number % 1 === 0;
-    };
-
-    /**
-     * Check if a numeric is odd
-     * @param number
-     * @returns {boolean}
-     * @example
-     * _.M.isOdd(5); //false
-     * _.M.isOdd(4); //true
-     * _.M.isOdd('11'); //false
-     * _.M.isOdd('8'); //true
-     */
-    M.isOdd = function (number) {
-        return 0 === number % 2;
-    };
-    /**
-     * Check if a number is even
-     * @param number
-     * @returns {boolean}
-     * @example
-     * _.M.isEven(5); //true
-     * _.M.isEven(4); //false
-     * _.M.isEven('11'); //true
-     * _.M.isEven('8'); //false
-     */
-    M.isEven = function (number) {
-        return 0 !== number % 2;
     };
 
     /**
@@ -1001,18 +847,14 @@
         }
 
         if (callback) {
-            if (_.isString(callback)) {
-                if (M.WAITER.has(callback)) {
-                    return M.WAITER.run(callback, args, context);
-                }
-                if (_.has(window, callback) && _.isFunction(window[callback])) {
-                    return window[callback].apply(context || window, args);
+            if (_.isFunction(callback)) {
+                return callback.apply(context || null, args);
+            } else if (_.isString(callback)) {
+                if (window.hasOwnProperty(callback) && _.isFunction(window[callback])) {
+                    return window[callback].apply(context || null, args);
                 }
 
                 throw new Error('Invalid callback!');
-            } else if (_.isFunction(callback)) {
-
-                return callback.apply(context || null, args);
             } else if (_.isArray(callback)) {
                 var result = [],
                     this_func = arguments.callee;
@@ -1050,14 +892,9 @@
     };
 
     function createConsoleCB(name, description) {
-        var args = [];
-        if (arguments.length > 1) {
-            args.push(description);
-        }
-
-        return function () {
-            console[name].apply(console, args.concat(slice.apply(arguments)));
-        }
+        return (function (default_description) {
+            console[name].apply(console, (default_description ? [default_description] : []).concat(slice.apply(arguments)));
+        })(description);
     }
 
     /**
@@ -1130,7 +967,8 @@
     };
 
 
-    var debug_types_status = {}, is_active_all_debug_type = false;
+    var debug_types_status = {},
+        all_debugging = false;
 
     /**
      *
@@ -1138,8 +976,8 @@
      * @returns {boolean}
      */
     M.isDebugging = function (type) {
-        if (is_active_all_debug_type || _.isEmpty(type)) {
-            return is_active_all_debug_type;
+        if (all_debugging || _.isEmpty(type)) {
+            return all_debugging;
         }
 
         return debug_types_status.hasOwnProperty(type) && debug_types_status[type];
@@ -1151,7 +989,7 @@
      */
     M.debugging = function (type) {
         if (_.isEmpty(type)) {
-            is_active_all_debug_type = true;
+            all_debugging = true;
             return;
         }
 
@@ -1163,7 +1001,7 @@
      */
     M.debugComplete = function (type) {
         if (_.isEmpty(type)) {
-            is_active_all_debug_type = false;
+            all_debugging = false;
             debug_types_status = {};
 
             return;
@@ -1313,27 +1151,9 @@
          * var scores = [1, 10, 2, 21];
          * scores.sort(_.M.SORT_NUMBER_DESC); // [21, 10, 2, 1]
          */
-        SORT_NUMBER_DESC: sortNumberDescCallback,
-
-        /**
-         * Compare 2 value is equal, loose comparison
-         * @constant
-         * @example
-         * _.M.IS_EQUAL(1, 1); //true
-         * _.M.IS_EQUAL(1, '1'); //true
-         * _.M.IS_EQUAL(1, true); //true
-         * _.M.IS_EQUAL(1, false); //false
-         * _.M.IS_EQUAL(1, 2); //false
-         */
-        IS_EQUAL: is_equal_loose,
-
-        /**
-         * Compare 2 value is equal, strict comparison
-         * @constant
-         * @example
-         * _.M.IS_STRICT_EQUAL(1, 1); //true
-         * _.M.IS_STRICT_EQUAL(1, '1'); //false
-         */
-        IS_STRICT_EQUAL: is_equal_strict
+        SORT_NUMBER_DESC: sortNumberDescCallback
     });
-})(_);
+
+
+    return M;
+}));

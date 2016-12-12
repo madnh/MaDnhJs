@@ -111,7 +111,11 @@
                 if (container.find('input[name="' + name + '"]').length > 1) {
                     if (element.is(':checked')) {
                         try{
-                            _.M.appendDeep(result, name_as_deep, checkbox_value);
+                            _.update(result, name_as_deep, function (curr) {
+                                curr.push(checkbox_value);
+
+                                return curr;
+                            });
                         }catch (ex){
                             _.set(result, name_as_deep, [checkbox_value]);
                         }

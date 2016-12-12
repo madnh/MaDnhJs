@@ -19,7 +19,7 @@
 
     function _layout(instance, data_source, data) {
         var size = _.clamp(data_source.options.size - 1, 0, 4),
-            padding_space = _.repeat('&nbsp;&nbsp;', size * 3),
+            padding_space = _.times(size * 3, _.constant('&nbsp;&nbsp;')).join(''),
             template = '',
             style = [];
 
