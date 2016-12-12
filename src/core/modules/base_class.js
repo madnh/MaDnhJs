@@ -1,27 +1,29 @@
-/**
- * @module _.M.BaseClass
- * @memberOf _.M
- */
-;(function (_) {
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(['madnh'], function (M) {
+            return factory(M);
+        });
+    } else {
+        // Browser globals
+        root.BaseClass = factory(root.M);
+    }
+}(this, function (M) {
+
     /**
      * Base class
-     * @class _.M.BaseClass
+     * @class BaseClass
      * @property {string} type_prefix Prefix of class, use as prefix of instance ID, default is class name
      * @property {string} id Instance ID
      */
     function BaseClass() {
         if (!this.type_prefix) {
-            this.type_prefix = _.M.className(this, true);
+            this.type_prefix = M.className(this, true);
         }
 
         if (!this.id) {
-            this.id = _.M.nextID(this.type_prefix, true);
+            this.id = M.nextID(this.type_prefix, true);
         }
     }
 
-    /**
-     * 
-     * @type {_.M.BaseClass}
-     */
-    _.M.BaseClass = BaseClass;
-})(_);
+    return BaseClass;
+}));

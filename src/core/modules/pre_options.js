@@ -1,6 +1,14 @@
-;(function (_) {
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(['lodash', 'madnh'], function (_, M) {
+            return factory(_, M);
+        });
+    } else {
+        // Browser globals
+        root.PreOptions = factory(root._, root.M);
+    }
+}(this, function (_, M) {
     var _pre_options = {};
-
 
     function _extend(sources, dest_name, options, real_time) {
         if (_pre_options.hasOwnProperty(dest_name)) {
@@ -21,7 +29,7 @@
             var base_options = {};
 
             _.each(sources, function (base) {
-                _.extend(base_options, _.M.PreOptions.get(base));
+                _.extend(base_options, PreOptions.get(base));
             });
             _.extend(options, base_options);
 
@@ -37,7 +45,7 @@
         }
     }
 
-    _.M.PreOptions = _.M.defineObject({
+    var module = M.defineObject({
         /**
          *
          * @param {string} name
@@ -50,6 +58,7 @@
                     options: options,
                     base: []
                 };
+
                 return true;
             }
 
@@ -77,6 +86,7 @@
 
             return false;
         },
+
         updateBase: function (name, new_base) {
             if (_pre_options.hasOwnProperty(name)) {
                 _pre_options[name].base = new_base;
@@ -86,6 +96,7 @@
 
             return false;
         },
+
         /**
          *
          * @param {string} name
@@ -97,12 +108,13 @@
                 throw new Error('Pre Options "' + name + '" is undefined');
             }
 
-            var result = {};
+            var self = this,
+                result = {};
 
             _.each(_.castArray(_pre_options[name].base), function (base) {
-                _.extend(result, _.M.PreOptions.get(base));
+                _.extend(result, self.get(base));
             });
-            _.extend(result, _.clone(_pre_options[name].options), _.isObject(custom) ? custom : {});
+            _.extend(result, _.cloneDeep(_pre_options[name].options), _.isObject(custom) ? custom : {});
 
             return result;
         },
@@ -133,14 +145,16 @@
          */
         list: function (detail) {
             if (detail) {
-                return _.clone(_pre_options);
+                return _.cloneDeep(_pre_options);
             }
 
-            return Object.keys(_pre_options);
+            return _.keys(_pre_options);
         },
 
         reset: function () {
             _pre_options = {};
         }
     });
-})(_);
+
+    return module;
+}));

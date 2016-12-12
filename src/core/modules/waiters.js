@@ -1,16 +1,19 @@
 /**
  * Callback listener system
- * @module _.M.WAITER
- * @memberOf _.M
  */
-;(function (_) {
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(['lodash', 'madnh'], function (_, M) {
+            return (root.Waiter = factory(_, M));
+        });
+    } else {
+        // Browser globals
+        root.Waiter = factory(root._, root.M);
+    }
+}(this, function (_, M) {
     var _waiters = {};
 
-    /**
-     * @lends _.M.WAITER
-     * @type {{}}
-     */
-    _.M.WAITER = _.M.defineObject({
+    var module = M.defineObject({
         /**
          * Check if a waiter key is exists
          * @param {string} waiter_key
@@ -27,11 +30,24 @@
          * @returns string Callback key
          */
         add: function (callback, times, description) {
-            var key = _.M.nextID('waiter_key', true);
+            var key = M.nextID('waiter_key', true);
+
+            if (_.isNumber(times)) {
+                times = parseInt(times);
+
+                if (_.isNaN(times) || !_.isFinite(times)) {
+                    times = 1;
+                } else {
+                    times = Math.max(times, 1);
+                }
+
+            } else {
+                times = true;
+            }
 
             _waiters[key] = {
                 callback: callback,
-                times: _.isNumber(times) ? Math.max(_.parseInt(times), 1) : true,
+                times: times,
                 description: description || ''
             };
 
@@ -131,7 +147,9 @@
                 return _.mapValues(_waiters, 'description');
             }
 
-            return Object.keys(_waiters);
+            return _.keys(_waiters);
         }
     });
-})(_);
+
+    return module;
+}));

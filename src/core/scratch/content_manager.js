@@ -1,12 +1,17 @@
 /**
  * Store data by key and data type. Support add, check exists, get and delete
- * @module _.M.ContentManager
- * @memberOf _.M
- * @requires _.M.BaseClass
  */
-;(function (_) {
-
-    _.M.defineConstant({
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(['lodash', 'MaDnh'], function (_, M) {
+            return (root.ContentManager = factory(_, M));
+        });
+    } else {
+        // Browser globals
+        root.ContentManager = factory(root._, root.M);
+    }
+}(this, function () {
+    M.defineConstant({
         /**
          * @constant {string}
          * @default
@@ -630,10 +635,6 @@
         };
     };
 
-    /**
-     *
-     * @type {_.M.ContentManager}
-     */
-    _.M.ContentManager = ContentManager;
 
-})(_);
+    return ContentManager;
+}));

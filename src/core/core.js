@@ -756,44 +756,32 @@
     };
 
     /**
-     * Check if a MaDnh constant is defined or not
-     * @param {string} name
-     * @returns {boolean}
-     * @example
-     * _.M.isDefinedConstant('TEST') => false
-     */
-    M.isDefinedConstant = function (name) {
-        return _.has(M, name.trim().toUpperCase());
-    };
-
-    /**
      * Define a MaDnh constant
+     * @param {object} target
      * @param {(string|Object)} name
      * @param {*} [value = undefined]
      * @example
-     * _.M.defineConstant('TEST', 123) => _.M.TEST = 123
+     * _.M.defineConstant(obj, 'TEST', 123) => obj.TEST = 123
      */
-    M.defineConstant = function (name, value) {
-        var obj = {},
-            result = [],
-            self = M;
+    M.defineConstant = function (target, name, value) {
+        var obj = {};
 
-        if (!_.isObject(name)) {
-            obj[name] = value;
-        } else {
+        if (_.isObject(name)) {
             obj = name;
+            value = undefined;
+        } else {
+            obj[name] = value;
         }
-        _.each(obj, function (value, key) {
+        _.each(obj, function (val, key) {
             key = key.trim().toUpperCase();
-            if (!M.isDefinedConstant(key)) {
-                Object.defineProperty(self, key, {
+
+            if (!target.hasOwnProperty(key)) {
+                Object.defineProperty(target, key, {
                     enumerable: true,
-                    value: value
+                    value: val
                 });
-                result.push(key);
             }
         });
-        return result;
     };
 
     /**
