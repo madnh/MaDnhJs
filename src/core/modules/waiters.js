@@ -3,153 +3,192 @@
  */
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['lodash', 'madnh'], function (_, M) {
-            return (root.Waiter = factory(_, M));
+        define([], function () {
+            return (root.Waiter = factory());
         });
     } else {
         // Browser globals
-        root.Waiter = factory(root._, root.M);
+        root.Waiter = factory();
     }
-}(this, function (_, M) {
-    var _waiters = {};
+}(this, function () {
+    var _waiters = {},
+        key_index = 0,
+        slice = Array.prototype.slice;
 
-    var module = M.defineObject({
-        /**
-         * Check if a waiter key is exists
-         * @param {string} waiter_key
-         */
-        has: function (waiter_key) {
-            return _waiters.hasOwnProperty(waiter_key) && (!_.isNumber(_waiters[waiter_key].times) || _waiters[waiter_key].times > 0);
-        },
+    function Waiter() {
+        //
+    }
 
-        /**
-         * Add callback
-         * @param {(string|function)} callback Callback
-         * @param {int|boolean} [times = true] Run times. Use true for forever
-         * @param {string} [description = ''] Waiter description
-         * @returns string Callback key
-         */
-        add: function (callback, times, description) {
-            var key = M.nextID('waiter_key', true);
+    /**
+     * Check if a waiter key is exists
+     * @param {string} waiter_key
+     */
+    Waiter.prototype.has = function (waiter_key) {
+        return _waiters.hasOwnProperty(waiter_key) && (typeof _waiters[waiter_key].times !== 'number' || _waiters[waiter_key].times > 0);
+    };
+    /**
+     * Add callback
+     * @param {(string|function)} callback Callback
+     * @param {int|boolean} [times = true] Run times. Use true for forever
+     * @param {string} [description = ''] Waiter description
+     * @returns string Callback key
+     */
+    Waiter.prototype.add = function (callback, times, description) {
+        var key = 'waiter_key_' + ++key_index;
 
-            if (_.isNumber(times)) {
-                times = parseInt(times);
+        if (typeof times == 'number') {
+            times = parseInt(times);
+            times = times !== times ? 1 : Math.max(times, 1);
+        } else {
+            times = true;
+        }
 
-                if (_.isNaN(times) || !_.isFinite(times)) {
-                    times = 1;
-                } else {
-                    times = Math.max(times, 1);
-                }
+        _waiters[key] = {
+            callback: callback,
+            times: times,
+            description: description
+        };
 
-            } else {
-                times = true;
-            }
+        return key;
+    };
+    /**
+     * Add once time callback
+     * @param {(string|function)} callback Callback
+     * @param {string} [description = ''] Waiter description
+     * @returns string Callback key
+     */
+    Waiter.prototype.addOnce = function (callback, description) {
+        return this.add(callback, 1, description);
+    };
 
-            _waiters[key] = {
-                callback: callback,
-                times: times,
-                description: description || ''
+    /**
+     * Similar to "add" but add waiter key to window as function
+     * @param {(string|function)} callback Callback
+     * @param {int|boolean} [times = true] Run times. Use true for forever
+     * @param {string} [description] Waiter description
+     * @returns {(string|number)} Waiter key/function name
+     */
+    Waiter.prototype.createFunc = function (callback, times, description) {
+        var key = this.add(callback, times, description);
+        var self = this;
+
+        window[key] = (function (key) {
+            return function () {
+                return self.run.apply(self, [key].concat(slice.call(arguments)));
             };
+        })(key);
 
-            return key;
-        },
+        return key;
+    };
 
-        /**
-         * Add once time callback
-         * @param {(string|function)} callback Callback
-         * @param {string} [description = ''] Waiter description
-         * @returns string Callback key
-         */
-        addOnce: function (callback, description) {
-            return this.add(callback, 1, description);
-        },
 
-        /**
-         * Similar to "add" but add waiter key to window as function
-         * @param {(string|function)} callback Callback
-         * @param {int|boolean} [times = true] Run times. Use true for forever
-         * @param {string} [description] Waiter description
-         * @returns {(string|number)} Waiter key/function name
-         */
-        createFunc: function (callback, times, description) {
-            var key = this.add(callback, times, description);
-            var self = this;
+    /**
+     * Similar of method createFunc, once time
+     * @param {(string|function)} callback Callback
+     * @param {string} [description] Waiter description
+     * @returns {(string|number)} Waiter key/function name
+     */
+    Waiter.prototype.createFuncOnce = function (callback, description) {
+        return this.createFunc(callback, 1, description);
+    };
 
-            window[key] = (function (key) {
-                return function () {
-                    return self.run.apply(self, [key].concat(_.toArray(arguments)));
-                };
-            })(key);
 
-            return key;
-        },
+    /**
+     * Remove keys by arguments
+     * @returns {Array} Removed waiters
+     */
+    Waiter.prototype.remove = function () {
+        var key,
+            index,
+            keys = flatten(slice.call(arguments)),
+            removed = [];
 
-        /**
-         * Similar of method createFunc, once time
-         * @param {(string|function)} callback Callback
-         * @param {string} [description] Waiter description
-         * @returns {(string|number)} Waiter key/function name
-         */
-        createFuncOnce: function (callback, description) {
-            return this.createFunc(callback, 1, description);
-        },
-
-        /**
-         * Remove keys by arguments
-         * @returns {Array} Removed waiters
-         */
-        remove: function () {
-            var keys = _.flatten(_.toArray(arguments)),
-                removed = [];
-
-            _.each(keys, function (tmp_key) {
-                if (_waiters.hasOwnProperty(tmp_key)) {
-                    removed.push(tmp_key);
-                    window[tmp_key] = undefined;
-                    delete _waiters[tmp_key];
-                    delete window[tmp_key];
-                }
-            });
-
-            return removed;
-        },
-
-        /**
-         * Run the waiter
-         * @param {string} waiter_key
-         * @param {Array} args
-         * @param {Object} this_arg
-         * @returns {*}
-         */
-        run: function (waiter_key, args, this_arg) {
-            var result;
-
-            if (!this.has(waiter_key)) {
-                throw new Error('Waiter key is non-exists: ' + waiter_key);
+        for (index in keys) {
+            if (keys.hasOwnProperty(index) && _waiters.hasOwnProperty(keys[index])) {
+                key = keys[index];
+                removed.push(key);
+                window[key] = undefined;
+                delete _waiters[key];
+                delete window[key];
             }
+        }
 
-            result = _waiters[waiter_key].callback.apply(this_arg || null, _.castArray(args));
+        return removed;
+    };
 
-            if (this.has(waiter_key) && _.isNumber(_waiters[waiter_key].times) && --_waiters[waiter_key].times < 1) {
-                this.remove(waiter_key);
+    /**
+     * Run the waiter
+     * @param {string} waiter_key
+     * @param {Array} args
+     * @param {Object} this_arg
+     * @returns {*}
+     */
+    Waiter.prototype.run = function (waiter_key, args, this_arg) {
+        var result;
+
+        if (!this.has(waiter_key)) {
+            throw new Error('Waiter key is non-exists: ' + waiter_key);
+        }
+
+        result = _waiters[waiter_key].callback.apply(this_arg || null, asArray(args));
+
+        if (this.has(waiter_key) && (typeof _waiters[waiter_key].times == 'number') && --_waiters[waiter_key].times < 1) {
+            this.remove(waiter_key);
+        }
+
+        return result;
+    };
+
+    /**
+     * Return list of waiters
+     * @param {boolean} [description = false] Include waiter description, default is false
+     * @returns {(Array|{})}
+     */
+    Waiter.prototype.list = function (description) {
+        var result = {};
+
+        if (description) {
+            for (var key in _waiters) {
+                if (_waiters.hasOwnProperty(key)) {
+                    result[key] = _waiters[key].description;
+                }
             }
 
             return result;
-        },
-
-        /**
-         * Return list of waiters
-         * @param {boolean} [description = false] Include waiter description, default is false
-         * @returns {(Array|{})}
-         */
-        list: function (description) {
-            if (description) {
-                return _.mapValues(_waiters, 'description');
-            }
-
-            return _.keys(_waiters);
         }
-    });
 
-    return module;
+        return Object.keys(_waiters);
+    };
+
+    var objToString = Object.prototype.toString;
+
+    function isArray(val) {
+        return objToString.call(val) === '[object Array]';
+    }
+
+    function asArray(val) {
+        return isArray(val) ? val : [val];
+    }
+
+    function flatten(array) {
+        var result = [];
+
+        if (!array.length) {
+            return [];
+        }
+
+        for (var i in array) {
+            if (array.hasOwnProperty(i)) {
+                if (isArray(array[i])) {
+                    result = result.concat(flatten(array[i]));
+                } else {
+                    result.push(array[i]);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    return new Waiter();
 }));

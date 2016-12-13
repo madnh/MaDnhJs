@@ -3,48 +3,77 @@
  */
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['lodash', 'madnh'], function (_, M) {
-            return (root.Priority = factory(_, M));
+        define([], function () {
+            return (root.Priority = factory());
         });
     } else {
         // Browser globals
-        root.Priority = factory(root._, root.M);
+        root.Priority = factory();
     }
-}(this, function (_, M) {
+}(this, function () {
+    var key,
+        key_index = 0,
+        constants = {
+            PRIORITY_HIGHEST: 100,
+            PRIORITY_HIGH: 250,
+            PRIORITY_DEFAULT: 500,
+            PRIORITY_LOW: 750,
+            PRIORITY_LOWEST: 1000,
+            PRIORITY_LEVEL_1: 100,
+            PRIORITY_LEVEL_2: 200,
+            PRIORITY_LEVEL_3: 300,
+            PRIORITY_LEVEL_4: 400,
+            PRIORITY_LEVEL_5: 500,
+            PRIORITY_LEVEL_6: 600,
+            PRIORITY_LEVEL_7: 700,
+            PRIORITY_LEVEL_8: 800,
+            PRIORITY_LEVEL_9: 900,
+            PRIORITY_LEVEL_10: 1000
+        };
+
     function Priority() {
         this._priorities = {};
         this._key_mapped = {};
     }
 
-    M.defineConstant(Priority, {
-        PRIORITY_HIGHEST: 100,
-        PRIORITY_HIGH: 250,
-        PRIORITY_DEFAULT: 500,
-        PRIORITY_LOW: 750,
-        PRIORITY_LOWEST: 1000,
-        PRIORITY_LEVEL_1: 100,
-        PRIORITY_LEVEL_2: 200,
-        PRIORITY_LEVEL_3: 300,
-        PRIORITY_LEVEL_4: 400,
-        PRIORITY_LEVEL_5: 500,
-        PRIORITY_LEVEL_6: 600,
-        PRIORITY_LEVEL_7: 700,
-        PRIORITY_LEVEL_8: 800,
-        PRIORITY_LEVEL_9: 900,
-        PRIORITY_LEVEL_10: 1000
-    });
+    /**
+     * Define Priority constant
+     */
+    for (key in constants) {
+        Object.defineProperty(Priority, key, {
+            enumerable: true,
+            value: constants[key]
+        });
+    }
 
+    /**
+     *
+     * @param {number} priority
+     * @return {boolean}
+     */
     Priority.prototype.hasPriority = function (priority) {
-        return this._priorities.hasOwnProperty(priority);
+        return this._priorities.hasOwnProperty(priority + '');
     };
+
+    /**
+     * Check if a key is exists
+     * @param {string} key
+     * @return {boolean}
+     */
     Priority.prototype.has = function (key) {
         return this._key_mapped.hasOwnProperty(key);
     };
+
+    /**
+     * @param {*} content
+     * @param {number} priority
+     * @return {string} Added key
+     */
     Priority.prototype.add = function (content, priority) {
-        var key = M.nextID('priority_key'),
+        var key = 'priority_key_' + ++key_index,
             index;
 
-        if (!_.isNumber(priority)) {
+        if (typeof priority !== 'number' || priority !== priority) {
             priority = Priority.PRIORITY_DEFAULT;
         }
         if (!this.hasPriority(priority)) {
@@ -54,7 +83,7 @@
         index = this._priorities[priority].length;
         this._priorities[priority].push({
             content: content,
-            key: key
+            priority_key: key
         });
         this._key_mapped[key] = {
             priority: priority,
@@ -65,35 +94,71 @@
     };
 
     /**
-     * Find first key of content
-     * @param {*} content
+     * Find keys of content
+     * @param {Priority} instance
+     * @param {function} callback
      * @param {boolean} [all = false]
      * @return {string|Array|boolean} Priority key(s) or false when not found
      */
-    Priority.prototype.getKey = function (content, all) {
+    function do_find(instance, callback, all) {
         var result = [],
-            priorities = _.keys(this._priorities),
+            priorities = Object.keys(instance._priorities),
             priority, index, len, target_priority;
 
         while (priority = priorities.shift()) {
-            target_priority = this._priorities[priority];
+            target_priority = instance._priorities[priority];
 
             for (index = 0, len = target_priority.length; index < len; index++) {
-                if (target_priority[index].content === content) {
+                if (callback(target_priority[index].content)) {
                     if (!all) {
-                        return target_priority[index].key;
+                        return target_priority[index].priority_key;
                     }
 
-                    result.push(target_priority[index].key);
+                    result.push(target_priority[index].priority_key);
                 }
             }
         }
 
         return result.length ? result : false;
+    }
+
+    function find_cb_content(find, compare_content) {
+        return find === compare_content;
+    }
+
+    /**
+     * Find all of keys by content
+     * @param {*} content
+     * @return {string|Array|boolean} Priority key(s) or false if not found
+     */
+    Priority.prototype.findAll = function (content) {
+        return do_find(this, _.partial(find_cb_content, content), true);
+    };
+    Priority.prototype.findAllBy = function (callback) {
+        return do_find(this, callback, true);
     };
 
+    /**
+     * Find first key of content
+     * @param {*} content
+     * @return {string|Array|boolean} Priority key or false if not found
+     */
+    Priority.prototype.find = function (content) {
+        return do_find(this, _.partial(find_cb_content, content), false);
+    };
+
+    Priority.prototype.findBy = function (callback) {
+        return do_find(this, callback, false);
+    };
+
+    /**
+     * Add a content if it is not added yet
+     * @param {*} content
+     * @param {number} priority
+     * @return {string} Added key
+     */
     Priority.prototype.addOnce = function (content, priority) {
-        var key = this.getKey(content, false);
+        var key = this.find(content);
 
         if (false !== key) {
             return key;
@@ -102,6 +167,22 @@
         return this.add(content, priority);
     };
 
+    Priority.prototype.get = function (key) {
+        if (!this.has(key)) {
+            return false;
+        }
+
+        var position = this._key_mapped[key];
+
+        return this._priorities[position.priority][position.index];
+    };
+
+    /**
+     * Update added content
+     * @param {string} key
+     * @param {*} new_value
+     * @return {boolean}
+     */
     Priority.prototype.update = function (key, new_value) {
         var position;
 
@@ -115,39 +196,88 @@
         return true;
     };
 
+    /**
+     *
+     * @param {string|string[]} keys
+     * @return {string[]} Removed keys
+     */
     Priority.prototype.remove = function (keys) {
-        var self = this, removed = [];
+        var removed = [],
+            index,
+            key,
+            position;
 
-        _.each(!_.isArray(keys) ? [keys] : keys, function (key) {
-            var position = self._key_mapped[key];
+        keys = asArray(keys);
+        for (index in keys) {
+            if (keys.hasOwnProperty(index)) {
+                key = keys[index];
+                position = this._key_mapped[key];
 
-            if (!position) {
-                return;
+                if (!position) {
+                    continue;
+                }
+
+                delete this._key_mapped[key];
+                this._priorities[position.priority][position.index] = undefined;
+                removed.push(key);
             }
-
-            delete self._key_mapped[key];
-            self._priorities[position.priority][position.index] = undefined;
-            removed.push(key);
-        });
+        }
 
         return removed;
     };
 
-    Priority.prototype.export = function () {
+    Priority.prototype.removeByContent = function (content) {
+        var keys = this.findAll(content);
+
+        if (false === keys) {
+            return [];
+        }
+
+        return this.remove(keys);
+    };
+
+    /**
+     * Get sorted contents
+     * @param {boolean} [with_key = false] Include priority key
+     * @return {Array}
+     */
+    Priority.prototype.export = function (with_key) {
         var result = [],
-            priority_keys = M.castItemsType(_.keys(this._priorities), 'number'),
-            self = this;
+            priority_keys = Object.keys(this._priorities),
+            priority,
+            index;
 
-        priority_keys.sort(M.SORT_NUMBER);
-
-        _.each(priority_keys, function (priority) {
-            _.each(self._priorities[priority], function (info) {
-                result.push(info.content);
-            });
+        priority_keys.sort(function (a, b) {
+            return a - b;
         });
+
+        while (priority = priority_keys.shift()) {
+            for (index in this._priorities[priority]) {
+                if (this._priorities[priority].hasOwnProperty(index)) {
+                    if (with_key) {
+                        result.push(this._priorities[priority][index].content);
+                    } else {
+                        result.push({
+                            content: this._priorities[priority][index].content,
+                            priority_key: this._priorities[priority][index].priority_key
+                        });
+                    }
+                }
+            }
+        }
 
         return result;
     };
 
-    return Priority;
+    var objToString = Object.prototype.toString;
+
+    function isArray(val) {
+        return objToString.call(val) === '[object Array]';
+    }
+
+    function asArray(val) {
+        return isArray(val) ? val : [val];
+    }
+
+    return new Priority();
 }));

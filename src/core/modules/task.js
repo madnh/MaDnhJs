@@ -1,4 +1,13 @@
-;(function (_) {
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(['lodash', 'madnh'], function (_, M) {
+            return (root.Task = factory(_, M));
+        });
+    } else {
+        // Browser globals
+        root.Task = factory(root._, root.M);
+    }
+}(this, function () {
     var tasks = {};
 
     /**
@@ -7,8 +16,8 @@
      * @constructor
      */
     function Task(handler) {
-        this.type_prefix = 'Task';
-        _.M.BaseClass.call(this);
+        this.id = M.nextID('Task');
+
         /**
          * Task name
          * @type {string}
@@ -48,7 +57,7 @@
      * @returns {Task}
      */
     Task.prototype.option = function (name, value) {
-        this.options = _.M.setup.apply(_.M, [this.options].concat(_.toArray(arguments)));
+        this.options = M.setup.apply(M, [this.options].concat(_.toArray(arguments)));
 
         return this;
     };
@@ -113,7 +122,7 @@
     Task.prototype.process = function (data) {
         var self = this;
 
-        this._result = _.clone(data);
+        this._result = _.cloneDeep(data);
         this._error = null;
 
         if (_.isString(this.handler)) {
@@ -124,7 +133,7 @@
         } else if (this.handler instanceof Task) {
             _process_handler_as_task(this, this.handler, self._result);
         } else if (_.isArray(this.handler)) {
-            _.M.loop(this.handler, function (handle) {
+            M.loop(this.handler, function (handle) {
                 var task_instance;
 
                 if (_.isString(handle)) {
@@ -140,7 +149,7 @@
                 }
             });
         } else if (_.isObject(this.handler)) {
-            _.M.loop(this.handler, function (options, handle) {
+            M.loop(this.handler, function (options, handle) {
                 var task_instance = Task.factory(handle);
 
                 if (!_.isEmpty(options)) {
@@ -198,7 +207,7 @@
      * @param {{}} [options] Task options
      */
     Task.register = function (name, handler, options) {
-        var info = _.M.optionalArgs(_.M.sliceArguments(arguments), ['name', 'handler', 'options'], {
+        var info = M.optionalArgs(_.toArray(arguments), ['name', 'handler', 'options'], {
             name: 'string',
             handler: ['string', 'Function', 'Array', 'Task'],
             options: 'Object'
@@ -240,7 +249,7 @@
 
     Task.apply = function (data, tasks) {
         var result = {
-            data: _.clone(data)
+            data: _.cloneDeep(data)
         };
 
         if (tasks) {
@@ -251,10 +260,10 @@
                 tasks = _.zipObject(tasks, _.fill(new Array(tasks.length), {}));
             }
 
-            _.M.loop(tasks, function (options, name) {
+            M.loop(tasks, function (options, name) {
                 var task = Task.factory(name, options);
 
-                if (task.process(_.clone(result['data']))) {
+                if (task.process(_.cloneDeep(result['data']))) {
                     result['data'] = task.getResult();
                 } else {
                     delete result['data'];
@@ -267,5 +276,5 @@
         return result;
     };
 
-    _.M.Task = Task;
-}).call(window, _);
+    return Task;
+}));

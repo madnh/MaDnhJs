@@ -529,17 +529,12 @@
         if (!_.isObject(object)) {
             object = {};
         }
-        switch (arguments.length) {
-            case 2:
-                if (_.isObject(option)) {
-                    _.each(option, function (val, path) {
-                        _.set(object, path, val);
-                    });
-                }
-                break;
-
-            case 3:
-                _.set(object, option, value);
+        if (_.isObject(option)) {
+            _.each(option, function (val, path) {
+                _.set(object, path, val);
+            });
+        } else {
+            _.set(object, option, value);
         }
 
         return object;

@@ -3,7 +3,7 @@
  */
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['lodash', 'MaDnh'], function (_, M) {
+        define(['lodash', 'madnh'], function (_, M) {
             return (root.ContentManager = factory(_, M));
         });
     } else {
@@ -11,7 +11,19 @@
         root.ContentManager = factory(root._, root.M);
     }
 }(this, function () {
-    M.defineConstant({
+
+    /**
+     * @constructor
+     * @property {string} type_prefix
+     * @property {string} id
+     */
+    function ContentManager() {
+        this.id = M.nextID('ContentManager');
+        this._contents = {};
+        this._usings = {};
+    }
+
+    M.defineConstant(ContentManager, {
         /**
          * @constant {string}
          * @default
@@ -66,17 +78,6 @@
         return false;
     }
 
-    /**
-     * @class _.M.ContentManager
-     */
-    function ContentManager() {
-        _.M.BaseClass.call(this);
-
-        this._contents = {};
-        this._usings = {};
-    }
-
-    _.M.inherit(ContentManager, _.M.BaseClass);
 
     /**
      * Check if content type is exists
@@ -131,16 +132,18 @@
             types = _.intersection(_.castArray(types), Object.keys(this._contents));
         }
 
-        _.M.loop(types, function (type) {
-            _.M.loop(Object.keys(self._contents[type]), function (key) {
-                if (callback(self._contents[type][key].content, self._contents[type][key].meta, key, type)) {
-                    result.push({
-                        type: type,
-                        key: key,
-                        content: _.clone(self._contents[type][key].content),
-                        meta: self._contents[type][key].meta ? _.clone(self._contents[type][key].meta) : undefined
-                    });
+        _.each(types, function (type) {
+            _.each(Object.keys(self._contents[type]), function (key) {
+                if (!callback(self._contents[type][key].content, self._contents[type][key].meta, key, type)) {
+                    return;
                 }
+
+                result.push({
+                    type: type,
+                    key: key,
+                    content: self._contents[type][key].content,
+                    meta: self._contents[type][key].meta
+                });
             });
         });
 
@@ -170,12 +173,12 @@
         _.M.loop(types, function (type) {
             _.M.loop(Object.keys(self._contents[type]), function (key) {
                 var item = self._contents[type][key];
-                if (callback(_.clone(item.content), _.clone(item.meta), key, type)) {
+                if (callback(item.content, item.meta, key, type)) {
                     found = {
                         type: type,
                         key: key,
-                        content: _.clone(item.content),
-                        meta: item.meta ? _.clone(item.meta) : undefined
+                        content: item.content,
+                        meta: item.meta
                     };
 
                     return 'break';
@@ -267,10 +270,10 @@
      */
     ContentManager.prototype.add = function (content, meta, type) {
         if (!type) {
-            type = _.M.contentType(content);
+            type = M.contentType(content);
         }
 
-        var key = _.M.nextID(this.id + '_' + type);
+        var key = M.nextID(this.id + '_' + type);
 
         if (!this._contents.hasOwnProperty(type)) {
             this._contents[type] = {};
@@ -292,7 +295,7 @@
      */
     ContentManager.prototype.addUnique = function (content, meta, type) {
         if (!type) {
-            type = _.M.contentType(content);
+            type = M.contentType(content);
         }
 
         var positions = this.contentPositions(content, type);
@@ -318,11 +321,11 @@
 
         if (with_meta) {
             callback = function (item) {
-                return _.clone(item)
+                return item;
             };
         } else {
             callback = function (item) {
-                return _.clone(item.content);
+                return item.content;
             }
         }
         if (!_.isEmpty(keys)) {
@@ -455,7 +458,7 @@
         var type = getContentTypeFromKey(this, key);
 
         if (false !== type && this._contents[type].hasOwnProperty(key)) {
-            return _.clone(this._contents[type][key]);
+            return this._contents[type][key];
         }
 
         return false;
@@ -468,7 +471,7 @@
      */
     ContentManager.prototype.getType = function (type) {
         if (this.hasType(type)) {
-            return _.clone(this._contents[type]);
+            return this._contents[type];
         }
 
         return false;
@@ -485,7 +488,7 @@
 
         if (false !== result) {
 
-            return _.clone(result.content);
+            return result.content;
         }
 
         return default_value;
@@ -502,7 +505,7 @@
 
         if (false !== result) {
 
-            return _.clone(result.meta);
+            return result.meta;
         }
 
         return default_value;
@@ -511,7 +514,7 @@
     /**
      * Remove content by key. Return removed keys
      * @param {string|string[]} keys
-     * @returns {object[]} Array of objects, each object has 2 item:
+     * @returns {Array} Array of objects, each object has 2 item:
      * - type: content type
      * - key: removed key
      */
@@ -618,9 +621,9 @@
 
     /**
      * Remove using content
-     * @returns {array} Removed position
+     * @returns {Array} Removed position
      */
-    ContentManager.prototype.removeUnusing = function () {
+    ContentManager.prototype.removeNotUsing = function () {
         return this.remove(this.unusedKeys());
     };
 

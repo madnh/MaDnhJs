@@ -327,7 +327,7 @@ describe('MODULE - ContentManager', function () {
         it('remove unused keys', function () {
             var other_key = items.add(_.M.randomString(10)),
                 unused_keys = items.unusedKeys(true),
-                removed_unused_keys = _.groupBy(items.removeUnusing(), 'type');
+                removed_unused_keys = _.groupBy(items.removeNotUsing(), 'type');
             //
             removed_unused_keys = _.mapValues(removed_unused_keys, function (array_of_detail) {
                 return _.map(array_of_detail, 'key');

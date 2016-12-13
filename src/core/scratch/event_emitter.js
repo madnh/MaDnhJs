@@ -1,17 +1,38 @@
-(function (root, factory) {
-    if (typeof define === 'function' && define.amd) {
-        define(['lodash', 'Priority'], function (_, Priority) {
-            return (root.EventEmitter = factory(_, Priority));
-        });
-    } else {
-        // Browser globals
-        root.EventEmitter = factory(root._, root.Priority);
-    }
-}(this, function (_, Priority) {
+/**
+ * @module _.M.EventEmitter
+ * @memberOf _.M
+ * @requires _.M.Priority
+ */
+;(function (_) {
+    _.M.defineConstant({
+        /**
+         * Default limit event't listeners
+         * @name _.M.EVENT_EMITTER_EVENT_LIMIT_LISTENERS
+         * @constant {number}
+         * @default
+         */
+        EVENT_EMITTER_EVENT_LIMIT_LISTENERS: 10,
+
+        /**
+         * Unlimited event's listeners
+         * @name _.M.EVENT_EMITTER_EVENT_UNLIMITED
+         * @constant {number}
+         * @default
+         */
+        EVENT_EMITTER_EVENT_UNLIMITED: -1
+
+    });
+
+    /**
+     * Event management system
+     * @class _.M.EventEmitter
+     * @extends _.M.BaseClass
+     */
     function EventEmitter(options) {
-        this.id = _.uniqueId('event_emitter_');
+        _.M.BaseClass.call(this);
 
         options = _.defaults(options || {}, {
+            'limit': _.M.EVENT_EMITTER_EVENT_LIMIT_LISTENERS,
             'events': {},
             'event_mimics': [],
             'event_privates': []
@@ -30,6 +51,10 @@
          */
         this._event_emitted = {};
 
+        /**
+         * @private
+         */
+        this._limit = _.M.beNumber(options.limit, _.M.EVENT_EMITTER_EVENT_LIMIT_LISTENERS);
 
         /**
          *
@@ -59,8 +84,8 @@
          */
         this._event_privates = ['attach', 'attached'];
 
-        if (!_.isObject(options['events'])) {
-            this.addListeners(options['events']);
+        if (!_.isEmpty(options['events'])) {
+            this.addListeners(_.M.beObject(options['events']));
         }
         if (!_.isEmpty(options['event_mimics'])) {
             this.mimic(_.castArray(options['event_mimics']));
@@ -69,6 +94,8 @@
             this.private(_.castArray(options['event_privates']));
         }
     }
+
+    _.M.inherit(EventEmitter, _.M.BaseClass);
 
     /**
      * Reset events
@@ -85,6 +112,7 @@
             this._event_emitted = {};
         }
     };
+
     /**
      * Alias of resetEvents
      * @see resetEvents
@@ -92,6 +120,7 @@
     EventEmitter.prototype.reset = function (event) {
         return this.resetEvents(event);
     };
+
     /**
      * Get all events name
      * @param {boolean} count Return events listeners count
@@ -110,6 +139,7 @@
         }
         return Object.keys(this._events);
     };
+
     /**
      * Get event emitted count
      * @param {string} event Event name, if not special then return all of emitted events
@@ -121,6 +151,21 @@
         }
 
         return _.clone(this._event_emitted);
+    };
+
+    /**
+     * Set event listener limit
+     * @param {int} [limit]
+     */
+    EventEmitter.prototype.limit = function (limit) {
+        this._limit = limit + 0;
+    };
+
+    /**
+     * Set unlimited for event listeners
+     */
+    EventEmitter.prototype.unlimited = function () {
+        this._limit = _.M.EVENT_EMITTER_EVENT_UNLIMITED;
     };
 
     /**
@@ -144,7 +189,7 @@
             return false;
         }
 
-        add_listener__prepare_events(this, events);
+        add_listener__prepare_events(this, events, listeners.length);
         option = add_listener__get_option(option);
 
         _.each(events, function (event) {
@@ -161,13 +206,22 @@
         return option.key;
     };
 
-    function add_listener__prepare_events(ee, events) {
+    function add_listener__prepare_events(ee, events, listener_length) {
         _.each(events, function (event) {
             if (!ee._events.hasOwnProperty(event)) {
                 ee._events[event] = {
-                    priority: new Priority(),
+                    priority: new _.M.Priority(),
                     key_mapped: {}
                 };
+            } else if (ee._limit != _.M.EVENT_EMITTER_EVENT_UNLIMITED) {
+                var status = ee._events[event].priority.status();
+
+                if (status.contents + listener_length > ee._limit) {
+                    console.warn('Possible _.M.EventEmitter memory leak detected. '
+                        + (status.contents + listeners.length) + ' listeners added (limit is ' + ee._limit
+                        + '). Use emitter.limit() or emitter.unlimited to resolve this warning.'
+                    );
+                }
             }
         });
     }
@@ -178,22 +232,23 @@
      * @returns {{priority, times, context, key, async}}
      */
     function add_listener__get_option(option) {
-        if (_.isNumber(option)) {
+        if (_.M.isNumeric(option)) {
             option = {
                 priority: option
             }
         }
 
         option = _.defaults(option || {}, {
-            priority: Priority.PRIORITY_DEFAULT,
-            times: true,
+            priority: _.M.PRIORITY_DEFAULT,
+            times: -1,
             context: null,
-            key: '',
+            key: null,
             async: false
         });
 
+        option.times = _.M.beNumber(option.times, -1);
         if (option.key === null) {
-            option.key = _.uniqueId('event_emitter_listener_');
+            option.key = _.M.nextID('event_emitter_listener');
         }
 
         return option;
@@ -211,14 +266,13 @@
         var keys = [],
             event_detail = ee._events[event];
 
-        _.each(_.castArray(listeners), function (listener) {
-            var key = event_detail.priority.add({
-                listener: listener,
+        _.M.loop(_.castArray(listeners), function (listener) {
+            var key = event_detail.priority.add(listener, option.priority, {
                 listener_key: option.key,
                 async: option.async,
                 times: option.times,
                 event: event
-            }, option.priority);
+            });
 
             keys.push(key);
         });
@@ -233,45 +287,34 @@
      * @return {boolean}
      */
     EventEmitter.prototype.has = function (key, events) {
-        events = _get_valid_events(this, events);
-
+        if (!events) {
+            events = Object.keys(this._events);
+        } else {
+            events = _.intersection(_.castArray(key), Object.keys(this._events));
+        }
         if (_.isEmpty(events)) {
             return false;
         }
 
-        var index, found = false, self = this;
+        var found = false, self = this;
 
-        for (index in events) {
-            if (events.hasOwnProperty(index) && self._events[events[index]].key_mapped.hasOwnProperty(key)) {
+        _.M.loop(events, function (event) {
+            if (self._events[event].key_mapped.hasOwnProperty(key)) {
                 found = true;
-                break;
+                return 'break';
             }
-        }
+        });
 
         return found;
     };
-    /**
-     *
-     * @param instance
-     * @param {Array} [events]
-     * @return {Array}
-     * @private
-     */
-    function _get_valid_events(instance, events) {
-        if (!events) {
-            return _.keys(instance._events);
-        }
-
-        return _.intersection(_.castArray(events), _.keys(instance._events));
-    }
-
 
     /**
      * @see addListener
      */
     EventEmitter.prototype.on = function (event, listener, option) {
-        return this.addListener.apply(this, _.toArray(arguments));
+        return this.addListener.apply(this, arguments);
     };
+
     /**
      * Add once time listener
      * @param events
@@ -280,7 +323,7 @@
      * @returns {string}
      */
     EventEmitter.prototype.addOnceListener = function (events, listeners, option) {
-        if (_.isNumber(option)) {
+        if (_.M.isNumeric(option)) {
             option = {
                 priority: option,
                 times: 1
@@ -299,7 +342,7 @@
      * @see addOnceListener
      */
     EventEmitter.prototype.once = function (events, listener, option) {
-        return this.addOnceListener.apply(this, _.toArray(arguments));
+        return this.addOnceListener.apply(this, arguments);
     };
 
     /**
@@ -313,7 +356,6 @@
         if (_.isObject(events)) {
             _.each(events, function (event_cbs, event_name) {
                 event_cbs = _.castArray(event_cbs);
-
                 _.each(event_cbs, function (event_cb) {
                     event_cb = _.castArray(event_cb);
                     events_arr.push({
@@ -331,7 +373,6 @@
 
         return keys;
     };
-
 
     /**
      * Emit event. Each event emitted will emit a event called 'event_emitted', with event emitted and it's data
@@ -366,28 +407,30 @@
             listeners;
 
         if (instance._events.hasOwnProperty(event_name)) {
-            listeners = instance._events[event_name].priority.export(true);
+            listeners = instance._events[event_name].priority.export();
 
             if (listeners.length) {
                 emitted = true;
                 _.each(listeners, function (listener_detail) {
-                    if (listener_detail.times === true || listener_detail.times > 0) {
-                        (listener_detail.async ? async_callback : do_callback)(listener_detail.listener, data, listener_detail.context || instance);
+                    if (listener_detail.meta.times == -1 || listener_detail.meta.times > 0) {
+                        if (listener_detail.meta.async) {
+                            _.M.async(listener_detail.content, data, listener_detail.meta.context || instance);
+                        } else {
+                            _.M.callFunc(listener_detail.content, data, listener_detail.meta.context || instance);
+                        }
 
-                        if (listener_detail.times === true) {
+                        if (listener_detail.meta.times == -1) {
                             return;
                         }
 
-                        listener_detail.times--;
-
-                        if (listener_detail.times > 0) {
-                            instance._events[event_name].priority.update(listener_detail.priority_key, listener_detail);
-
+                        listener_detail.meta.times--;
+                        if (listener_detail.meta.times > 0) {
+                            instance._events[event_name].priority.updateMeta(listener_detail.key, listener_detail.meta);
                             return;
                         }
                     }
 
-                    _remove_listener(instance, event_name, listener_detail.listener_key, listener_detail.priority_key);
+                    _remove_listener(instance, event_name, listener_detail.meta.listener_key, listener_detail.key);
                 });
             }
         }
@@ -404,7 +447,6 @@
         if (!instance._events.hasOwnProperty(event) || !instance._events[event].key_mapped.hasOwnProperty(listener_key)) {
             return;
         }
-
         instance._events[event].priority.remove(priority_key);
         instance._events[event].key_mapped[listener_key] = _.without(instance._events[event].key_mapped[listener_key], priority_key);
 
@@ -421,7 +463,11 @@
 
     function _notice_event(instance, event_name, data) {
         _.each(instance._event_followers, function (follower) {
-            (follower.async ? async_callback : do_callback)(_.partial(_notice_event_cb, follower), [instance.id, event_name, data], instance);
+            if (follower.async) {
+                _.M.async(_.partial(_notice_event_cb, follower), [instance.id, event_name, data], instance);
+            } else {
+                _.M.callFunc(_.partial(_notice_event_cb, follower), [instance.id, event_name, data], instance);
+            }
         });
     }
 
@@ -429,47 +475,13 @@
         follower.target.notice(source_id, source_event, source_data);
     }
 
-    function do_callback(callback, args, context) {
-        if (arguments.length >= 2) {
-            args = _.castArray(args);
-        } else {
-            args = [];
-        }
-
-        if (callback) {
-            if (_.isArray(callback)) {
-                var result = [];
-
-                _.each(callback, function (callback_item) {
-                    result.push(callback_item.apply(context || null, args));
-                });
-
-                return result;
-            } else if (_.isFunction(callback)) {
-                return callback.apply(context || null, args);
-            }
-        }
-
-        return undefined;
-    }
-
-    function async_callback(callback, args, delay, context) {
-        delay = parseInt(delay);
-        if (_.isNaN(delay) || !_.isFinite(delay)) {
-            delay = 1;
-        }
-
-        return setTimeout(function () {
-            do_callback(callback, args, context || null);
-        }, Math.max(1, delay));
-    }
 
     /**
      * Alias of 'emitEvent'
      * @see emitEvent
      */
     EventEmitter.prototype.emit = function () {
-        this.emitEvent.apply(this, _.toArray(arguments));
+        this.emitEvent.apply(this, arguments);
     };
 
     /**
@@ -503,6 +515,20 @@
         return removed;
     };
 
+    /**
+     *
+     * @param instance
+     * @param {Array} [events]
+     * @return {Array}
+     * @private
+     */
+    function _get_valid_events(instance, events) {
+        if (!events) {
+            return _.keys(instance._events);
+        }
+
+        return _.intersection(_.castArray(events), _.keys(instance._events));
+    }
 
     /**
      *
@@ -513,10 +539,7 @@
      * @private
      */
     function _group_keys_by_event(instance, keys, events) {
-        var grouped = {},
-            event,
-            found,
-            events_cloned = _.clone(events);
+        var grouped = {}, event, found, events_cloned = _.clone(events);
 
         while (keys.length && (event = events_cloned.shift())) {
             found = _.intersection(keys, _.keys(instance._events[event].key_mapped));
@@ -530,13 +553,13 @@
         return grouped;
     }
 
-    function _remove_listener_by_keys(instance, keys, events) {
+    function _remove_listener_by_keys(instance, keys, events, priority) {
         var keys_grouped_by_event = _group_keys_by_event(instance, keys, events),
             event_detail;
 
         _.each(keys_grouped_by_event, function (keys, event) {
             event_detail = instance._events[event];
-            event_detail.priority.remove(_.flatten(_.values(_.pick(event_detail.key_mapped, keys))));
+            event_detail.priority.remove(_.flatten(_.values(_.pick(event_detail.key_mapped, keys))), priority ? priority : null);
 
             event_detail.key_mapped = _.omit(event_detail.key_mapped, keys);
             instance._events[event] = event_detail;
@@ -545,32 +568,19 @@
         return keys_grouped_by_event;
     }
 
-    function _find_keys_by_listener(listener, compare_content) {
-        return listener === compare_content.listener;
-    }
+    function _remove_listener_by_listeners(instance, listeners, events, priority) {
+        var removed = {}, priority_keys_removed;
 
-    function _remove_listener_by_listeners(instance, listeners, events) {
-        var removed = {},
-            priority_keys_removed;
+        priority = priority || null;
 
         _.each(listeners, function (listener) {
-            var callback = _.partial(_find_keys_by_listener, listener);
-
             _.each(events, function (event) {
-                var keys = instance._events[event].priority.findAllBy(callback);
-
-                if (false == keys) {
-                    return;
-                }
-
-                priority_keys_removed = instance._events[event].priority.remove(keys);
+                priority_keys_removed = instance._events[event].priority.removeContent(listener, priority);
 
                 if (priority_keys_removed.length) {
                     var removed_grouped_by_listener_key = _remove_key_mapped_by_priority_keys(instance._events[event].key_mapped, priority_keys_removed);
-                    var tmp_obj = {};
 
-                    tmp_obj[event] = Object.keys(removed_grouped_by_listener_key);
-                    _merge_object_item(removed, tmp_obj);
+                    _merge_object_item(removed, _.M.beObject(event, Object.keys(removed_grouped_by_listener_key)));
                 }
             });
         });
@@ -594,7 +604,6 @@
 
             if (found.length) {
                 key_mapped[key] = _.difference(key_mapped[key], found);
-
                 if (!key_mapped[key].length) {
                     delete key_mapped[key];
                 }
@@ -629,7 +638,7 @@
      * @see removeListener
      */
     EventEmitter.prototype.off = function () {
-        return this.removeListener.apply(this, _.toArray(arguments));
+        return this.removeListener.apply(this, arguments);
     };
 
     /**
@@ -655,34 +664,35 @@
      * @returns {boolean}
      */
     EventEmitter.prototype.attach = function (eventEmitter, only, excepts, async) {
-        if (!EventEmitter.isEventEmitter(eventEmitter)) {
-            throw new Error('Invalid EventEmitter instance');
-        }
-        if (!this._event_followers.hasOwnProperty(eventEmitter.id)) {
-            this._event_followers[eventEmitter.id] = {
-                target: eventEmitter,
-                async: _.isUndefined(async) || Boolean(async)
-            };
-            this.emitEvent('attach', [eventEmitter, only, excepts]);
-            eventEmitter.attachTo(this, only, excepts);
-            return true;
+        if (_.M.isEventEmitter(eventEmitter)) {
+            if (!this._event_followers.hasOwnProperty(eventEmitter.id)) {
+                this._event_followers[eventEmitter.id] = {
+                    target: eventEmitter,
+                    async: _.isUndefined(async) || Boolean(async)
+                };
+                this.emitEvent('attach', [eventEmitter, only, excepts]);
+                eventEmitter.attachTo(this, only, excepts);
+                return true;
+            }
+
+            return false;
         }
 
-        return false;
+        throw new Error('Invalid _.M.EventEmitter instance');
     };
 
     /**
      * Check if has an EE instance is attached to this
-     * @param {EventEmitter} eventEmitter
+     * @param {_.M.EventEmitter} eventEmitter
      * @return {boolean}
      */
     EventEmitter.prototype.hasFollower = function (eventEmitter) {
-        return EventEmitter.isEventEmitter(eventEmitter) && this._event_followers.hasOwnProperty(eventEmitter.id);
+        return _.M.isEventEmitter(eventEmitter) && this._event_followers.hasOwnProperty(eventEmitter.id);
     };
 
     /**
      * Attach other event emitter to this. Notice sync
-     * @param {EventEmitter} eventEmitter
+     * @param eventEmitter
      * @param only
      * @param excepts
      * @return boolean
@@ -690,27 +700,27 @@
     EventEmitter.prototype.attachHard = function (eventEmitter, only, excepts) {
         return this.attach(eventEmitter, only, excepts, false);
     };
+
     /**
      * Attach this to other event emitter instance. Notice async
-     * @param {EventEmitter} eventEmitter
+     * @param {_.M.EventEmitter} eventEmitter
      * @param {Array} [only]
      * @param {Array} [excepts]
      * @param {boolean} [hard=false] Hard attach to other, other notice will call immediate. Default is false
      * @returns {boolean}
      */
     EventEmitter.prototype.attachTo = function (eventEmitter, only, excepts, hard) {
-        if (!EventEmitter.isEventEmitter(eventEmitter)) {
-            throw new Error('Invalid EventEmitter instance');
+        if (!_.M.isEventEmitter(eventEmitter)) {
+            throw new Error('Invalid _.M.EventEmitter instance');
         }
         if (!this._event_following.hasOwnProperty(eventEmitter.id)) {
             this._event_following[eventEmitter.id] = {
                 id: eventEmitter.id,
-                type: eventEmitter.constructor.name,
+                type: eventEmitter.type_prefix,
                 only: _.castArray(only || []),
                 excepts: _.castArray(excepts || [])
             };
             this.emitEvent('attached', [eventEmitter, only, excepts]);
-
             if (hard) {
                 return eventEmitter.attachHard(this);
             }
@@ -728,12 +738,12 @@
      * @return {boolean}
      */
     EventEmitter.prototype.isFollowing = function (eventEmitter) {
-        return EventEmitter.isEventEmitter(eventEmitter) && this._event_following.hasOwnProperty(eventEmitter.id);
+        return _.M.isEventEmitter(eventEmitter) && this._event_following.hasOwnProperty(eventEmitter.id);
     };
 
     /**
      * Hard Attach this to other event emitter instance. Notice sync
-     * @param {EventEmitter} eventEmitter
+     * @param {_.M.EventEmitter} eventEmitter
      * @param {Array} [only]
      * @param {Array} [excepts]
      * @returns {boolean}
@@ -810,19 +820,19 @@
      * @returns {boolean}
      */
     EventEmitter.prototype.detach = function (eventEmitter) {
-        if (!EventEmitter.isEventEmitter(eventEmitter)) {
-            throw new Error('Invalid EventEmitter instance');
+        if (_.M.isEventEmitter(eventEmitter)) {
+            if (this._event_followers.hasOwnProperty(eventEmitter.id)) {
+                this.emitEvent('detach', [eventEmitter]);
+                delete this._event_followers[eventEmitter.id];
+                eventEmitter.detachFrom(this);
+
+                return true;
+            }
+
+            return false;
         }
-        if (this._event_followers.hasOwnProperty(eventEmitter.id)) {
-            this.emitEvent('detach', [eventEmitter]);
-            delete this._event_followers[eventEmitter.id];
-            eventEmitter.detachFrom(this);
 
-            return true;
-        }
-
-        return false;
-
+        throw new Error('Invalid _.M.EventEmitter instance');
     };
 
     /**
@@ -831,22 +841,38 @@
      * @returns {boolean}
      */
     EventEmitter.prototype.detachFrom = function (eventEmitter) {
-        if (!EventEmitter.isEventEmitter(eventEmitter)) {
-            throw new Error('Invalid EventEmitter instance');
-        }
-        if (this._event_following.hasOwnProperty(eventEmitter.id)) {
-            this.emitEvent('detached', [eventEmitter]);
-            delete this._event_following[eventEmitter.id];
-            eventEmitter.detach(this);
+        if (_.M.isEventEmitter(eventEmitter)) {
+            if (this._event_following.hasOwnProperty(eventEmitter.id)) {
+                this.emitEvent('detached', [eventEmitter]);
+                delete this._event_following[eventEmitter.id];
+                eventEmitter.detach(this);
 
-            return true;
+                return true;
+            }
+            return false;
+
         }
+
+        throw new Error('Invalid _.M.EventEmitter instance');
+    };
+
+    /**
+     *
+     * @type {_.M.EventEmitter}
+     */
+    _.M.EventEmitter = EventEmitter;
+
+    /**
+     * Check if object is instance of Event Emitter
+     * @param {object} object
+     * @returns {boolean}
+     */
+    _.M.isEventEmitter = function (object) {
+        if (_.isObject(object)) {
+            return object instanceof EventEmitter;
+        }
+
         return false;
     };
 
-    EventEmitter.isEventEmitter = function (object) {
-        return object instanceof EventEmitter;
-    };
-
-    return EventEmitter;
-}));
+})(_);
