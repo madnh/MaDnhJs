@@ -5,7 +5,7 @@ describe('MODULE - Priority', function () {
     var priority_instance;
 
     beforeEach(function () {
-        priority_instance = new _.M.Priority();
+        priority_instance = new M.Priority();
     });
 
     describe('Add', function () {

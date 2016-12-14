@@ -7,8 +7,8 @@ describe('MODULE - EventEmitter', function () {
             var ee, key;
 
             before(function () {
-                ee = new _.M.EventEmitter();
-                key = ee.addListener('test', _.M.logArgs);
+                ee = new M.EventEmitter();
+                key = ee.addListener('test', M.logArgs);
             });
 
             it('return key as string', function () {
@@ -22,8 +22,8 @@ describe('MODULE - EventEmitter', function () {
             var ee, key;
 
             before(function () {
-                ee = new _.M.EventEmitter();
-                key = ee.addListener('test', [_.M.logArgs, _.M.logArgs]);
+                ee = new M.EventEmitter();
+                key = ee.addListener('test', [M.logArgs, M.logArgs]);
             });
 
             it('return key as string', function () {
@@ -37,8 +37,8 @@ describe('MODULE - EventEmitter', function () {
             var ee, key;
 
             before(function () {
-                ee = new _.M.EventEmitter();
-                key = ee.addListener(['test', 'test2'], [_.M.logArgs, _.M.logArgs]);
+                ee = new M.EventEmitter();
+                key = ee.addListener(['test', 'test2'], [M.logArgs, M.logArgs]);
             });
 
             it('return key as string', function () {
@@ -52,11 +52,11 @@ describe('MODULE - EventEmitter', function () {
             var ee, keys;
 
             before(function () {
-                ee = new _.M.EventEmitter();
+                ee = new M.EventEmitter();
 
                 keys = ee.addListeners({
-                    test: [_.M.logArgs, _.M.logArgs],
-                    test2: [_.M.logArgs, [_.M.logArgs, {key: 'yahoo'}]]
+                    test: [M.logArgs, M.logArgs],
+                    test2: [M.logArgs, [M.logArgs, {key: 'yahoo'}]]
                 });
             });
 
@@ -75,10 +75,10 @@ describe('MODULE - EventEmitter', function () {
     });
     describe('Emit', function () {
         describe('Emit an event', function () {
-            var ee, data = _.M.randomString(10);
+            var ee, data = M.randomString(10);
 
             before(function () {
-                ee = new _.M.EventEmitter();
+                ee = new M.EventEmitter();
                 ee.addListener('test', function (done, data_arg) {
                     done();
 
@@ -116,7 +116,7 @@ describe('MODULE - EventEmitter', function () {
             var ee, key;
 
             before(function () {
-                ee = new _.M.EventEmitter();
+                ee = new M.EventEmitter();
 
                 key = ee.addOnceListener('test', function (done) {
                     done();
@@ -131,9 +131,9 @@ describe('MODULE - EventEmitter', function () {
                 chai_assert.isTrue(ee.has(key));
             });
             it('Emit event success', function (done) {
-                _.M.debugging('test');
+                M.debugging('test');
                 ee.emit('test', [done]);
-                _.M.debugComplete('test');
+                M.debugComplete('test');
             });
             it('Key isn\'t exists after previous emit', function () {
                 chai_assert.isFalse(ee.has(key));
@@ -145,7 +145,7 @@ describe('MODULE - EventEmitter', function () {
             ;
 
             beforeEach(function () {
-                ee = new _.M.EventEmitter();
+                ee = new M.EventEmitter();
             });
 
             it('event_emitted', function (done) {
@@ -178,10 +178,10 @@ describe('MODULE - EventEmitter', function () {
         var ee, key, key2, key3;
 
         beforeEach(function () {
-            ee = new _.M.EventEmitter();
-            key = ee.addListener('test', _.M.logArgs);
-            key2 = ee.addListener('test2', _.M.logArgs);
-            key3 = ee.addListener('test3', _.M.warnArgs);
+            ee = new M.EventEmitter();
+            key = ee.addListener('test', M.logArgs);
+            key2 = ee.addListener('test2', M.logArgs);
+            key3 = ee.addListener('test3', M.warnArgs);
 
             chai_assert.isTrue(ee.has(key));
             chai_assert.isTrue(ee.has(key2));
@@ -198,7 +198,7 @@ describe('MODULE - EventEmitter', function () {
         });
         it('remove by key, special event name', function () {
             chai_assert.doesNotThrow(function () {
-                ee.removeListener(_.M.logArgs, 'test');
+                ee.removeListener(M.logArgs, 'test');
             });
             chai_assert.isFalse(ee.has(key));
             chai_assert.isTrue(ee.has(key2));
@@ -206,7 +206,7 @@ describe('MODULE - EventEmitter', function () {
         });
         it('remove by listener', function () {
             chai_assert.doesNotThrow(function () {
-                ee.removeListener(_.M.logArgs);
+                ee.removeListener(M.logArgs);
             });
 
             chai_assert.isFalse(ee.has(key));
@@ -216,7 +216,7 @@ describe('MODULE - EventEmitter', function () {
         it('remove by listeners', function () {
             var removed;
             chai_assert.doesNotThrow(function () {
-                removed = ee.removeListener([_.M.logArgs, _.M.warnArgs]);
+                removed = ee.removeListener([M.logArgs, M.warnArgs]);
             });
 
 
@@ -234,8 +234,8 @@ describe('MODULE - EventEmitter', function () {
         var base_ee, other_ee;
 
         before(function () {
-            base_ee = new _.M.EventEmitter();
-            other_ee = new _.M.EventEmitter();
+            base_ee = new M.EventEmitter();
+            other_ee = new M.EventEmitter();
 
             other_ee.attachTo(base_ee);
         });
@@ -255,8 +255,8 @@ describe('MODULE - EventEmitter', function () {
                 private_event = 'private_event';
 
             beforeEach(function () {
-                base_ee = new _.M.EventEmitter();
-                other_ee = new _.M.EventEmitter();
+                base_ee = new M.EventEmitter();
+                other_ee = new M.EventEmitter();
 
                 base_ee.private(private_event);
                 other_ee.attachTo(base_ee);
@@ -305,8 +305,8 @@ describe('MODULE - EventEmitter', function () {
                 event_name = 'test';
 
             beforeEach(function () {
-                base_ee = new _.M.EventEmitter();
-                other_ee = new _.M.EventEmitter();
+                base_ee = new M.EventEmitter();
+                other_ee = new M.EventEmitter();
 
                 other_ee.attachTo(base_ee);
             });
@@ -339,8 +339,8 @@ describe('MODULE - EventEmitter', function () {
         var base_ee, other_ee;
 
         beforeEach(function () {
-            base_ee = new _.M.EventEmitter();
-            other_ee = new _.M.EventEmitter();
+            base_ee = new M.EventEmitter();
+            other_ee = new M.EventEmitter();
 
             other_ee.attachTo(base_ee);
         });

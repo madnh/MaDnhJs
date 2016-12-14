@@ -5,15 +5,15 @@ describe('MODULE - ContentManager', function () {
     var items;
 
     function reset_each_descibe() {
-        _.M.resetID('ContentManager');
+        M.resetID('ContentManager');
         if (items) {
-            _.M.resetID(items.id);
-            _.M.resetID(items.id + '_string');
-            _.M.resetID(items.id + '_number');
-            _.M.resetID(items.id + '_boolean');
-            _.M.resetID(items.id + '_Array');
+            M.resetID(items.id);
+            M.resetID(items.id + '_string');
+            M.resetID(items.id + '_number');
+            M.resetID(items.id + '_boolean');
+            M.resetID(items.id + '_Array');
         }
-        items = new _.M.ContentManager();
+        items = new M.ContentManager();
     }
 
     before(reset_each_descibe);
@@ -46,7 +46,7 @@ describe('MODULE - ContentManager', function () {
             chai_assert.sameMembers(keys['string'], [key]);
         });
         it('Add, unique', function () {
-            var val = _.M.randomString(20),
+            var val = M.randomString(20),
                 key = items.add(val);
 
             chai_assert.strictEqual(items.addUnique(val), key);
@@ -166,7 +166,7 @@ describe('MODULE - ContentManager', function () {
             valid_remove_key(key);
         });
         it('only remove special key', function () {
-            var value = _.M.randomString(10),
+            var value = M.randomString(10),
                 key = items.add(value),
                 key_2 = items.add(value);
             //
@@ -174,7 +174,7 @@ describe('MODULE - ContentManager', function () {
             chai_assert.isTrue(items.has(key_2));
         });
         it('remove all item by value', function () {
-            var value = _.M.randomString(20),
+            var value = M.randomString(20),
                 key = items.add(value),
                 key_2 = items.add(value);
             //
@@ -200,11 +200,11 @@ describe('MODULE - ContentManager', function () {
 
         before(function () {
             reset_each_descibe();
-            values = [_.M.randomString(10), true, 123, _.M.randomString(10)];
+            values = [M.randomString(10), true, 123, M.randomString(10)];
 
             _.each(values, function (item) {
                 must_be.push({
-                    type: _.M.contentType(item),
+                    type: M.contentType(item),
                     key: items.add(item),
                     meta: undefined,
                     content: item
@@ -232,7 +232,7 @@ describe('MODULE - ContentManager', function () {
         };
         before(function () {
             reset_each_descibe();
-            value = _.M.randomString(20);
+            value = M.randomString(20);
             must_be = {
                 type: 'string',
                 key: items.add(value),
@@ -270,7 +270,7 @@ describe('MODULE - ContentManager', function () {
             chai_assert.isTrue(items.isUsing(key));
         });
         it('Return false if key isn\'t exists', function () {
-            var non_exists_key = _.now() + _.M.randomString(5);
+            var non_exists_key = _.now() + M.randomString(5);
             //
             chai_assert.isFalse(items.has(non_exists_key));
             chai_assert.isFalse(items.using(non_exists_key));
@@ -281,13 +281,13 @@ describe('MODULE - ContentManager', function () {
             chai_assert.isTrue(items.isUsingContent(value));
         });
         it('Return false if a content is unused', function () {
-            var non_exists_content = _.now() + _.M.randomString(5);
+            var non_exists_content = _.now() + M.randomString(5);
             //
             chai_assert.isFalse(items.hasContent(non_exists_content));
             chai_assert.isFalse(items.isUsingContent(non_exists_content));
         });
         it('unused an using key', function () {
-            var other_using_key = items.add(_.M.randomString(10));
+            var other_using_key = items.add(M.randomString(10));
             //
             chai_assert.isTrue(items.using(other_using_key));
             chai_assert.isTrue(items.isUsing(other_using_key));
@@ -325,7 +325,7 @@ describe('MODULE - ContentManager', function () {
             chai_assert.isFalse(items.isUsing(key));
         });
         it('remove unused keys', function () {
-            var other_key = items.add(_.M.randomString(10)),
+            var other_key = items.add(M.randomString(10)),
                 unused_keys = items.unusedKeys(true),
                 removed_unused_keys = _.groupBy(items.removeNotUsing(), 'type');
             //

@@ -1,5 +1,5 @@
-var d = new _.M.Dialog();
-var btn1 = new _.M.DialogButton({
+var d = new M.Dialog();
+var btn1 = new M.DialogButton({
     name: 'btn1',
     type: 'success'
 });
@@ -20,7 +20,7 @@ d.open();
 
 
 
-_.M.Dialog.confirm('Bạn có chắc muốn xóa các tập tin này??', null, {
+M.Dialog.confirm('Bạn có chắc muốn xóa các tập tin này??', null, {
     title: 'Xóa tập tin',
-    type: _.M.DIALOG_DANGER
+    type: M.DIALOG_DANGER
 });

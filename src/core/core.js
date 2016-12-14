@@ -281,14 +281,16 @@
 
     /**
      *
-     * @param {string} type a type, do not require existed
+     * @param {string} [type] a type, do not require existed
      * @param {number} [value]
      * @returns {number|*}
      */
     M.resetID = function (type, value) {
-        if (_.isEmpty(type)) {
+        if (!arguments.length) {
             type = 'unique_id';
         }
+
+        type = String(type);
 
         if (_.isUndefined(value)) {
             delete unique_id_current_status[type];
@@ -519,7 +521,7 @@
      * @param {Object} object host object
      * @param {(string|Object)} option field name of object of fields
      * @param {*} value value of field when option param is field name
-     * @returns {*}
+     * @returns {{}}
      * @example
      * var obj = {a: 'A', b: 'B'}
      * _.M.setup(obj, 'a', '123'); //obj -> {a: '123', b: 'B'}
@@ -1117,7 +1119,7 @@
     }
 
 
-    M.defineConstant({
+    M.defineConstant(M, {
         /**
          * Array sort compare function. Sort number
          * @constant

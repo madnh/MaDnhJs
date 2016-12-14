@@ -17,7 +17,7 @@ describe('MODULE - Task', function () {
                 task_process_result;
 
             before(function () {
-                task = new _.M.Task(task_handler);
+                task = new M.Task(task_handler);
 
                 task_process_result = task.process(data);
             });
@@ -40,7 +40,7 @@ describe('MODULE - Task', function () {
                 };
 
             before(function () {
-                task = new _.M.Task(task_handler);
+                task = new M.Task(task_handler);
 
                 task_process_result = task.process(data);
             });
@@ -69,7 +69,7 @@ describe('MODULE - Task', function () {
                 };
 
             before(function () {
-                task = new _.M.Task(function () {
+                task = new M.Task(function () {
                     throw new Error('Error by throw new Error exception');
                 });
 
@@ -91,9 +91,9 @@ describe('MODULE - Task', function () {
     });
     describe('Multiple task', function () {
         before(function () {
-            _.M.Task.register('task_1', task_handler);
-            _.M.Task.register('task_2', task_handler);
-            _.M.Task.register('task_3', ['task_1', 'task_2']);
+            M.Task.register('task_1', task_handler);
+            M.Task.register('task_2', task_handler);
+            M.Task.register('task_3', ['task_1', 'task_2']);
         });
 
         describe('Valid data', function () {
@@ -103,7 +103,7 @@ describe('MODULE - Task', function () {
                 task_process_result;
 
             before(function () {
-                task = _.M.Task.factory('task_3');
+                task = M.Task.factory('task_3');
                 task_process_result = task.process(data);
             });
 
@@ -124,7 +124,7 @@ describe('MODULE - Task', function () {
                 };
 
             before(function () {
-                task = _.M.Task.factory('task_3');
+                task = M.Task.factory('task_3');
 
                 task_process_result = task.process(data);
             });
@@ -153,9 +153,9 @@ describe('MODULE - Task', function () {
                 task_process_result;
 
             before(function () {
-                _.M.Task.register('apply_task', task_handler);
+                M.Task.register('apply_task', task_handler);
 
-                task_process_result = _.M.Task.apply(data, 'apply_task');
+                task_process_result = M.Task.apply(data, 'apply_task');
             });
 
             it('Task result must be correct', function () {
@@ -173,9 +173,9 @@ describe('MODULE - Task', function () {
                 task_process_result;
 
             before(function () {
-                _.M.Task.register('apply_task_invalid_data', task_handler);
+                M.Task.register('apply_task_invalid_data', task_handler);
 
-                task_process_result = _.M.Task.apply(data, 'apply_task_invalid_data');
+                task_process_result = M.Task.apply(data, 'apply_task_invalid_data');
             });
 
             it('Process result is error', function () {

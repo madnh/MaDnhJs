@@ -4,7 +4,7 @@ describe('MODULE - BaseClass', function () {
 
     it('Extend', function () {
         function MyClass() {
-            _.M.BaseClass.call(this);
+            M.BaseClass.call(this);
         }
 
         //
@@ -18,7 +18,7 @@ describe('MODULE - BaseClass', function () {
     it('Extend, change type_prefix', function () {
         function MyClass2() {
             this.type_prefix = 'Yahoo';
-            _.M.BaseClass.call(this);
+            M.BaseClass.call(this);
         }
 
         //

@@ -1,13 +1,18 @@
-/**
- *
- * @namespace _.M
- */
-;(function (_) {
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(['lodash'], function (_) {
+            return (root.M = factory(_));
+        });
+    } else {
+        root.M = factory(root._);
+    }
+}(this, function (_) {
     /*
      |--------------------------------------------------------------------------
      | Type Definitions
      |--------------------------------------------------------------------------
      */
+
     /**
      * Loop callback. Useful in _.each, _.map, _.omit,...
      * @callback loopCallback
@@ -45,29 +50,12 @@
     var version = '1.2.8';
 
     var M = {};
+
     Object.defineProperty(M, 'VERSION', {
         value: version
     });
 
     var slice = Array.prototype.slice;
-
-
-    /** Mixin method "module" to UnderscoreJS
-     * This method help us to structure UnderscoreJS extensions as module
-     */
-    _.mixin({
-        /**
-         * @memberOf _
-         * @param name Name of module, UPPER CASE
-         * @param exports Module export object
-         */
-        module: function (name, exports) {
-            Object.defineProperty(_, name.toString(), {
-                value: exports
-            });
-        }
-    });
-    _.module('M', M);
 
     /**
      * Slice arguments of a function as array
@@ -180,7 +168,7 @@
 
     /**
      * Loop over array or object like _.each but breakable
-     * @param {object|array} obj Loop object
+     * @param {object|Array} obj Loop object
      * @param {loopCallback} callback callback apply on every item, return break value to break the loop
      * @param {string} [break_on=break] Value of callback result that break the loop, default is 'break'
      * @returns {*}
@@ -228,33 +216,6 @@
             }
         }
         return obj;
-    };
-
-    /**
-     * Remove object keys
-     * @param {object} obj Object
-     * @param {string[]|loopCallback} args Array of item name or callback. If use callback then callback must return
-     *     true/false to remove/keep item
-     */
-    M.removeKeys = function (obj, args) {
-        var keys = _.flatten(slice.call(arguments, 1));
-        var removed = [], old_items;
-
-        if (keys.length == 1 && _.isFunction(keys[0])) {
-            old_items = Object.keys(obj);
-            obj = _.omit(obj, keys[0]);
-            removed = _.difference(old_items, Object.keys(obj));
-        } else {
-            _.each(keys, function (key) {
-                if (_.has(obj, key)) {
-                    removed.push(key);
-                    obj[key] = undefined;
-                    delete  obj[key];
-                }
-            });
-        }
-
-        return removed;
     };
 
     var unique_id_current_status = {};
@@ -320,14 +281,16 @@
 
     /**
      *
-     * @param {string} type a type, do not require existed
+     * @param {string} [type] a type, do not require existed
      * @param {number} [value]
      * @returns {number|*}
      */
     M.resetID = function (type, value) {
-        if (_.isEmpty(type)) {
+        if (!arguments.length) {
             type = 'unique_id';
         }
+
+        type = String(type);
 
         if (_.isUndefined(value)) {
             delete unique_id_current_status[type];
@@ -425,30 +388,9 @@
         if (_.isObject(value)) {
             return false;
         }
+
         var type = typeof value;
         return value == null || type === 'string' || type === 'number' || type === 'boolean';
-    };
-
-
-    /**
-     * Merge multiple array to first array
-     * @return {Array}
-     */
-    M.mergeArray = function () {
-        switch (arguments.length) {
-            case 0:
-                return [];
-            case 1:
-                return arguments[0];
-        }
-
-        for (var i = 1; i < arguments.length; i++) {
-            for (var j = 0, len = arguments[i].length; j < len; j += 1000) {
-                arguments[0].push.apply(arguments[0], arguments[i].slice(j, j + 1000));
-            }
-        }
-
-        return arguments[0];
     };
 
     M.mergeObject = function () {
@@ -530,7 +472,7 @@
      * _.M.diffObjectLoose({a: 0, b: 1}, {a: '0', b: 2}); //{b: 1}
      */
     M.diffObjectLoose = function (object, others) {
-        var args = _.toArray(arguments);
+        var args = _.flatten(_.toArray(arguments));
 
         args.unshift(is_diff_loose_cb);
 
@@ -544,23 +486,10 @@
      * @param {object} others
      * @return {*}
      */
-    M.diffObjectWithCallback = function (callback, object, others) {
+    M.diffObjectWith = function (callback, object, others) {
         return diff_object.apply(null, slice.apply(arguments))
     };
 
-    M.appendDeep = function (object, deep, value) {
-        return _.update(object, deep, function (current_value) {
-            if (M.isString(current_value) || _.isNumber(current_value)) {
-                current_value += value + '';
-            } else if (_.isArray(current_value)) {
-                current_value.push(value);
-            } else {
-                current_value = [current_value, value];
-            }
-
-            return current_value;
-        });
-    };
 
     /**
      * Get random string
@@ -592,7 +521,7 @@
      * @param {Object} object host object
      * @param {(string|Object)} option field name of object of fields
      * @param {*} value value of field when option param is field name
-     * @returns {*}
+     * @returns {{}}
      * @example
      * var obj = {a: 'A', b: 'B'}
      * _.M.setup(obj, 'a', '123'); //obj -> {a: '123', b: 'B'}
@@ -602,14 +531,12 @@
         if (!_.isObject(object)) {
             object = {};
         }
-        switch (arguments.length) {
-            case 2:
-                if (_.isObject(option)) {
-                    object = _.extend({}, object, option);
-                }
-                break;
-            case 3:
-                object[option] = value;
+        if (_.isObject(option)) {
+            _.each(option, function (val, path) {
+                _.set(object, path, val);
+            });
+        } else {
+            _.set(object, option, value);
         }
 
         return object;
@@ -635,28 +562,6 @@
         return result;
     };
 
-    /**
-     * Return first value of arguments that isn't empty
-     * @returns {*}
-     * @example
-     * _.M.firstNotEmpty(['', 0, false, 123]); //123
-     */
-    M.firstNotEmpty = function () {
-        var arr = _.flatten(_.toArray(arguments));
-
-        var index = -1,
-            length = arr.length;
-
-        while (++index < length) {
-            var value = arr[index];
-
-            if (value) {
-                return value;
-            }
-        }
-
-        return null;
-    };
 
     /**
      * Like _.pairs but array item is an object with field is "key", "value"
@@ -700,34 +605,12 @@
         var result = {};
 
         _.each(collection, function (object) {
-            var key = object.hasOwnProperty(key_field) ? object[key_field] : undefined;
-
-            result[key] = object.hasOwnProperty(value_field) ? object[value_field] : undefined;
+            if (object.hasOwnProperty(key_field)) {
+                result[object[key_field]] = object.hasOwnProperty(value_field) ? object[value_field] : undefined;
+            }
         });
 
         return result;
-    };
-
-    /**
-     * Repeat value by times
-     * @param {*} value
-     * @param {number} times Repeat times, >= 0
-     * @param {boolean} [as_array = false] Return result as array, default is return as string
-     * @returns {*}
-     * @example
-     * _.M.repeat('a', 5); //'aaaaa'
-     * _.M.repeat('a', 5, true); //['a', 'a', 'a', 'a', 'a']
-     *
-     */
-    M.repeat = function (value, times, as_array) {
-        var result = [];
-        times = Math.max(0, times);
-
-        for (var i = 0; i < times; i++) {
-            result.push(value);
-        }
-
-        return as_array ? result : result.join('');
     };
 
     /**
@@ -742,46 +625,6 @@
      */
     M.isNumeric = function (value) {
         return !_.isArray(value) && (value - parseFloat(value) + 1) >= 0;
-    };
-
-    /**
-     * Check if numeric value is integer
-     * @param {number} number
-     * @returns {boolean}
-     * @example
-     * _.M.isInteger(123); //true
-     * _.M.isInteger(123.5); //false
-     * _.M.isInteger('123'); //true
-     */
-    M.isInteger = function (number) {
-        return M.isNumeric(number) && number % 1 === 0;
-    };
-
-    /**
-     * Check if a numeric is odd
-     * @param number
-     * @returns {boolean}
-     * @example
-     * _.M.isOdd(5); //false
-     * _.M.isOdd(4); //true
-     * _.M.isOdd('11'); //false
-     * _.M.isOdd('8'); //true
-     */
-    M.isOdd = function (number) {
-        return 0 === number % 2;
-    };
-    /**
-     * Check if a number is even
-     * @param number
-     * @returns {boolean}
-     * @example
-     * _.M.isEven(5); //true
-     * _.M.isEven(4); //false
-     * _.M.isEven('11'); //true
-     * _.M.isEven('8'); //false
-     */
-    M.isEven = function (number) {
-        return 0 !== number % 2;
     };
 
     /**
@@ -910,44 +753,32 @@
     };
 
     /**
-     * Check if a MaDnh constant is defined or not
-     * @param {string} name
-     * @returns {boolean}
-     * @example
-     * _.M.isDefinedConstant('TEST') => false
-     */
-    M.isDefinedConstant = function (name) {
-        return _.has(M, name.trim().toUpperCase());
-    };
-
-    /**
      * Define a MaDnh constant
+     * @param {object} target
      * @param {(string|Object)} name
      * @param {*} [value = undefined]
      * @example
-     * _.M.defineConstant('TEST', 123) => _.M.TEST = 123
+     * _.M.defineConstant(obj, 'TEST', 123) => obj.TEST = 123
      */
-    M.defineConstant = function (name, value) {
-        var obj = {},
-            result = [],
-            self = M;
+    M.defineConstant = function (target, name, value) {
+        var obj = {};
 
-        if (!_.isObject(name)) {
-            obj[name] = value;
-        } else {
+        if (_.isObject(name)) {
             obj = name;
+            value = undefined;
+        } else {
+            obj[name] = value;
         }
-        _.each(obj, function (value, key) {
+        _.each(obj, function (val, key) {
             key = key.trim().toUpperCase();
-            if (!M.isDefinedConstant(key)) {
-                Object.defineProperty(self, key, {
+
+            if (!target.hasOwnProperty(key)) {
+                Object.defineProperty(target, key, {
                     enumerable: true,
-                    value: value
+                    value: val
                 });
-                result.push(key);
             }
         });
-        return result;
     };
 
     /**
@@ -1001,18 +832,14 @@
         }
 
         if (callback) {
-            if (_.isString(callback)) {
-                if (M.WAITER.has(callback)) {
-                    return M.WAITER.run(callback, args, context);
-                }
-                if (_.has(window, callback) && _.isFunction(window[callback])) {
-                    return window[callback].apply(context || window, args);
+            if (_.isFunction(callback)) {
+                return callback.apply(context || null, args);
+            } else if (_.isString(callback)) {
+                if (window.hasOwnProperty(callback) && _.isFunction(window[callback])) {
+                    return window[callback].apply(context || null, args);
                 }
 
                 throw new Error('Invalid callback!');
-            } else if (_.isFunction(callback)) {
-
-                return callback.apply(context || null, args);
             } else if (_.isArray(callback)) {
                 var result = [],
                     this_func = arguments.callee;
@@ -1050,14 +877,9 @@
     };
 
     function createConsoleCB(name, description) {
-        var args = [];
-        if (arguments.length > 1) {
-            args.push(description);
-        }
-
-        return function () {
-            console[name].apply(console, args.concat(slice.apply(arguments)));
-        }
+        return (function (default_description) {
+            console[name].apply(console, (default_description ? [default_description] : []).concat(slice.apply(arguments)));
+        })(description);
     }
 
     /**
@@ -1130,7 +952,8 @@
     };
 
 
-    var debug_types_status = {}, is_active_all_debug_type = false;
+    var debug_types_status = {},
+        all_debugging = false;
 
     /**
      *
@@ -1138,8 +961,8 @@
      * @returns {boolean}
      */
     M.isDebugging = function (type) {
-        if (is_active_all_debug_type || _.isEmpty(type)) {
-            return is_active_all_debug_type;
+        if (all_debugging || _.isEmpty(type)) {
+            return all_debugging;
         }
 
         return debug_types_status.hasOwnProperty(type) && debug_types_status[type];
@@ -1151,7 +974,7 @@
      */
     M.debugging = function (type) {
         if (_.isEmpty(type)) {
-            is_active_all_debug_type = true;
+            all_debugging = true;
             return;
         }
 
@@ -1163,7 +986,7 @@
      */
     M.debugComplete = function (type) {
         if (_.isEmpty(type)) {
-            is_active_all_debug_type = false;
+            all_debugging = false;
             debug_types_status = {};
 
             return;
@@ -1296,7 +1119,7 @@
     }
 
 
-    M.defineConstant({
+    M.defineConstant(M, {
         /**
          * Array sort compare function. Sort number
          * @constant
@@ -1313,168 +1136,304 @@
          * var scores = [1, 10, 2, 21];
          * scores.sort(_.M.SORT_NUMBER_DESC); // [21, 10, 2, 1]
          */
-        SORT_NUMBER_DESC: sortNumberDescCallback,
-
-        /**
-         * Compare 2 value is equal, loose comparison
-         * @constant
-         * @example
-         * _.M.IS_EQUAL(1, 1); //true
-         * _.M.IS_EQUAL(1, '1'); //true
-         * _.M.IS_EQUAL(1, true); //true
-         * _.M.IS_EQUAL(1, false); //false
-         * _.M.IS_EQUAL(1, 2); //false
-         */
-        IS_EQUAL: is_equal_loose,
-
-        /**
-         * Compare 2 value is equal, strict comparison
-         * @constant
-         * @example
-         * _.M.IS_STRICT_EQUAL(1, 1); //true
-         * _.M.IS_STRICT_EQUAL(1, '1'); //false
-         */
-        IS_STRICT_EQUAL: is_equal_strict
+        SORT_NUMBER_DESC: sortNumberDescCallback
     });
-})(_);
-/**
- * @module _.M.FLAG
- * @memberOf _.M
- */
-;(function (_) {
-    var _flags = {};
+
+
+    return M;
+}));
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define([], function () {
+            return (root.Flag = factory());
+        });
+    } else {
+        // Browser globals
+        root.Flag = factory();
+    }
+}(this, function () {
+    function Flag() {
+        this._flags = {};
+
+    }
 
     /**
-     * @lends _.M.FLAG
-     * @type {{}}
+     * Check if a flag is exists
+     * @param {string} name
+     * @return {boolean}
      */
-    _.M.FLAG = _.M.defineObject({
-        /**
-         * Check if a flag is exists
-         * @param {string} name
-         */
-        has: function (name) {
-            return _.has(_flags, name);
-        },
+    Flag.prototype.hasFlag = function (name) {
+        return this._flags && this._flags.hasOwnProperty(name);
+    };
 
-        /**
-         * Set a flag
-         * @param {string} name
-         * @param {boolean} [is_active=true] Flag status, default is True
-         */
-        flag: function (name, is_active) {
-            is_active = _.isUndefined(is_active) ? true : Boolean(is_active);
+    /**
+     * Set a flag
+     * @param {string} name
+     * @param {boolean} [is_active=true] Flag status, default is True
+     * @return {Flag}
+     */
+    Flag.prototype.flag = function (name, is_active) {
+        is_active = (is_active || typeof is_active == 'undefined') ? true : Boolean(is_active);
 
-            if (_.isArray(name)) {
-                _.each(name, function (tmp_name) {
-                    _flags[tmp_name] = is_active;
-                });
-            } else {
-                _flags[name] = is_active;
+        if (!this._flags) {
+            this._flags = {};
+        }
+        if (name instanceof Array) {
+            for (var i = 0, len = name.length; i < len; i++) {
+                this._flags[name[i]] = is_active;
             }
-        },
-
-        /**
-         * Get flags
-         * @param {boolean} [detail=false] If true then return flags with detail of it, else only return flags name
-         */
-        flags: function (detail) {
-            if (detail) {
-                return _.clone(_flags);
-            }
-            return _.keys(_flags);
-        },
-
-        /**
-         * Get flag by name
-         * @param {string} name
-         * @returns {(*|boolean)}
-         */
-        get: function (name) {
-            return this.has(name) && Boolean(_flags[name]);
-        },
-
-        /**
-         * Check if a flag is exists
-         * @param {string} name
-         * @returns {*}
-         */
-        isFlagged: function (name) {
-            var result, self = this;
-
-            if (_.isArray(name)) {
-                result = [];
-                _.each(name, function (tmp_name) {
-                    if (self.get(tmp_name)) {
-                        result.push(tmp_name);
-                    }
-                })
-            } else {
-                result = this.get(name);
-            }
-
-            return result;
-        },
-
-        /**
-         *
-         * @param {string|string[]} name
-         * @param {boolean} [status] Missing - On/off when current flag's status is off/on.
-         * Boolean - On/off when status is true/false
-         */
-        toggle: function (name, status) {
-            var thisFunc = arguments.callee;
-            var self = this;
-
-            if (_.isArray(name)) {
-                _.each(name, function (tmp_name) {
-                    thisFunc.apply(self, [tmp_name, status]);
-                })
-            } else {
-                if (!_.isUndefined(status)) {
-                    this.flag(name, Boolean(status));
-                } else {
-                    this.flag(name, !this.isFlagged(name));
+        } else if (name instanceof Object) {
+            for (var tmp_name in name) {
+                if (name.hasOwnProperty(tmp_name)) {
+                    this._flags[tmp_name] = Boolean(name[tmp_name]);
                 }
             }
-        },
-
-        reset: function () {
-            _flags = {};
+        } else {
+            this._flags[name] = is_active;
         }
 
-    });
-})(_);
-/**
- * @module _.M.BaseClass
- * @memberOf _.M
- */
-;(function (_) {
+        return this;
+    };
+
+    /**
+     * Get flag status is on (true) or off (false)
+     * @param {string} name
+     * @return {boolean} true -> on, false -> off
+     */
+    Flag.prototype.flagStatus = function (name) {
+        return this._flags && this._flags.hasOwnProperty(name) && Boolean(this._flags[name]);
+    };
+
+    /**
+     * Check if a flag is exists and it's status is on
+     * @param {string} name
+     * @return {boolean}
+     */
+    Flag.prototype.isFlagged = function (name) {
+        return true === this.flagStatus(name);
+    };
+
+    /**
+     *
+     * @param {string|Array} flags
+     * @param {boolean} [status] Missing - On/off when current flag's status is off/on.
+     * Boolean - On/off when status is true/false
+     *
+     * @return {Flag}
+     */
+    Flag.prototype.toggleFlag = function (flags, status) {
+        if (flags instanceof Array) {
+            for (var index in flags) {
+                this.toggleFlag(flags[index], status);
+            }
+
+            return this;
+        }
+        if (typeof status != 'undefined') {
+            this.flag(flags, Boolean(status));
+        } else {
+            this.flag(flags, !this.isFlagged(flags));
+        }
+
+        return this;
+    };
+
+    /**
+     *
+     * @return {Flag}
+     */
+    Flag.prototype.resetFlagStatus = function () {
+        this._flags = {};
+
+        return this;
+    };
+
+    Flag.mixin = function (destObject) {
+        var props = ['hasFlag', 'flag', 'flagStatus', 'isFlagged', 'toggleFlag', 'resetFlagStatus'];
+
+        for (var i = 0; i < props.length; i++) {
+            if (typeof destObject === 'function') {
+                destObject.prototype[props[i]] = Flag.prototype[props[i]];
+            } else {
+                destObject[props[i]] = Flag.prototype[props[i]];
+            }
+        }
+
+        return destObject;
+    };
+
+
+    var static_instance = new Flag();
+
+    var methods = ['hasFlag', 'flag', 'flagStatus', 'isFlagged', 'toggleFlag', 'resetFlagStatus'];
+
+    for (var i = 0, len = methods.length; i < len; i++) {
+        Flag[methods[i]] = (function (method) {
+            return function () {
+                return static_instance[method].apply(static_instance, Array.prototype.slice.call(arguments));
+            };
+        })(methods[i]);
+    }
+
+
+    return Flag;
+}));
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(['madnh'], function (M) {
+            return factory(M);
+        });
+    } else {
+        // Browser globals
+        root.BaseClass = factory(root.M);
+    }
+}(this, function (M) {
+
     /**
      * Base class
-     * @class _.M.BaseClass
+     * @class BaseClass
      * @property {string} type_prefix Prefix of class, use as prefix of instance ID, default is class name
      * @property {string} id Instance ID
      */
     function BaseClass() {
         if (!this.type_prefix) {
-            this.type_prefix = _.M.className(this, true);
+            this.type_prefix = M.className(this, true);
         }
 
         if (!this.id) {
-            this.id = _.M.nextID(this.type_prefix, true);
+            this.id = M.nextID(this.type_prefix, true);
         }
     }
 
-    /**
-     * 
-     * @type {_.M.BaseClass}
-     */
-    _.M.BaseClass = BaseClass;
-})(_);
-;(function (_) {
+    return BaseClass;
+}));
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(['lodash', 'madnh'], function (_, M) {
+            return factory(_, M);
+        });
+    } else {
+        // Browser globals
+        root.PreOptions = factory(root._, root.M);
+    }
+}(this, function (_, M) {
     var _pre_options = {};
 
+    /**
+     * @constructor
+     */
+    function PreOptions() {
+        //
+    }
+
+    /**
+     *
+     * @param {string} name
+     * @param {{}}options
+     * @param {boolean} [override=false]
+     */
+    PreOptions.prototype.define = function (name, options, override) {
+        if (override || !_pre_options.hasOwnProperty(name)) {
+            _pre_options[name] = {
+                options: options,
+                base: []
+            };
+
+            return true;
+        }
+
+        return false;
+    };
+    /**
+     *
+     * @param {string} name
+     * @returns {boolean}
+     */
+    PreOptions.prototype.has = function (name) {
+        return _pre_options.hasOwnProperty(name);
+    };
+    /**
+     *
+     * @param {string} name
+     * @param {{}} options
+     * @returns {boolean}
+     */
+    PreOptions.prototype.update = function (name, options) {
+        if (_pre_options.hasOwnProperty(name)) {
+            _.extend(_pre_options[name].options, options);
+            return true;
+        }
+
+        return false;
+    };
+
+    PreOptions.prototype.updateBase = function (name, new_base) {
+        if (_pre_options.hasOwnProperty(name)) {
+            _pre_options[name].base = new_base;
+
+            return true;
+        }
+
+        return false;
+    };
+
+    /**
+     *
+     * @param {string} name
+     * @param {{}} [custom={}]
+     * @returns {*}
+     */
+    PreOptions.prototype.get = function (name, custom) {
+        if (!_pre_options.hasOwnProperty(name)) {
+            throw new Error('Pre Options "' + name + '" is undefined');
+        }
+
+        var self = this,
+            result = {};
+
+        _.each(_.castArray(_pre_options[name].base), function (base) {
+            _.extend(result, self.get(base));
+        });
+        _.extend(result, _.cloneDeep(_pre_options[name].options), _.isObject(custom) ? custom : {});
+
+        return result;
+    };
+
+    /**
+     * Create PreOptions, base on real time value of other PreOptions
+     * @param {string|string[]} sources Base on other PreOptions
+     * @param {string} dest_name
+     * @param {{}} [options={}]
+     */
+    PreOptions.prototype.extend = function (sources, dest_name, options) {
+        _extend(sources, dest_name, options, true);
+    };
+    /**
+     * Create PreOptions, base on runtime-value of other PreOptions
+     * @param {string|string[]} sources Base on other PreOptions
+     * @param {string} dest_name
+     * @param {{}} [options={}]
+     */
+    PreOptions.prototype.baseOn = function (sources, dest_name, options) {
+        _extend(sources, dest_name, options, false);
+    };
+
+    /**
+     *
+     * @param {boolean} [detail=false]
+     * @returns {Array|{}}
+     */
+    PreOptions.prototype.list = function (detail) {
+        if (detail) {
+            return _.cloneDeep(_pre_options);
+        }
+
+        return _.keys(_pre_options);
+    };
+
+    PreOptions.prototype.reset = function () {
+        _pre_options = {};
+    };
 
     function _extend(sources, dest_name, options, real_time) {
         if (_pre_options.hasOwnProperty(dest_name)) {
@@ -1495,7 +1454,7 @@
             var base_options = {};
 
             _.each(sources, function (base) {
-                _.extend(base_options, _.M.PreOptions.get(base));
+                _.extend(base_options, PreOptions.get(base));
             });
             _.extend(options, base_options);
 
@@ -1511,122 +1470,34 @@
         }
     }
 
-    _.M.PreOptions = _.M.defineObject({
-        /**
-         *
-         * @param {string} name
-         * @param {{}}options
-         * @param {boolean} [override=false]
-         */
-        define: function (name, options, override) {
-            if (override || !_pre_options.hasOwnProperty(name)) {
-                _pre_options[name] = {
-                    options: options,
-                    base: []
-                };
-                return true;
-            }
-
-            return false;
-        },
-        /**
-         *
-         * @param {string} name
-         * @returns {boolean}
-         */
-        has: function (name) {
-            return _pre_options.hasOwnProperty(name);
-        },
-        /**
-         *
-         * @param {string} name
-         * @param {{}} options
-         * @returns {boolean}
-         */
-        update: function (name, options) {
-            if (_pre_options.hasOwnProperty(name)) {
-                _.extend(_pre_options[name].options, options);
-                return true;
-            }
-
-            return false;
-        },
-        updateBase: function (name, new_base) {
-            if (_pre_options.hasOwnProperty(name)) {
-                _pre_options[name].base = new_base;
-
-                return true;
-            }
-
-            return false;
-        },
-        /**
-         *
-         * @param {string} name
-         * @param {{}} [custom={}]
-         * @returns {*}
-         */
-        get: function (name, custom) {
-            if (!_pre_options.hasOwnProperty(name)) {
-                throw new Error('Pre Options "' + name + '" is undefined');
-            }
-
-            var result = {};
-
-            _.each(_.castArray(_pre_options[name].base), function (base) {
-                _.extend(result, _.M.PreOptions.get(base));
-            });
-            _.extend(result, _.clone(_pre_options[name].options), _.isObject(custom) ? custom : {});
-
-            return result;
-        },
-
-        /**
-         * Create PreOptions, base on real time value of other PreOptions
-         * @param {string|string[]} sources Base on other PreOptions
-         * @param {string} dest_name
-         * @param {{}} [options={}]
-         */
-        extend: function (sources, dest_name, options) {
-            _extend(sources, dest_name, options, true);
-        },
-        /**
-         * Create PreOptions, base on runtime-value of other PreOptions
-         * @param {string|string[]} sources Base on other PreOptions
-         * @param {string} dest_name
-         * @param {{}} [options={}]
-         */
-        baseOn: function (sources, dest_name, options) {
-            _extend(sources, dest_name, options, false);
-        },
-
-        /**
-         *
-         * @param {boolean} [detail=false]
-         * @returns {Array|{}}
-         */
-        list: function (detail) {
-            if (detail) {
-                return _.clone(_pre_options);
-            }
-
-            return Object.keys(_pre_options);
-        },
-
-        reset: function () {
-            _pre_options = {};
-        }
-    });
-})(_);
+    return new PreOptions();
+}));
 /**
  * Store data by key and data type. Support add, check exists, get and delete
- * @module _.M.ContentManager
- * @memberOf _.M
- * @requires _.M.BaseClass
  */
-;(function (_) {
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(['lodash', 'madnh'], function (_, M) {
+            return (root.ContentManager = factory(_, M));
+        });
+    } else {
+        // Browser globals
+        root.ContentManager = factory(root._, root.M);
+    }
+}(this, function () {
 
-    _.M.defineConstant({
+    /**
+     * @constructor
+     * @property {string} type_prefix
+     * @property {string} id
+     */
+    function ContentManager() {
+        this.id = M.nextID('ContentManager');
+        this._contents = {};
+        this._usings = {};
+    }
+
+    M.defineConstant(ContentManager, {
         /**
          * @constant {string}
          * @default
@@ -1681,17 +1552,6 @@
         return false;
     }
 
-    /**
-     * @class _.M.ContentManager
-     */
-    function ContentManager() {
-        _.M.BaseClass.call(this);
-
-        this._contents = {};
-        this._usings = {};
-    }
-
-    _.M.inherit(ContentManager, _.M.BaseClass);
 
     /**
      * Check if content type is exists
@@ -1746,16 +1606,18 @@
             types = _.intersection(_.castArray(types), Object.keys(this._contents));
         }
 
-        _.M.loop(types, function (type) {
-            _.M.loop(Object.keys(self._contents[type]), function (key) {
-                if (callback(self._contents[type][key].content, self._contents[type][key].meta, key, type)) {
-                    result.push({
-                        type: type,
-                        key: key,
-                        content: _.clone(self._contents[type][key].content),
-                        meta: self._contents[type][key].meta ? _.clone(self._contents[type][key].meta) : undefined
-                    });
+        _.each(types, function (type) {
+            _.each(Object.keys(self._contents[type]), function (key) {
+                if (!callback(self._contents[type][key].content, self._contents[type][key].meta, key, type)) {
+                    return;
                 }
+
+                result.push({
+                    type: type,
+                    key: key,
+                    content: self._contents[type][key].content,
+                    meta: self._contents[type][key].meta
+                });
             });
         });
 
@@ -1785,12 +1647,12 @@
         _.M.loop(types, function (type) {
             _.M.loop(Object.keys(self._contents[type]), function (key) {
                 var item = self._contents[type][key];
-                if (callback(_.clone(item.content), _.clone(item.meta), key, type)) {
+                if (callback(item.content, item.meta, key, type)) {
                     found = {
                         type: type,
                         key: key,
-                        content: _.clone(item.content),
-                        meta: item.meta ? _.clone(item.meta) : undefined
+                        content: item.content,
+                        meta: item.meta
                     };
 
                     return 'break';
@@ -1882,10 +1744,10 @@
      */
     ContentManager.prototype.add = function (content, meta, type) {
         if (!type) {
-            type = _.M.contentType(content);
+            type = M.contentType(content);
         }
 
-        var key = _.M.nextID(this.id + '_' + type);
+        var key = M.nextID(this.id + '_' + type);
 
         if (!this._contents.hasOwnProperty(type)) {
             this._contents[type] = {};
@@ -1907,7 +1769,7 @@
      */
     ContentManager.prototype.addUnique = function (content, meta, type) {
         if (!type) {
-            type = _.M.contentType(content);
+            type = M.contentType(content);
         }
 
         var positions = this.contentPositions(content, type);
@@ -1933,11 +1795,11 @@
 
         if (with_meta) {
             callback = function (item) {
-                return _.clone(item)
+                return item;
             };
         } else {
             callback = function (item) {
-                return _.clone(item.content);
+                return item.content;
             }
         }
         if (!_.isEmpty(keys)) {
@@ -2070,7 +1932,7 @@
         var type = getContentTypeFromKey(this, key);
 
         if (false !== type && this._contents[type].hasOwnProperty(key)) {
-            return _.clone(this._contents[type][key]);
+            return this._contents[type][key];
         }
 
         return false;
@@ -2083,7 +1945,7 @@
      */
     ContentManager.prototype.getType = function (type) {
         if (this.hasType(type)) {
-            return _.clone(this._contents[type]);
+            return this._contents[type];
         }
 
         return false;
@@ -2100,7 +1962,7 @@
 
         if (false !== result) {
 
-            return _.clone(result.content);
+            return result.content;
         }
 
         return default_value;
@@ -2117,7 +1979,7 @@
 
         if (false !== result) {
 
-            return _.clone(result.meta);
+            return result.meta;
         }
 
         return default_value;
@@ -2126,7 +1988,7 @@
     /**
      * Remove content by key. Return removed keys
      * @param {string|string[]} keys
-     * @returns {object[]} Array of objects, each object has 2 item:
+     * @returns {Array} Array of objects, each object has 2 item:
      * - type: content type
      * - key: removed key
      */
@@ -2233,9 +2095,9 @@
 
     /**
      * Remove using content
-     * @returns {array} Removed position
+     * @returns {Array} Removed position
      */
-    ContentManager.prototype.removeUnusing = function () {
+    ContentManager.prototype.removeNotUsing = function () {
         return this.remove(this.unusedKeys());
     };
 
@@ -2250,494 +2112,500 @@
         };
     };
 
-    /**
-     *
-     * @type {_.M.ContentManager}
-     */
-    _.M.ContentManager = ContentManager;
 
-})(_);
+    return ContentManager;
+}));
 /**
- * Priority
- * @module _.M.Priority
- * @memberOf _.M
- * @requires _.M.ContentManager
+ * Manage contents with priority
  */
-;(function (_) {
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define([], function () {
+            return (root.Priority = factory());
+        });
+    } else {
+        // Browser globals
+        root.Priority = factory();
+    }
+}(this, function () {
+    var key,
+        key_index = 0,
+        constants = {
+            PRIORITY_HIGHEST: 100,
+            PRIORITY_HIGH: 250,
+            PRIORITY_DEFAULT: 500,
+            PRIORITY_LOW: 750,
+            PRIORITY_LOWEST: 1000,
+            PRIORITY_LEVEL_1: 100,
+            PRIORITY_LEVEL_2: 200,
+            PRIORITY_LEVEL_3: 300,
+            PRIORITY_LEVEL_4: 400,
+            PRIORITY_LEVEL_5: 500,
+            PRIORITY_LEVEL_6: 600,
+            PRIORITY_LEVEL_7: 700,
+            PRIORITY_LEVEL_8: 800,
+            PRIORITY_LEVEL_9: 900,
+            PRIORITY_LEVEL_10: 1000
+        };
 
-    _.M.defineConstant({
-        /**
-         * @name _.M.PRIORITY_HIGHEST
-         * @constant {number}
-         * @default
-         */
-        PRIORITY_HIGHEST: 100,
-        /**
-         * @name _.M.PRIORITY_HIGH
-         * @constant {number}
-         * @default
-         */
-        PRIORITY_HIGH: 250,
-        /**
-         * @name _.M.PRIORITY_DEFAULT
-         * @constant {number}
-         * @default
-         */
-        PRIORITY_DEFAULT: 500,
-        /**
-         * @name _.M.PRIORITY_LOW
-         * @constant {number}
-         * @default
-         */
-        PRIORITY_LOW: 750,
-        /**
-         * @name _.M.PRIORITY_LOWEST
-         * @constant {number}
-         * @default
-         */
-        PRIORITY_LOWEST: 1000,
-
-        /**
-         * @name _.M.PRIORITY_LEVEL_1
-         * @constant {number}
-         * @default
-         */
-        PRIORITY_LEVEL_1: 100,
-
-        /**
-         * @name _.M.PRIORITY_LEVEL_2
-         * @constant {number}
-         * @default
-         */
-        PRIORITY_LEVEL_2: 200,
-
-        /**
-         * @name _.M.PRIORITY_LEVEL_3
-         * @constant {number}
-         * @default
-         */
-        PRIORITY_LEVEL_3: 300,
-
-        /**
-         * @name _.M.PRIORITY_LEVEL_4
-         * @constant {number}
-         * @default
-         */
-        PRIORITY_LEVEL_4: 400,
-
-        /**
-         * @name _.M.PRIORITY_LEVEL_5
-         * @constant {number}
-         * @default
-         */
-        PRIORITY_LEVEL_5: 500,
-
-        /**
-         * @name _.M.PRIORITY_LEVEL_6
-         * @constant {number}
-         * @default
-         */
-        PRIORITY_LEVEL_6: 600,
-
-        /**
-         * @name _.M.PRIORITY_LEVEL_7
-         * @constant {number}
-         * @default
-         */
-        PRIORITY_LEVEL_7: 700,
-        /**
-         * @name _.M.PRIORITY_LEVEL_8
-         * @constant {number}
-         * @default
-         */
-        PRIORITY_LEVEL_8: 800,
-
-        /**
-         * @name _.M.PRIORITY_LEVEL_9
-         * @constant {number}
-         * @default
-         */
-        PRIORITY_LEVEL_9: 900,
-        /**
-         * @name _.M.PRIORITY_LEVEL_10
-         * @constant {number}
-         * @default
-         */
-        PRIORITY_LEVEL_10: 1000
-    });
-
-    /**
-     * Manage contents with priority
-     * @class _.M.Priority
-     * @extends _.M.ContentManager
-     */
     function Priority() {
-        _.M.ContentManager.call(this);
-
-        /**
-         * Priority number and keys
-         * @type {{}}
-         * @private
-         */
         this._priorities = {};
-
-        /**
-         * key => priority
-         * @type {{}}
-         * @private
-         */
         this._key_mapped = {};
     }
-    _.M.inherit(Priority, _.M.ContentManager);
 
     /**
-     * Check if a priority is exists
-     * @param priority
-     * @returns {boolean}
+     * Define Priority constant
+     */
+    for (key in constants) {
+        Object.defineProperty(Priority, key, {
+            enumerable: true,
+            value: constants[key]
+        });
+    }
+
+    /**
+     *
+     * @param {number} priority
+     * @return {boolean}
      */
     Priority.prototype.hasPriority = function (priority) {
-        return this._priorities.hasOwnProperty(priority);
+        return this._priorities.hasOwnProperty(priority + '');
     };
 
     /**
      * Check if a key is exists
      * @param {string} key
-     * @returns {*|boolean}
+     * @return {boolean}
      */
     Priority.prototype.has = function (key) {
         return this._key_mapped.hasOwnProperty(key);
     };
 
     /**
-     * Get status about number of priorities and contents
-     * @returns {{priorities: number, contents: number}}
-     */
-    Priority.prototype.status = function () {
-        var priorities = Object.keys(this._priorities),
-            result = {
-                priorities: priorities.length,
-                contents: 0
-            },
-            self = this;
-
-        priorities.forEach(function (priority) {
-            result.contents += self._priorities[priority].length;
-        });
-
-        return result;
-    };
-
-    /**
-     * Add content
      * @param {*} content
-     * @param {number} [priority = _.M.PRIORITY_DEFAULT]
-     * @param {*} [meta] Content meta info
-     * @returns {(string|boolean)} content key
+     * @param {number} priority
+     * @return {string} Added key
      */
-    Priority.prototype.add = function (content, priority, meta) {
-        var key = this._super.add.call(this, content, meta, 'priority');
+    Priority.prototype.add = function (content, priority) {
+        var key = 'priority_key_' + ++key_index,
+            index;
 
-        this.using(key);
-        priority = _.M.beNumber(priority, _.M.PRIORITY_DEFAULT);
-
-        if (!_.has(this._priorities, priority)) {
+        if (typeof priority !== 'number' || priority !== priority) {
+            priority = Priority.PRIORITY_DEFAULT;
+        }
+        if (!this.hasPriority(priority)) {
             this._priorities[priority] = [];
         }
 
-        this._priorities[priority].push(key);
-        this._key_mapped[key] = priority;
+        index = this._priorities[priority].length;
+        this._priorities[priority].push({
+            content: content,
+            priority_key: key
+        });
+        this._key_mapped[key] = {
+            priority: priority,
+            index: index
+        };
 
         return key;
     };
 
     /**
-     * Remove content by keys
-     * @param {string|string[]} keys
-     * @param {number|number[]} [priorities] Special priorities, default is all priorities
-     * @returns {string[]} Removed keys
+     * Find keys of content
+     * @param {Priority} instance
+     * @param {function} callback
+     * @param {boolean} [all = false]
+     * @return {string|Array|boolean} Priority key(s) or false when not found
      */
-    Priority.prototype.remove = function (keys, priorities) {
-        var removed  = remove_keys.apply(null, [this].concat(_.toArray(arguments)));
+    function do_find(instance, callback, all) {
+        var result = [],
+            priorities = Object.keys(instance._priorities),
+            priority, index, len, target_priority;
 
-        return _.map(this._super.remove.call(this, removed), 'key');
+        while (priority = priorities.shift()) {
+            target_priority = instance._priorities[priority];
+
+            for (index = 0, len = target_priority.length; index < len; index++) {
+                if (callback(target_priority[index].content)) {
+                    if (!all) {
+                        return target_priority[index].priority_key;
+                    }
+
+                    result.push(target_priority[index].priority_key);
+                }
+            }
+        }
+
+        return result.length ? result : false;
+    }
+
+    function find_cb_content(find, compare_content) {
+        return find === compare_content;
+    }
+
+    /**
+     * Find all of keys by content
+     * @param {*} content
+     * @return {string|Array|boolean} Priority key(s) or false if not found
+     */
+    Priority.prototype.findAll = function (content) {
+        return do_find(this, _.partial(find_cb_content, content), true);
+    };
+    Priority.prototype.findAllBy = function (callback) {
+        return do_find(this, callback, true);
+    };
+
+    /**
+     * Find first key of content
+     * @param {*} content
+     * @return {string|Array|boolean} Priority key or false if not found
+     */
+    Priority.prototype.find = function (content) {
+        return do_find(this, _.partial(find_cb_content, content), false);
+    };
+
+    Priority.prototype.findBy = function (callback) {
+        return do_find(this, callback, false);
+    };
+
+    /**
+     * Add a content if it is not added yet
+     * @param {*} content
+     * @param {number} priority
+     * @return {string} Added key
+     */
+    Priority.prototype.addOnce = function (content, priority) {
+        var key = this.find(content);
+
+        if (false !== key) {
+            return key;
+        }
+
+        return this.add(content, priority);
+    };
+
+    Priority.prototype.get = function (key) {
+        if (!this.has(key)) {
+            return false;
+        }
+
+        var position = this._key_mapped[key];
+
+        return this._priorities[position.priority][position.index];
+    };
+
+    /**
+     * Update added content
+     * @param {string} key
+     * @param {*} new_value
+     * @return {boolean}
+     */
+    Priority.prototype.update = function (key, new_value) {
+        var position;
+
+        if (!this.has(key)) {
+            return false;
+        }
+
+        position = this._key_mapped[key];
+        this._priorities[position.priority][position.index] = new_value;
+
+        return true;
     };
 
     /**
      *
-     * @param instance
-     * @param {string[]} keys
-     * @param {number[]} priorities
+     * @param {string|string[]} keys
+     * @return {string[]} Removed keys
      */
-    function get_valid_priorities_by_keys(instance, keys, priorities) {
-        var priorities_and_keys = _.invertBy(_.pick(instance._key_mapped, _.castArray(keys))),
-            priorities_from_keys_casted = _.M.castItemsType(Object.keys(priorities_and_keys), 'number');
+    Priority.prototype.remove = function (keys) {
+        var removed = [],
+            index,
+            key,
+            position;
 
-        if (!priorities) {
-            priorities = priorities_from_keys_casted;
-        } else {
-            priorities = _.intersection(_.M.castItemsType(_.castArray(priorities), 'number'), priorities_from_keys_casted);
+        keys = asArray(keys);
+        for (index in keys) {
+            if (keys.hasOwnProperty(index)) {
+                key = keys[index];
+                position = this._key_mapped[key];
+
+                if (!position) {
+                    continue;
+                }
+
+                delete this._key_mapped[key];
+                this._priorities[position.priority][position.index] = undefined;
+                removed.push(key);
+            }
         }
-        priorities = get_valid_priorities(instance, priorities);
 
-        return _.mapValues(_.pick(instance._priorities, priorities), function (priority_keys, priority) {
-            return _.intersection(priorities_and_keys[priority], priority_keys);
-        });
-    }
-    /**
-     *
-     * @param {Priority} instance
-     * @param {number[]} priorities
-     * @return {number[]}
-     */
-    function get_valid_priorities(instance, priorities) {
-        return _.intersection(_.M.castItemsType(priorities, 'number'), _.M.castItemsType(Object.keys(instance._priorities), 'number'));
-    }
+        return removed;
+    };
 
-    function remove_keys(instance, keys, priorities) {
-        var priorities_with_keys = get_valid_priorities_by_keys(instance, keys, priorities),
-            remove_keys;
+    Priority.prototype.removeByContent = function (content) {
+        var keys = this.findAll(content);
 
-
-        _.M.loop(priorities_with_keys, function (priority_keys, priority) {
-            instance._priorities[priority] = _.difference(instance._priorities[priority], priority_keys);
-        });
-
-        remove_keys = _.flatten(_.values(priorities_with_keys));
-        _.M.removeKeys(instance._key_mapped, remove_keys);
-
-        return remove_keys;
-    }
-
-    /**
-     * Remove content
-     * @param {*} content
-     * @param {number|number[]} [priorities] Special priorities, default is all priorities
-     * @returns {string[]} Removed keys
-     */
-    Priority.prototype.removeContent = function (content, priorities) {
-        var content_positions = this.contentPositions(content, 'priority'),
-            keys = _.map(content_positions, 'key');
-
-        if(!keys.length){
+        if (false === keys) {
             return [];
-        }
-        if (priorities) {
-            return this.remove(keys, priorities);
         }
 
         return this.remove(keys);
     };
 
     /**
-     * Get priority data
-     * @param {boolean} [content_only = false] return priority content only, default get content and meta
-     * @returns {Array} List of objects with keys:
-     * - key: content key
-     * - meta: meta info
-     * - content: content
+     * Get sorted contents
+     * @param {boolean} [with_key = false] Include priority key
+     * @return {Array}
      */
-    Priority.prototype.export = function (content_only) {
-        var contents = [],
-            priority_keys = _.M.castItemsType(Object.keys(this._priorities), 'number'),
-            self = this,
-            raw_contents = this.getType('priority');
+    Priority.prototype.export = function (with_key) {
+        var result = [],
+            priority_keys = Object.keys(this._priorities),
+            priority,
+            index;
 
-        priority_keys.sort(_.M.SORT_NUMBER);
-
-        _.each(priority_keys, function (priority) {
-            _.each(self._priorities[priority], function (key) {
-                if (!raw_contents.hasOwnProperty(key)) {
-                    return;
-                }
-                if (content_only) {
-                    contents.push(raw_contents[key]['content']);
-                } else {
-                    contents.push(_.extend({key: key}, raw_contents[key]));
-                }
-            });
+        priority_keys.sort(function (a, b) {
+            return a - b;
         });
 
-        return contents;
+        while (priority = priority_keys.shift()) {
+            for (index in this._priorities[priority]) {
+                if (this._priorities[priority].hasOwnProperty(index)) {
+                    if (with_key) {
+                        result.push(this._priorities[priority][index].content);
+                    } else {
+                        result.push({
+                            content: this._priorities[priority][index].content,
+                            priority_key: this._priorities[priority][index].priority_key
+                        });
+                    }
+                }
+            }
+        }
+
+        return result;
+    };
+
+    var objToString = Object.prototype.toString;
+
+    function isArray(val) {
+        return objToString.call(val) === '[object Array]';
+    }
+
+    function asArray(val) {
+        return isArray(val) ? val : [val];
+    }
+
+    return new Priority();
+}));
+/**
+ * Callback listener system
+ */
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define([], function () {
+            return (root.Waiter = factory());
+        });
+    } else {
+        // Browser globals
+        root.Waiter = factory();
+    }
+}(this, function () {
+    var _waiters = {},
+        key_index = 0,
+        slice = Array.prototype.slice;
+
+    function Waiter() {
+        //
+    }
+
+    /**
+     * Check if a waiter key is exists
+     * @param {string} waiter_key
+     */
+    Waiter.prototype.has = function (waiter_key) {
+        return _waiters.hasOwnProperty(waiter_key) && (typeof _waiters[waiter_key].times !== 'number' || _waiters[waiter_key].times > 0);
+    };
+    /**
+     * Add callback
+     * @param {(string|function)} callback Callback
+     * @param {int|boolean} [times = true] Run times. Use true for forever
+     * @param {string} [description = ''] Waiter description
+     * @returns string Callback key
+     */
+    Waiter.prototype.add = function (callback, times, description) {
+        var key = 'waiter_key_' + ++key_index;
+
+        if (typeof times == 'number') {
+            times = parseInt(times);
+            times = times !== times ? 1 : Math.max(times, 1);
+        } else {
+            times = true;
+        }
+
+        _waiters[key] = {
+            callback: callback,
+            times: times,
+            description: description
+        };
+
+        return key;
+    };
+    /**
+     * Add once time callback
+     * @param {(string|function)} callback Callback
+     * @param {string} [description = ''] Waiter description
+     * @returns string Callback key
+     */
+    Waiter.prototype.addOnce = function (callback, description) {
+        return this.add(callback, 1, description);
     };
 
     /**
-     *
-     * @type {_.M.Priority}
+     * Similar to "add" but add waiter key to window as function
+     * @param {(string|function)} callback Callback
+     * @param {int|boolean} [times = true] Run times. Use true for forever
+     * @param {string} [description] Waiter description
+     * @returns {(string|number)} Waiter key/function name
      */
-    _.M.Priority = Priority;
-})(_);
-/**
- * Callback listener system
- * @module _.M.WAITER
- * @memberOf _.M
- */
-;(function (_) {
-    var _waiters = {};
+    Waiter.prototype.createFunc = function (callback, times, description) {
+        var key = this.add(callback, times, description);
+        var self = this;
+
+        window[key] = (function (key) {
+            return function () {
+                return self.run.apply(self, [key].concat(slice.call(arguments)));
+            };
+        })(key);
+
+        return key;
+    };
+
 
     /**
-     * @lends _.M.WAITER
-     * @type {{}}
+     * Similar of method createFunc, once time
+     * @param {(string|function)} callback Callback
+     * @param {string} [description] Waiter description
+     * @returns {(string|number)} Waiter key/function name
      */
-    _.M.WAITER = _.M.defineObject({
-        /**
-         * Check if a waiter key is exists
-         * @param {string} waiter_key
-         */
-        has: function (waiter_key) {
-            return _waiters.hasOwnProperty(waiter_key) && (!_.isNumber(_waiters[waiter_key].times) || _waiters[waiter_key].times > 0);
-        },
+    Waiter.prototype.createFuncOnce = function (callback, description) {
+        return this.createFunc(callback, 1, description);
+    };
 
-        /**
-         * Add callback
-         * @param {(string|function)} callback Callback
-         * @param {int|boolean} [times = true] Run times. Use true for forever
-         * @param {string} [description = ''] Waiter description
-         * @returns string Callback key
-         */
-        add: function (callback, times, description) {
-            var key = _.M.nextID('waiter_key', true);
 
-            _waiters[key] = {
-                callback: callback,
-                times: _.isNumber(times) ? Math.max(_.parseInt(times), 1) : true,
-                description: description || ''
-            };
+    /**
+     * Remove keys by arguments
+     * @returns {Array} Removed waiters
+     */
+    Waiter.prototype.remove = function () {
+        var key,
+            index,
+            keys = flatten(slice.call(arguments)),
+            removed = [];
 
-            return key;
-        },
-
-        /**
-         * Add once time callback
-         * @param {(string|function)} callback Callback
-         * @param {string} [description = ''] Waiter description
-         * @returns string Callback key
-         */
-        addOnce: function (callback, description) {
-            return this.add(callback, 1, description);
-        },
-
-        /**
-         * Similar to "add" but add waiter key to window as function
-         * @param {(string|function)} callback Callback
-         * @param {int|boolean} [times = true] Run times. Use true for forever
-         * @param {string} [description] Waiter description
-         * @returns {(string|number)} Waiter key/function name
-         */
-        createFunc: function (callback, times, description) {
-            var key = this.add(callback, times, description);
-            var self = this;
-
-            window[key] = (function (key) {
-                return function () {
-                    return self.run.apply(self, [key].concat(_.toArray(arguments)));
-                };
-            })(key);
-
-            return key;
-        },
-
-        /**
-         * Similar of method createFunc, once time
-         * @param {(string|function)} callback Callback
-         * @param {string} [description] Waiter description
-         * @returns {(string|number)} Waiter key/function name
-         */
-        createFuncOnce: function (callback, description) {
-            return this.createFunc(callback, 1, description);
-        },
-
-        /**
-         * Remove keys by arguments
-         * @returns {Array} Removed waiters
-         */
-        remove: function () {
-            var keys = _.flatten(_.toArray(arguments)),
-                removed = [];
-
-            _.each(keys, function (tmp_key) {
-                if (_waiters.hasOwnProperty(tmp_key)) {
-                    removed.push(tmp_key);
-                    window[tmp_key] = undefined;
-                    delete _waiters[tmp_key];
-                    delete window[tmp_key];
-                }
-            });
-
-            return removed;
-        },
-
-        /**
-         * Run the waiter
-         * @param {string} waiter_key
-         * @param {Array} args
-         * @param {Object} this_arg
-         * @returns {*}
-         */
-        run: function (waiter_key, args, this_arg) {
-            var result;
-
-            if (!this.has(waiter_key)) {
-                throw new Error('Waiter key is non-exists: ' + waiter_key);
+        for (index in keys) {
+            if (keys.hasOwnProperty(index) && _waiters.hasOwnProperty(keys[index])) {
+                key = keys[index];
+                removed.push(key);
+                window[key] = undefined;
+                delete _waiters[key];
+                delete window[key];
             }
+        }
 
-            result = _waiters[waiter_key].callback.apply(this_arg || null, _.castArray(args));
+        return removed;
+    };
 
-            if (this.has(waiter_key) && _.isNumber(_waiters[waiter_key].times) && --_waiters[waiter_key].times < 1) {
-                this.remove(waiter_key);
+    /**
+     * Run the waiter
+     * @param {string} waiter_key
+     * @param {Array} args
+     * @param {Object} this_arg
+     * @returns {*}
+     */
+    Waiter.prototype.run = function (waiter_key, args, this_arg) {
+        var result;
+
+        if (!this.has(waiter_key)) {
+            throw new Error('Waiter key is non-exists: ' + waiter_key);
+        }
+
+        result = _waiters[waiter_key].callback.apply(this_arg || null, asArray(args));
+
+        if (this.has(waiter_key) && (typeof _waiters[waiter_key].times == 'number') && --_waiters[waiter_key].times < 1) {
+            this.remove(waiter_key);
+        }
+
+        return result;
+    };
+
+    /**
+     * Return list of waiters
+     * @param {boolean} [description = false] Include waiter description, default is false
+     * @returns {(Array|{})}
+     */
+    Waiter.prototype.list = function (description) {
+        var result = {};
+
+        if (description) {
+            for (var key in _waiters) {
+                if (_waiters.hasOwnProperty(key)) {
+                    result[key] = _waiters[key].description;
+                }
             }
 
             return result;
-        },
-
-        /**
-         * Return list of waiters
-         * @param {boolean} [description = false] Include waiter description, default is false
-         * @returns {(Array|{})}
-         */
-        list: function (description) {
-            if (description) {
-                return _.mapValues(_waiters, 'description');
-            }
-
-            return Object.keys(_waiters);
         }
-    });
-})(_);
-/**
- * @module _.M.EventEmitter
- * @memberOf _.M
- * @requires _.M.Priority
- */
-;(function (_) {
-    _.M.defineConstant({
-        /**
-         * Default limit event't listeners
-         * @name _.M.EVENT_EMITTER_EVENT_LIMIT_LISTENERS
-         * @constant {number}
-         * @default
-         */
-        EVENT_EMITTER_EVENT_LIMIT_LISTENERS: 10,
 
-        /**
-         * Unlimited event's listeners
-         * @name _.M.EVENT_EMITTER_EVENT_UNLIMITED
-         * @constant {number}
-         * @default
-         */
-        EVENT_EMITTER_EVENT_UNLIMITED: -1
+        return Object.keys(_waiters);
+    };
 
-    });
+    var objToString = Object.prototype.toString;
 
-    /**
-     * Event management system
-     * @class _.M.EventEmitter
-     * @extends _.M.BaseClass
-     */
+    function isArray(val) {
+        return objToString.call(val) === '[object Array]';
+    }
+
+    function asArray(val) {
+        return isArray(val) ? val : [val];
+    }
+
+    function flatten(array) {
+        var result = [];
+
+        if (!array.length) {
+            return [];
+        }
+
+        for (var i in array) {
+            if (array.hasOwnProperty(i)) {
+                if (isArray(array[i])) {
+                    result = result.concat(flatten(array[i]));
+                } else {
+                    result.push(array[i]);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    return new Waiter();
+}));
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(['lodash', 'Priority'], function (_, Priority) {
+            return (root.EventEmitter = factory(_, Priority));
+        });
+    } else {
+        // Browser globals
+        root.EventEmitter = factory(root._, root.Priority);
+    }
+}(this, function (_, Priority) {
     function EventEmitter(options) {
-        _.M.BaseClass.call(this);
+        this.id = _.uniqueId('event_emitter_');
 
         options = _.defaults(options || {}, {
-            'limit': _.M.EVENT_EMITTER_EVENT_LIMIT_LISTENERS,
             'events': {},
             'event_mimics': [],
             'event_privates': []
@@ -2756,10 +2624,6 @@
          */
         this._event_emitted = {};
 
-        /**
-         * @private
-         */
-        this._limit = _.M.beNumber(options.limit, _.M.EVENT_EMITTER_EVENT_LIMIT_LISTENERS);
 
         /**
          *
@@ -2789,8 +2653,8 @@
          */
         this._event_privates = ['attach', 'attached'];
 
-        if (!_.isEmpty(options['events'])) {
-            this.addListeners(_.M.beObject(options['events']));
+        if (!_.isObject(options['events'])) {
+            this.addListeners(options['events']);
         }
         if (!_.isEmpty(options['event_mimics'])) {
             this.mimic(_.castArray(options['event_mimics']));
@@ -2799,7 +2663,6 @@
             this.private(_.castArray(options['event_privates']));
         }
     }
-    _.M.inherit(EventEmitter, _.M.BaseClass);
 
     /**
      * Reset events
@@ -2816,7 +2679,6 @@
             this._event_emitted = {};
         }
     };
-
     /**
      * Alias of resetEvents
      * @see resetEvents
@@ -2824,7 +2686,6 @@
     EventEmitter.prototype.reset = function (event) {
         return this.resetEvents(event);
     };
-
     /**
      * Get all events name
      * @param {boolean} count Return events listeners count
@@ -2843,7 +2704,6 @@
         }
         return Object.keys(this._events);
     };
-
     /**
      * Get event emitted count
      * @param {string} event Event name, if not special then return all of emitted events
@@ -2855,21 +2715,6 @@
         }
 
         return _.clone(this._event_emitted);
-    };
-
-    /**
-     * Set event listener limit
-     * @param {int} [limit]
-     */
-    EventEmitter.prototype.limit = function (limit) {
-        this._limit = limit + 0;
-    };
-
-    /**
-     * Set unlimited for event listeners
-     */
-    EventEmitter.prototype.unlimited = function () {
-        this._limit = _.M.EVENT_EMITTER_EVENT_UNLIMITED;
     };
 
     /**
@@ -2893,7 +2738,7 @@
             return false;
         }
 
-        add_listener__prepare_events(this, events, listeners.length);
+        add_listener__prepare_events(this, events);
         option = add_listener__get_option(option);
 
         _.each(events, function (event) {
@@ -2903,29 +2748,20 @@
             if (!event_detail.key_mapped.hasOwnProperty(option.key)) {
                 event_detail.key_mapped[option.key] = keys;
             } else {
-                _.M.mergeArray(event_detail.key_mapped[option.key], keys);
+                event_detail.key_mapped[option.key] = _.concat(event_detail.key_mapped[option.key], keys);
             }
         });
 
         return option.key;
     };
 
-    function add_listener__prepare_events(ee, events, listener_length) {
+    function add_listener__prepare_events(ee, events) {
         _.each(events, function (event) {
             if (!ee._events.hasOwnProperty(event)) {
                 ee._events[event] = {
-                    priority: new _.M.Priority(),
+                    priority: new Priority(),
                     key_mapped: {}
                 };
-            } else if (ee._limit != _.M.EVENT_EMITTER_EVENT_UNLIMITED) {
-                var status = ee._events[event].priority.status();
-
-                if (status.contents + listener_length > ee._limit) {
-                    console.warn('Possible _.M.EventEmitter memory leak detected. '
-                        + (status.contents + listeners.length) + ' listeners added (limit is ' + ee._limit
-                        + '). Use emitter.limit() or emitter.unlimited to resolve this warning.'
-                    );
-                }
             }
         });
     }
@@ -2936,23 +2772,22 @@
      * @returns {{priority, times, context, key, async}}
      */
     function add_listener__get_option(option) {
-        if (_.M.isNumeric(option)) {
+        if (_.isNumber(option)) {
             option = {
                 priority: option
             }
         }
 
         option = _.defaults(option || {}, {
-            priority: _.M.PRIORITY_DEFAULT,
-            times: -1,
+            priority: Priority.PRIORITY_DEFAULT,
+            times: true,
             context: null,
-            key: null,
+            key: '',
             async: false
         });
 
-        option.times = _.M.beNumber(option.times, -1);
         if (option.key === null) {
-            option.key = _.M.nextID('event_emitter_listener');
+            option.key = _.uniqueId('event_emitter_listener_');
         }
 
         return option;
@@ -2970,13 +2805,14 @@
         var keys = [],
             event_detail = ee._events[event];
 
-        _.M.loop(_.castArray(listeners), function (listener) {
-            var key = event_detail.priority.add(listener, option.priority, {
+        _.each(_.castArray(listeners), function (listener) {
+            var key = event_detail.priority.add({
+                listener: listener,
                 listener_key: option.key,
                 async: option.async,
                 times: option.times,
                 event: event
-            });
+            }, option.priority);
 
             keys.push(key);
         });
@@ -2991,34 +2827,45 @@
      * @return {boolean}
      */
     EventEmitter.prototype.has = function (key, events) {
-        if (!events) {
-            events = Object.keys(this._events);
-        } else {
-            events = _.intersection(_.castArray(key), Object.keys(this._events));
-        }
+        events = _get_valid_events(this, events);
+
         if (_.isEmpty(events)) {
             return false;
         }
 
-        var found = false, self = this;
+        var index, found = false, self = this;
 
-        _.M.loop(events, function (event) {
-            if (self._events[event].key_mapped.hasOwnProperty(key)) {
+        for (index in events) {
+            if (events.hasOwnProperty(index) && self._events[events[index]].key_mapped.hasOwnProperty(key)) {
                 found = true;
-                return 'break';
+                break;
             }
-        });
+        }
 
         return found;
     };
+    /**
+     *
+     * @param instance
+     * @param {Array} [events]
+     * @return {Array}
+     * @private
+     */
+    function _get_valid_events(instance, events) {
+        if (!events) {
+            return _.keys(instance._events);
+        }
+
+        return _.intersection(_.castArray(events), _.keys(instance._events));
+    }
+
 
     /**
      * @see addListener
      */
     EventEmitter.prototype.on = function (event, listener, option) {
-        return this.addListener.apply(this, arguments);
+        return this.addListener.apply(this, _.toArray(arguments));
     };
-
     /**
      * Add once time listener
      * @param events
@@ -3027,7 +2874,7 @@
      * @returns {string}
      */
     EventEmitter.prototype.addOnceListener = function (events, listeners, option) {
-        if (_.M.isNumeric(option)) {
+        if (_.isNumber(option)) {
             option = {
                 priority: option,
                 times: 1
@@ -3046,7 +2893,7 @@
      * @see addOnceListener
      */
     EventEmitter.prototype.once = function (events, listener, option) {
-        return this.addOnceListener.apply(this, arguments);
+        return this.addOnceListener.apply(this, _.toArray(arguments));
     };
 
     /**
@@ -3060,6 +2907,7 @@
         if (_.isObject(events)) {
             _.each(events, function (event_cbs, event_name) {
                 event_cbs = _.castArray(event_cbs);
+
                 _.each(event_cbs, function (event_cb) {
                     event_cb = _.castArray(event_cb);
                     events_arr.push({
@@ -3077,6 +2925,7 @@
 
         return keys;
     };
+
 
     /**
      * Emit event. Each event emitted will emit a event called 'event_emitted', with event emitted and it's data
@@ -3111,30 +2960,28 @@
             listeners;
 
         if (instance._events.hasOwnProperty(event_name)) {
-            listeners = instance._events[event_name].priority.export();
+            listeners = instance._events[event_name].priority.export(true);
 
             if (listeners.length) {
                 emitted = true;
                 _.each(listeners, function (listener_detail) {
-                    if (listener_detail.meta.times == -1 || listener_detail.meta.times > 0) {
-                        if (listener_detail.meta.async) {
-                            _.M.async(listener_detail.content, data, listener_detail.meta.context || instance);
-                        } else {
-                            _.M.callFunc(listener_detail.content, data, listener_detail.meta.context || instance);
-                        }
+                    if (listener_detail.times === true || listener_detail.times > 0) {
+                        (listener_detail.async ? async_callback : do_callback)(listener_detail.listener, data, listener_detail.context || instance);
 
-                        if (listener_detail.meta.times == -1) {
+                        if (listener_detail.times === true) {
                             return;
                         }
 
-                        listener_detail.meta.times--;
-                        if (listener_detail.meta.times > 0) {
-                            instance._events[event_name].priority.updateMeta(listener_detail.key, listener_detail.meta);
+                        listener_detail.times--;
+
+                        if (listener_detail.times > 0) {
+                            instance._events[event_name].priority.update(listener_detail.priority_key, listener_detail);
+
                             return;
                         }
                     }
 
-                    _remove_listener(instance, event_name, listener_detail.meta.listener_key, listener_detail.key);
+                    _remove_listener(instance, event_name, listener_detail.listener_key, listener_detail.priority_key);
                 });
             }
         }
@@ -3151,6 +2998,7 @@
         if (!instance._events.hasOwnProperty(event) || !instance._events[event].key_mapped.hasOwnProperty(listener_key)) {
             return;
         }
+
         instance._events[event].priority.remove(priority_key);
         instance._events[event].key_mapped[listener_key] = _.without(instance._events[event].key_mapped[listener_key], priority_key);
 
@@ -3167,11 +3015,7 @@
 
     function _notice_event(instance, event_name, data) {
         _.each(instance._event_followers, function (follower) {
-            if (follower.async) {
-                _.M.async(_.partial(_notice_event_cb, follower), [instance.id, event_name, data], instance);
-            } else {
-                _.M.callFunc(_.partial(_notice_event_cb, follower), [instance.id, event_name, data], instance);
-            }
+            (follower.async ? async_callback : do_callback)(_.partial(_notice_event_cb, follower), [instance.id, event_name, data], instance);
         });
     }
 
@@ -3179,13 +3023,47 @@
         follower.target.notice(source_id, source_event, source_data);
     }
 
+    function do_callback(callback, args, context) {
+        if (arguments.length >= 2) {
+            args = _.castArray(args);
+        } else {
+            args = [];
+        }
+
+        if (callback) {
+            if (_.isArray(callback)) {
+                var result = [];
+
+                _.each(callback, function (callback_item) {
+                    result.push(callback_item.apply(context || null, args));
+                });
+
+                return result;
+            } else if (_.isFunction(callback)) {
+                return callback.apply(context || null, args);
+            }
+        }
+
+        return undefined;
+    }
+
+    function async_callback(callback, args, delay, context) {
+        delay = parseInt(delay);
+        if (_.isNaN(delay) || !_.isFinite(delay)) {
+            delay = 1;
+        }
+
+        return setTimeout(function () {
+            do_callback(callback, args, context || null);
+        }, Math.max(1, delay));
+    }
 
     /**
      * Alias of 'emitEvent'
      * @see emitEvent
      */
     EventEmitter.prototype.emit = function () {
-        this.emitEvent.apply(this, arguments);
+        this.emitEvent.apply(this, _.toArray(arguments));
     };
 
     /**
@@ -3219,20 +3097,6 @@
         return removed;
     };
 
-    /**
-     *
-     * @param instance
-     * @param {Array} [events]
-     * @return {Array}
-     * @private
-     */
-    function _get_valid_events(instance, events) {
-        if (!events) {
-            return Object.keys(instance._events);
-        }
-
-        return _.M.validKeys(instance._events, _.castArray(events));
-    }
 
     /**
      *
@@ -3243,10 +3107,13 @@
      * @private
      */
     function _group_keys_by_event(instance, keys, events) {
-        var grouped = {}, event, found, events_cloned = _.clone(events);
+        var grouped = {},
+            event,
+            found,
+            events_cloned = _.clone(events);
 
         while (keys.length && (event = events_cloned.shift())) {
-            found = _.M.validKeys(instance._events[event].key_mapped, keys);
+            found = _.intersection(keys, _.keys(instance._events[event].key_mapped));
 
             if (found.length) {
                 grouped[event] = found;
@@ -3257,37 +3124,47 @@
         return grouped;
     }
 
-    function _remove_listener_by_keys(instance, keys, events, priority) {
+    function _remove_listener_by_keys(instance, keys, events) {
         var keys_grouped_by_event = _group_keys_by_event(instance, keys, events),
             event_detail;
 
         _.each(keys_grouped_by_event, function (keys, event) {
             event_detail = instance._events[event];
-            event_detail.priority.remove(_.flatten(
-                _.values(
-                    _.pick(event_detail.key_mapped, keys))),
-                priority ? priority : null);
+            event_detail.priority.remove(_.flatten(_.values(_.pick(event_detail.key_mapped, keys))));
 
-            _.M.removeKeys(event_detail.key_mapped, keys);
+            event_detail.key_mapped = _.omit(event_detail.key_mapped, keys);
             instance._events[event] = event_detail;
         });
 
         return keys_grouped_by_event;
     }
 
-    function _remove_listener_by_listeners(instance, listeners, events, priority) {
-        var removed = {}, priority_keys_removed;
+    function _find_keys_by_listener(listener, compare_content) {
+        return listener === compare_content.listener;
+    }
 
-        priority = priority || null;
+    function _remove_listener_by_listeners(instance, listeners, events) {
+        var removed = {},
+            priority_keys_removed;
 
         _.each(listeners, function (listener) {
+            var callback = _.partial(_find_keys_by_listener, listener);
+
             _.each(events, function (event) {
-                priority_keys_removed = instance._events[event].priority.removeContent(listener, priority);
+                var keys = instance._events[event].priority.findAllBy(callback);
+
+                if (false == keys) {
+                    return;
+                }
+
+                priority_keys_removed = instance._events[event].priority.remove(keys);
 
                 if (priority_keys_removed.length) {
                     var removed_grouped_by_listener_key = _remove_key_mapped_by_priority_keys(instance._events[event].key_mapped, priority_keys_removed);
+                    var tmp_obj = {};
 
-                    _merge_object_item(removed, _.M.beObject(event, Object.keys(removed_grouped_by_listener_key)));
+                    tmp_obj[event] = Object.keys(removed_grouped_by_listener_key);
+                    _merge_object_item(removed, tmp_obj);
                 }
             });
         });
@@ -3311,6 +3188,7 @@
 
             if (found.length) {
                 key_mapped[key] = _.difference(key_mapped[key], found);
+
                 if (!key_mapped[key].length) {
                     delete key_mapped[key];
                 }
@@ -3335,7 +3213,7 @@
             if (!target.hasOwnProperty(key)) {
                 target[key] = value;
             } else {
-                _.M.mergeArray(target[key], value);
+                target[key] = _.concat(target[key], value);
             }
         });
     }
@@ -3345,21 +3223,21 @@
      * @see removeListener
      */
     EventEmitter.prototype.off = function () {
-        return this.removeListener.apply(this, arguments);
+        return this.removeListener.apply(this, _.toArray(arguments));
     };
 
     /**
      * Set events is private
      */
     EventEmitter.prototype.private = function () {
-        _.M.mergeArray(this._event_privates, _.flatten(_.toArray(arguments)));
+        this._event_mimics = _.concat(this._event_privates, _.flatten(_.toArray(arguments)));
     };
 
     /**
      * Set events is mimic
      */
     EventEmitter.prototype.mimic = function () {
-        _.M.mergeArray(this._event_mimics, _.flatten(_.toArray(arguments)));
+        this._event_mimics = _.concat(this._event_mimics, _.flatten(_.toArray(arguments)));
     };
 
     /**
@@ -3371,35 +3249,34 @@
      * @returns {boolean}
      */
     EventEmitter.prototype.attach = function (eventEmitter, only, excepts, async) {
-        if (_.M.isEventEmitter(eventEmitter)) {
-            if (!this._event_followers.hasOwnProperty(eventEmitter.id)) {
-                this._event_followers[eventEmitter.id] = {
-                    target: eventEmitter,
-                    async: _.isUndefined(async) || Boolean(async)
-                };
-                this.emitEvent('attach', [eventEmitter, only, excepts]);
-                eventEmitter.attachTo(this, only, excepts);
-                return true;
-            }
-
-            return false;
+        if (!EventEmitter.isEventEmitter(eventEmitter)) {
+            throw new Error('Invalid EventEmitter instance');
+        }
+        if (!this._event_followers.hasOwnProperty(eventEmitter.id)) {
+            this._event_followers[eventEmitter.id] = {
+                target: eventEmitter,
+                async: _.isUndefined(async) || Boolean(async)
+            };
+            this.emitEvent('attach', [eventEmitter, only, excepts]);
+            eventEmitter.attachTo(this, only, excepts);
+            return true;
         }
 
-        throw new Error('Invalid _.M.EventEmitter instance');
+        return false;
     };
 
     /**
      * Check if has an EE instance is attached to this
-     * @param {_.M.EventEmitter} eventEmitter
+     * @param {EventEmitter} eventEmitter
      * @return {boolean}
      */
     EventEmitter.prototype.hasFollower = function (eventEmitter) {
-        return _.M.isEventEmitter(eventEmitter) && this._event_followers.hasOwnProperty(eventEmitter.id);
+        return EventEmitter.isEventEmitter(eventEmitter) && this._event_followers.hasOwnProperty(eventEmitter.id);
     };
 
     /**
      * Attach other event emitter to this. Notice sync
-     * @param eventEmitter
+     * @param {EventEmitter} eventEmitter
      * @param only
      * @param excepts
      * @return boolean
@@ -3407,27 +3284,27 @@
     EventEmitter.prototype.attachHard = function (eventEmitter, only, excepts) {
         return this.attach(eventEmitter, only, excepts, false);
     };
-
     /**
      * Attach this to other event emitter instance. Notice async
-     * @param {_.M.EventEmitter} eventEmitter
+     * @param {EventEmitter} eventEmitter
      * @param {Array} [only]
      * @param {Array} [excepts]
      * @param {boolean} [hard=false] Hard attach to other, other notice will call immediate. Default is false
      * @returns {boolean}
      */
     EventEmitter.prototype.attachTo = function (eventEmitter, only, excepts, hard) {
-        if (!_.M.isEventEmitter(eventEmitter)) {
-            throw new Error('Invalid _.M.EventEmitter instance');
+        if (!EventEmitter.isEventEmitter(eventEmitter)) {
+            throw new Error('Invalid EventEmitter instance');
         }
         if (!this._event_following.hasOwnProperty(eventEmitter.id)) {
             this._event_following[eventEmitter.id] = {
                 id: eventEmitter.id,
-                type: eventEmitter.type_prefix,
+                type: eventEmitter.constructor.name,
                 only: _.castArray(only || []),
                 excepts: _.castArray(excepts || [])
             };
             this.emitEvent('attached', [eventEmitter, only, excepts]);
+
             if (hard) {
                 return eventEmitter.attachHard(this);
             }
@@ -3445,12 +3322,12 @@
      * @return {boolean}
      */
     EventEmitter.prototype.isFollowing = function (eventEmitter) {
-        return _.M.isEventEmitter(eventEmitter) && this._event_following.hasOwnProperty(eventEmitter.id);
+        return EventEmitter.isEventEmitter(eventEmitter) && this._event_following.hasOwnProperty(eventEmitter.id);
     };
 
     /**
      * Hard Attach this to other event emitter instance. Notice sync
-     * @param {_.M.EventEmitter} eventEmitter
+     * @param {EventEmitter} eventEmitter
      * @param {Array} [only]
      * @param {Array} [excepts]
      * @returns {boolean}
@@ -3527,19 +3404,19 @@
      * @returns {boolean}
      */
     EventEmitter.prototype.detach = function (eventEmitter) {
-        if (_.M.isEventEmitter(eventEmitter)) {
-            if (this._event_followers.hasOwnProperty(eventEmitter.id)) {
-                this.emitEvent('detach', [eventEmitter]);
-                delete this._event_followers[eventEmitter.id];
-                eventEmitter.detachFrom(this);
+        if (!EventEmitter.isEventEmitter(eventEmitter)) {
+            throw new Error('Invalid EventEmitter instance');
+        }
+        if (this._event_followers.hasOwnProperty(eventEmitter.id)) {
+            this.emitEvent('detach', [eventEmitter]);
+            delete this._event_followers[eventEmitter.id];
+            eventEmitter.detachFrom(this);
 
-                return true;
-            }
-
-            return false;
+            return true;
         }
 
-        throw new Error('Invalid _.M.EventEmitter instance');
+        return false;
+
     };
 
     /**
@@ -3548,95 +3425,93 @@
      * @returns {boolean}
      */
     EventEmitter.prototype.detachFrom = function (eventEmitter) {
-        if (_.M.isEventEmitter(eventEmitter)) {
-            if (this._event_following.hasOwnProperty(eventEmitter.id)) {
-                this.emitEvent('detached', [eventEmitter]);
-                delete this._event_following[eventEmitter.id];
-                eventEmitter.detach(this);
-
-                return true;
-            }
-            return false;
-
+        if (!EventEmitter.isEventEmitter(eventEmitter)) {
+            throw new Error('Invalid EventEmitter instance');
         }
+        if (this._event_following.hasOwnProperty(eventEmitter.id)) {
+            this.emitEvent('detached', [eventEmitter]);
+            delete this._event_following[eventEmitter.id];
+            eventEmitter.detach(this);
 
-        throw new Error('Invalid _.M.EventEmitter instance');
-    };
-
-    /**
-     *
-     * @type {_.M.EventEmitter}
-     */
-    _.M.EventEmitter = EventEmitter;
-
-    /**
-     * Check if object is instance of Event Emitter
-     * @param {object} object
-     * @returns {boolean}
-     */
-    _.M.isEventEmitter = function (object) {
-        if (_.isObject(object)) {
-            return object instanceof EventEmitter;
+            return true;
         }
-
         return false;
     };
 
-})(_);
+    EventEmitter.isEventEmitter = function (object) {
+        return object instanceof EventEmitter;
+    };
+
+    return EventEmitter;
+}));
 /**
  * Cache management system
- * @module _.M.CACHE
- * @memberOf _.M
  */
-;(function (_) {
-    _.M.defineConstant({
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(['lodash', 'madnh'], function (_, M) {
+            return (root.Cache = factory(_, M));
+        });
+    } else {
+        // Browser globals
+        root.Cache = factory(root._, root.M);
+    }
+}(this, function () {
+    var _cache_data = {};
+    var _clean_interval_time;
+    var _clean_interval;
+
+    /**
+     * @constructor
+     */
+    function Cache() {
+        //Clean cache every 10 seconds
+        if (_clean_interval) {
+            clearInterval(_clean_interval);
+        }
+        _clean_interval = setInterval(_clean_cache, _clean_interval_time * 1000);
+    }
+
+    M.defineConstant(Cache, {
         /**
          * 10 seconds
-         * @name _.M.CACHE_MIN
          * @constant {number}
          * @default
          */
         CACHE_MIN: 10,
         /**
          * 1 minute
-         * @name _.M.CACHE_TINY
          * @constant {number}
          * @default
          */
         CACHE_TINY: 60,
         /**
          * 5 minutes
-         * @name _.M.CACHE_SHORT
          * @constant {number}
          * @default
          */
         CACHE_SHORT: 300,
         /**
          * 10 minutes
-         * @name _.M.CACHE_MEDIUM
          * @constant {number}
          * @default
          */
         CACHE_MEDIUM: 600,
         /**
          * 1 hour
-         * @name _.M.CACHE_LONG
          * @constant {number}
          * @default
          */
         CACHE_LONG: 3600,
         /**
          * Forever
-         * @name _.M.CACHE_FOREVER
          * @constant {number}
          * @default
          */
         CACHE_FOREVER: true
     });
 
-    var _cache_data = {};
-    var _clean_interval_time = _.M.CACHE_MIN;
-    var _clean_interval;
+    _clean_interval_time = Cache.CACHE_MIN;
 
     /**
      * Check if a cache name is exists
@@ -3663,8 +3538,8 @@
      * @private
      */
     function _set_cache(name, value, live_time) {
-        if (_.isUndefined(live_time) || !_.M.isNumeric(Number(live_time))) {
-            live_time = _.M.CACHE_MEDIUM;
+        if (_.isUndefined(live_time) || !_.isNumber(Number(live_time)) || !_.isFinite(Number(live_time))) {
+            live_time = Cache.CACHE_MEDIUM;
         }
         _cache_data[name] = {
             value: value,
@@ -3692,7 +3567,7 @@
      * @private
      */
     function _cache_collection_change(name, value, addMode) {
-        var live_time = _.M.CACHE_MEDIUM;
+        var live_time = Cache.CACHE_MEDIUM;
         var new_value = [];
 
         if (_.isUndefined(addMode)) {
@@ -3718,9 +3593,9 @@
                 }
             }
         } else {
-            if(addMode){
+            if (addMode) {
                 new_value.push(value);
-            }else{
+            } else {
                 return undefined;
             }
 
@@ -3738,7 +3613,7 @@
      * @private
      */
     function _cache_number_change(name, value, addMode) {
-        if (_.isUndefined(value) || !_.M.isNumeric(Number(value))) {
+        if (_.isUndefined(value) || !_.isNumber(Number(value)) || !_.isFinite(Number(value))) {
             value = 1;
         }
         if (_.isUndefined(addMode)) {
@@ -3746,16 +3621,16 @@
         }
         if (addMode) {
             value = Math.abs(value);
-        }else{
+        } else {
             value = -1 * Math.abs(value);
         }
 
         if (!_has_cache(name)) {
             _set_cache(name, value);
         } else {
-            _cache_data[name].value =  Number(_cache_data[name].value);
+            _cache_data[name].value = Number(_cache_data[name].value);
 
-            if (!_.M.isNumeric(_cache_data[name].value)) {
+            if (!_.isNumber(_cache_data[name].value) || !_.isFinite(_cache_data[name].value)) {
                 _cache_data[name].value = 0;
             }
 
@@ -3780,177 +3655,178 @@
         _expire_cache(removes);
     }
 
-    //Clean cache every 10 seconds
-    _clean_interval = setInterval(_clean_cache, _clean_interval_time * 1000);
+    Cache.prototype.set = function (name, value, live_time) {
+        _set_cache(name, value, live_time);
+    };
+    /**
+     * Check if a cached name is exists
+     * @param {string} name
+     * @returns {boolean}
+     */
+    Cache.prototype.has = function (name) {
+        return _has_cache(name);
+    };
 
     /**
-     * @lends _.M.CACHE
-     * @type {{}}
+     * Get cached value
+     * @param {string} name
+     * @param {*} default_value
+     * @returns {*}
      */
-    _.M.CACHE = _.M.defineObject({
-
-        set: function (name, value, live_time) {
-            _set_cache(name, value, live_time);
-        },
-        /**
-         * Check if a cached name is exists
-         * @param {string} name
-         * @returns {boolean}
-         */
-        has: function (name) {
-            return _has_cache(name);
-        },
-
-        /**
-         * Get cached value
-         * @param {string} name
-         * @param {*} default_value
-         * @returns {*}
-         */
-        get: function (name, default_value) {
-            if (_.has(_cache_data, name)) {
-                if (_cache_data[name].expire_time === true || _cache_data[name].expire_time > parseInt(Math.floor(_.now() / 1000))) {
-                    return _cache_data[name].value;
-                }
-                delete _cache_data[name];
+    Cache.prototype.get = function (name, default_value) {
+        if (_.has(_cache_data, name)) {
+            if (_cache_data[name].expire_time === true || _cache_data[name].expire_time > parseInt(Math.floor(_.now() / 1000))) {
+                return _cache_data[name].value;
             }
-
-            return default_value;
-        },
-
-        /**
-         * Add live time
-         * @param {string} name
-         * @param {number} [live_time] Default is cached live time
-         * @return {boolean|number} False - cache is not exists. True - cache is forever. Number - next expire time
-         */
-        touch: function (name, live_time) {
-            if (this.has(name)) {
-                if (_cache_data[name].expire_time !== true) {
-                    var cache = _cache_data[name];
-
-                    if (!_.M.isNumeric(live_time)) {
-                        live_time = cache.live_time;
-                    }
-
-                    cache.expire_time = Math.max(cache.expire_time, parseInt(Math.floor(_.now() / 1000)) + live_time);
-
-                    return cache.expire_time;
-                }
-
-                return true;
-            }
-
-            return false;
-        },
-
-        /**
-         * Get valid caches
-         * @param {boolean} [name_only = true] Only return cache name
-         * @returns {*}
-         */
-        list: function (name_only) {
-
-            /**
-             * @type {({}|Array)}
-             */
-            var result;
-            var now_second = parseInt(Math.floor(_.now() / 1000));
-
-            /**
-             * @type {function}
-             */
-            var addItem;
-            if (name_only || _.isUndefined(name_only)) {
-                result = [];
-                addItem = function (key) {
-                    result.push(key);
-                };
-            } else {
-                result = {};
-                addItem = function (key, data) {
-                    result[key] = data;
-                }
-            }
-
-            _.each(_cache_data, function (data, key) {
-                if (data.expire_time === true || now_second < data.expire_time) {
-                    addItem(key, data);
-                }
-            });
-
-            return result;
-        },
-
-        /**
-         * Clean expired caches
-         */
-        clean: function () {
-            return _clean_cache();
-        },
-
-        /**
-         * Manual delete expired caches
-         */
-        expire: function () {
-            _expire_cache(Array.prototype.slice.apply(arguments));
-        },
-
-        /**
-         * Increment value of a cache, if cache is not exists then create with value and live time as default
-         * (CACHE_MEDIUM), if exists then increment it and set live time as old. If old value isn't a valid numeric
-         * then set it to 0
-         *
-         * @param {string} name
-         * @param {number} [value = 1] Increment value
-         * @returns {number}
-         */
-        increment: function (name, value) {
-            if (!_.M.isNumeric(value)) {
-                value = 1;
-            }
-            return _cache_number_change(name, value, true);
-        },
-
-        /**
-         * Decrement value of a cache, if cache is not exists then create with value and live time as default
-         * (CACHE_MEDIUM), if exists then decrement it and set live time as old. If old value isn't a valid numeric
-         * then set it to 0
-         *
-         * @param {string} name
-         * @param {number} [value = 1] Decrement value
-         * @returns {number}
-         */
-        decrement: function (name, value) {
-            if (!_.M.isNumeric(value)) {
-                value = 1;
-            }
-            return _cache_number_change(name, value, false);
-        },
-
-        /**
-         * Add item to array
-         * @param {string} name
-         * @param {*} value
-         * @returns {*}
-         */
-        arrayPush: function (name, value) {
-            return _cache_collection_change(name, value, true);
-        },
-
-        /**
-         * Remove item from array
-         * @param {string} name
-         * @param {*} value
-         * @returns {*}
-         */
-        arrayWithout: function (name, value) {
-            return _cache_collection_change(name, value, false);
+            delete _cache_data[name];
         }
-    });
 
-})(_);
-;(function (_) {
+        return default_value;
+    };
+
+    /**
+     * Add live time
+     * @param {string} name
+     * @param {number} [live_time] Default is cached live time
+     * @return {boolean|number} False - cache is not exists. True - cache is forever. Number - next expire time
+     */
+    Cache.prototype.touch = function (name, live_time) {
+        if (this.has(name)) {
+            if (_cache_data[name].expire_time !== true) {
+                var cache = _cache_data[name];
+
+                if (!_.isNumber(live_time) || !_.isFinite(live_time)) {
+                    live_time = cache.live_time;
+                }
+
+                cache.expire_time = Math.max(cache.expire_time, parseInt(Math.floor(_.now() / 1000)) + live_time);
+
+                return cache.expire_time;
+            }
+
+            return true;
+        }
+
+        return false;
+    };
+
+    /**
+     * Get valid caches
+     * @param {boolean} [name_only = true] Only return cache name
+     * @returns {*}
+     */
+    Cache.prototype.list = function (name_only) {
+
+        /**
+         * @type {({}|Array)}
+         */
+        var result;
+        var now_second = parseInt(Math.floor(_.now() / 1000));
+
+        /**
+         * @type {function}
+         */
+        var addItem;
+        if (name_only || _.isUndefined(name_only)) {
+            result = [];
+            addItem = function (key) {
+                result.push(key);
+            };
+        } else {
+            result = {};
+            addItem = function (key, data) {
+                result[key] = data;
+            }
+        }
+
+        _.each(_cache_data, function (data, key) {
+            if (data.expire_time === true || now_second < data.expire_time) {
+                addItem(key, data);
+            }
+        });
+
+        return result;
+    };
+
+    /**
+     * Clean expired caches
+     */
+    Cache.prototype.clean = function () {
+        return _clean_cache();
+    };
+
+    /**
+     * Manual delete expired caches
+     */
+    Cache.prototype.expire = function () {
+        _expire_cache(Array.prototype.slice.apply(arguments));
+    };
+
+    /**
+     * Increment value of a cache, if cache is not exists then create with value and live time as default
+     * (CACHE_MEDIUM), if exists then increment it and set live time as old. If old value isn't a valid numeric
+     * then set it to 0
+     *
+     * @param {string} name
+     * @param {number} [value = 1] Increment value
+     * @returns {number}
+     */
+    Cache.prototype.increment = function (name, value) {
+        if (!_.isNumber(value) || !_.isFinite(value)) {
+            value = 1;
+        }
+        return _cache_number_change(name, value, true);
+    };
+
+    /**
+     * Decrement value of a cache, if cache is not exists then create with value and live time as default
+     * (CACHE_MEDIUM), if exists then decrement it and set live time as old. If old value isn't a valid numeric
+     * then set it to 0
+     *
+     * @param {string} name
+     * @param {number} [value = 1] Decrement value
+     * @returns {number}
+     */
+    Cache.prototype.decrement = function (name, value) {
+        if (!_.isNumber(value) || !_.isFinite(value)) {
+            value = 1;
+        }
+        return _cache_number_change(name, value, false);
+    };
+
+    /**
+     * Add item to array
+     * @param {string} name
+     * @param {*} value
+     * @returns {*}
+     */
+    Cache.prototype.arrayPush = function (name, value) {
+        return _cache_collection_change(name, value, true);
+    };
+
+    /**
+     * Remove item from array
+     * @param {string} name
+     * @param {*} value
+     * @returns {*}
+     */
+    Cache.prototype.arrayWithout = function (name, value) {
+        return _cache_collection_change(name, value, false);
+    };
+
+
+    return new Cache();
+}));
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(['lodash', 'madnh'], function (_, M) {
+            return (root.Task = factory(_, M));
+        });
+    } else {
+        // Browser globals
+        root.Task = factory(root._, root.M);
+    }
+}(this, function () {
     var tasks = {};
 
     /**
@@ -3959,8 +3835,8 @@
      * @constructor
      */
     function Task(handler) {
-        this.type_prefix = 'Task';
-        _.M.BaseClass.call(this);
+        this.id = M.nextID('Task');
+
         /**
          * Task name
          * @type {string}
@@ -4000,7 +3876,7 @@
      * @returns {Task}
      */
     Task.prototype.option = function (name, value) {
-        this.options = _.M.setup.apply(_.M, [this.options].concat(_.M.sliceArguments(arguments)));
+        this.options = M.setup.apply(M, [this.options].concat(_.toArray(arguments)));
 
         return this;
     };
@@ -4065,7 +3941,7 @@
     Task.prototype.process = function (data) {
         var self = this;
 
-        this._result = _.clone(data);
+        this._result = _.cloneDeep(data);
         this._error = null;
 
         if (_.isString(this.handler)) {
@@ -4076,7 +3952,7 @@
         } else if (this.handler instanceof Task) {
             _process_handler_as_task(this, this.handler, self._result);
         } else if (_.isArray(this.handler)) {
-            _.M.loop(this.handler, function (handle) {
+            M.loop(this.handler, function (handle) {
                 var task_instance;
 
                 if (_.isString(handle)) {
@@ -4092,7 +3968,7 @@
                 }
             });
         } else if (_.isObject(this.handler)) {
-            _.M.loop(this.handler, function (options, handle) {
+            M.loop(this.handler, function (options, handle) {
                 var task_instance = Task.factory(handle);
 
                 if (!_.isEmpty(options)) {
@@ -4150,7 +4026,7 @@
      * @param {{}} [options] Task options
      */
     Task.register = function (name, handler, options) {
-        var info = _.M.optionalArgs(_.M.sliceArguments(arguments), ['name', 'handler', 'options'], {
+        var info = M.optionalArgs(_.toArray(arguments), ['name', 'handler', 'options'], {
             name: 'string',
             handler: ['string', 'Function', 'Array', 'Task'],
             options: 'Object'
@@ -4192,7 +4068,7 @@
 
     Task.apply = function (data, tasks) {
         var result = {
-            data: _.clone(data)
+            data: _.cloneDeep(data)
         };
 
         if (tasks) {
@@ -4203,10 +4079,10 @@
                 tasks = _.zipObject(tasks, _.fill(new Array(tasks.length), {}));
             }
 
-            _.M.loop(tasks, function (options, name) {
+            M.loop(tasks, function (options, name) {
                 var task = Task.factory(name, options);
 
-                if (task.process(_.clone(result['data']))) {
+                if (task.process(_.cloneDeep(result['data']))) {
                     result['data'] = task.getResult();
                 } else {
                     delete result['data'];
@@ -4219,846 +4095,5 @@
         return result;
     };
 
-    _.M.Task = Task;
-}).call(window, _);
-/**
- * Application
- * @module _.M.App
- * @memberOf _.M
- * @requires _.M.EventEmitter
- */
-;(function (_) {
-    function App() {
-        _.M.EventEmitter.call(this);
-
-        this.private('init');
-    }
-
-    _.M.inherit(App, _.M.EventEmitter);
-
-    /**
-     * Option this app
-     * @param {string|{}} option
-     * @param {*} value
-     * @param {string} [separator='.']
-     */
-    App.prototype.option = function (option, value, separator) {
-        var options = {}, invalid_options;
-
-        if (_.isObject(option)) {
-            options = option;
-            invalid_options = _.pick(options, function (value, key) {
-                return (key + '')[0] === '_' || _.isFunction(value);
-            });
-
-            if (!_.isEmpty(invalid_options)) {
-                console.warn('Invalid _.App options: ' + Object.keys(invalid_options).join(', '));
-            }
-            _.extend(this, _.omit(option, Object.keys(invalid_options)));
-        } else {
-            option += '';
-            var deep = option.split(separator || '.');
-
-            if (deep[0][0] === '_') {
-                console.warn('Invalid _.App options: ' + deep[0][0]);
-                return this;
-            }
-
-            _.set(this, deep, value);
-        }
-
-        return this;
-    };
-
-    /**
-     * Add init callback
-     * @param {function} callback
-     * @param {boolean} [time=1]
-     * @param {number} [priority=_.M.PRIORITY_DEFAULT]
-     */
-    App.prototype.onInit = function (callback, time, priority) {
-        this.addListener('init', callback, {
-            times: time || 1,
-            priority: priority || _.M.PRIORITY_DEFAULT
-        });
-
-        return this;
-    };
-
-    /**
-     * Init App
-     * @param {boolean} [reset=false]
-     */
-    App.prototype.init = function (reset) {
-        this.emitEvent('init');
-
-        reset && this.resetEvents('init');
-    };
-
-    App.prototype.resetInitCallbacks = function () {
-        this.resetEvents('init');
-    };
-
-    _.module('App', new App);
-})(_);
-/**
- * @module _.M.AJAX
- * @memberOf _.M
- * @requires _.M.EventEmitter
- */
-;(function (_) {
-
-    _.M.defineConstant({
-        AJAX_PRE_OPTIONS_NAME: '_.M.AJAX',
-        /**
-         * @constant {string}
-         * @default
-         */
-        AJAX_ABORTED: 'aborted',
-        /**
-         * @constant {string}
-         * @default
-         */
-        AJAX_TIMEOUT: 'timeout',
-        /**
-         * @constant {string}
-         * @default
-         */
-        AJAX_PARSER_ERROR: 'parser_error',
-        /**
-         * @constant {number}
-         * @default
-         */
-        AJAX_SERVER_ERROR: 500,
-        /**
-         * @constant {number}
-         * @default
-         */
-        AJAX_FORBIDDEN: 403,
-        /**
-         * @constant {number}
-         * @default
-         */
-        AJAX_NOT_FOUND: 404
-    });
-
-    var jqXHR_response_statuses = {
-        204: 'Server has received the request but there is no information to send back',
-        400: 'The request had bad syntax or was inherently impossible to be satisfied',
-        401: 'The parameter to this message gives a specification of authorization schemes which are acceptable',
-        403: 'The request is for something forbidden',
-        404: 'The server has not found anything matching the URI given',
-        405: 'Method not allowed',
-        406: 'Not acceptable',
-        408: 'Request timeout',
-        413: 'Payload too large',
-        414: 'URI too long',
-        429: 'Too many requests',
-        431: 'Request header fields too large',
-        500: 'The server encountered an unexpected condition which prevented it from fulfilling the request',
-        501: 'The server does not support the facility required',
-        parser_error: 'Parse response failed',
-        aborted: 'Manual abort request'
-    };
-
-    /**
-     * Option values
-     * - response_tasks: Response adapter object with key is adapter name, value is adapter option object
-     * - data_tasks: Data adapter object with key is adapter name, value is adapter option object
-     * - auto_abort: abort prev request if not completed
-     * - retry: retry times when error
-     * - is_continue: check if continue to retry request. Boolean or function which bind to AJAX instance, return
-     * boolean value
-     */
-    _.M.PreOptions.define(_.M.AJAX_PRE_OPTIONS_NAME, {
-        response_tasks: {},
-        data_tasks: {},
-        auto_abort: true,
-        retry: 0,
-        retry_delay: 0,
-        is_continue: true
-    });
-
-    /**
-     *
-     * @param {object} [options]
-     * @class _.M.AJAX
-     * @extends _.M.EventEmitter
-     */
-    function AJAX(options) {
-        _.M.EventEmitter.call(this);
-
-        this.options = _.M.PreOptions.get(_.M.AJAX_PRE_OPTIONS_NAME);
-
-        /**
-         * jQuery XHR object
-         * @type {null}
-         * @property
-         */
-        this.jqXHR = null;
-
-        /**
-         * requested times
-         * @type {number}
-         * @property
-         */
-        this.requested = 0;
-
-        /**
-         * @property
-         * @type {number}
-         */
-        this.retry_time = 0;
-
-        /**
-         * @property
-         * @type {null|object}
-         * @private
-         */
-        this._last_options = null;
-
-        /**
-         * @property
-         * @type {boolean}
-         * @private
-         */
-        this._is_retrying = false;
-
-        /**
-         * @property
-         * @type {null}
-         * @private
-         */
-        this._retry_timeout_id = null;
-
-        /**
-         * @property
-         * @type {*}
-         */
-        this.response = null;
-
-        /**
-         * @property
-         * @type {{code: number|string, message: string}}
-         */
-        this.error = null;
-        this._is_response_meaning_failed = false;
-
-        if (_.isObject(options)) {
-            this.option(options);
-        }
-    }
-
-    _.M.inherit(AJAX, _.M.EventEmitter);
-
-    /**
-     *
-     * @param {{}} options
-     */
-    AJAX.globalOption = function (options) {
-        _.M.PreOptions.update(_.M.AJAX_PRE_OPTIONS_NAME, options);
-    };
-
-    /**
-     * Get error detail
-     * @param {Array} error_arguments jQuery error callback arguments as array
-     * @returns {{code: string|number, message: string}}
-     */
-    AJAX.beautifyError = function (error_arguments) {
-        var jqXHR = error_arguments[0],
-            textStatus = error_arguments[1],
-            errorThrown = error_arguments[2],
-            err_result = {
-                code: '',
-                message: 'Ajax error'
-            };
-
-        switch (textStatus) {
-            case 'parsererror':
-                err_result.code = _.M.AJAX_PARSER_ERROR;
-                break;
-
-            case 'abort':
-                err_result.code = _.M.AJAX_ABORTED;
-                break;
-
-            default:
-                err_result.code = jqXHR.status;
-        }
-
-        if (jqXHR_response_statuses.hasOwnProperty(err_result.code)) {
-            err_result.message = jqXHR_response_statuses[err_result.code];
-        } else {
-            err_result.message = errorThrown;
-        }
-
-        return err_result;
-    };
-
-    AJAX.prototype.option = function (option, value) {
-        this.options = _.M.setup.apply(_.M, [this.options].concat(Array.prototype.slice.apply(arguments)));
-
-        return this;
-    };
-
-    AJAX.prototype.data = function (data) {
-        this.options.data = data;
-
-        return this;
-    };
-    AJAX.prototype.addData = function (name, value) {
-        var data;
-
-        if (!this.options.data) {
-            this.options.data = {};
-        }
-
-        if (_.isObject(arguments[0])) {
-            data = _.extend({}, name);
-        } else {
-            data = {};
-            if (arguments.length < 2) {
-                data[name + ''] = 'true';
-            } else {
-                data[name] = value;
-            }
-        }
-
-        if (_.isObject(this.options.data)) {
-            _.extend(this.options.data, data);
-        } else if (_.isString(this.options.data)) {
-            data = _.map(data, function (value, key) {
-                return key + '=' + value;
-            });
-
-            if (this.options.data.length) {
-                this.options.data += '&' + data;
-            } else {
-                this.options.data = data;
-            }
-        }
-
-        return this;
-    };
-
-    /**
-     * Add success callback. Callback arguments:
-     * - response: last response after processed by AJAXResponseAdapters
-     *
-     * @param callback
-     * @returns {AJAX}
-     */
-    AJAX.prototype.done = function (callback) {
-        this.on('done', callback);
-
-        if (this.isSuccess()) {
-            callback.apply(this, [_.clone(this.response)]);
-        }
-
-
-        return this;
-    };
-
-    /**
-     * Add catch callback. Callback arguments:
-     * - message: Error message
-     * - code: error code
-     *
-     * @param callback
-     * @returns {AJAX}
-     */
-    AJAX.prototype.fail = function (callback) {
-        this.on('fail', callback);
-
-        if (this.isFailed()) {
-            callback.apply(this, [this.error.message, this.error.code]);
-        }
-
-        return this;
-    };
-
-    /**
-     * Add finally callback
-     *
-     * @param callback
-     * @returns {AJAX}
-     */
-    AJAX.prototype.always = function (callback) {
-        this.on('always', callback);
-
-        if (this.isDone()) {
-            callback.apply(this, [this.error, this.response]);
-        }
-
-        return this;
-    };
-
-    /**
-     * Get status of ajax
-     * @returns {(boolean|number)}
-     */
-    AJAX.prototype.status = function () {
-        if (_.isObject(this.jqXHR) && this.jqXHR.hasOwnProperty('readyState')) {
-            return this.jqXHR.readyState;
-        }
-
-        return false;
-    };
-    /**
-     * Check if instance is ready for request
-     * @returns {boolean}
-     */
-    AJAX.prototype.isReady = function () {
-        var status = this.status();
-
-        return status !== false && status === 0;
-    };
-
-    /**
-     * Check if instance is requesting
-     * @returns {boolean}
-     */
-    AJAX.prototype.isRequesting = function () {
-        var status = this.status();
-
-        return status !== false && status >= 1 && status <= 3;
-    };
-
-    AJAX.prototype.isRetrying = function () {
-        return Boolean(this._is_retrying);
-    };
-
-    /**
-     * Check if request is done and not retrying
-     * @returns {boolean}
-     */
-    AJAX.prototype.isDone = function () {
-        return !this.isRetrying() && this.status() === 4;
-    };
-
-    AJAX.prototype.isFailed = function () {
-        return this.isDone() && !_.isEmpty(this.error);
-    };
-
-    AJAX.prototype.isResponseMeaningFailed = function () {
-        return this.isFailed() && this._is_response_meaning_failed;
-    };
-
-    AJAX.prototype.isSuccess = function () {
-        return this.isDone() && _.isEmpty(this.error);
-    };
-
-    /**
-     * Check if current request is aborted
-     * @returns {boolean}
-     */
-    AJAX.prototype.isAborted = function () {
-        return this.error && (this.error.code === _.M.AJAX_ABORTED);
-    };
-
-    AJAX.prototype.isLastRetryTime = function () {
-        return this.isRetrying() && this.options.retry && this.retry_time >= parseInt(this.options.retry);
-    };
-
-    AJAX.prototype.isRetryable = function () {
-        if (!_.isEmpty(this.error) && !this.isAborted() && !this.isResponseMeaningFailed() && this.options.retry && this.retry_time < parseInt(this.options.retry)) {
-            var is_continue;
-
-            if (_.isFunction(this.options.is_continue)) {
-                is_continue = this.options.is_continue.bind(this)(_.clone(this.error));
-            } else {
-                is_continue = Boolean(this.options.is_continue);
-            }
-
-            return is_continue;
-        }
-
-        return false;
-    };
-
-    function _ajax_done_cb(response) {
-        var result = _.M.Task.apply(response, this.options.response_tasks);
-
-        if (result.error) {
-            this._is_response_meaning_failed = true;
-            this.error = result.error;
-
-            if (!this.isRetryable()) {
-                this.emitEvent('fail', [result.error.message, result.error.code]);
-            }
-
-            return;
-        }
-
-        this.response = result.data;
-
-        this.emitEvent('done', [_.clone(result.data)]);
-    }
-
-    function _ajax_fail_cb(jqXHR, textStatus, errorThrown) {
-        var err_result = AJAX.beautifyError(arguments);
-
-        this.error = err_result;
-
-        if (!this.isRetryable() && !this.isAborted()) {
-            this.emitEvent('fail', [err_result.message, err_result.code]);
-        }
-    }
-
-    function _at_the_end(ajax_instance) {
-        ajax_instance._last_options = null;
-        ajax_instance._is_retrying = false;
-        ajax_instance.emitEvent('always', [ajax_instance.error, ajax_instance.response]);
-
-        if (_.App) {
-            _.App.emitEvent('ajax_complete', [ajax_instance]);
-        }
-    }
-
-    function _ajax_always_cb(jqXHR, textStatus) {
-        var self = this;
-
-        if (this.isAborted()) {
-            this.emitEvent('aborted');
-        } else if (this.isRetryable()) {
-            if (this.isRetrying()) {
-                this.emitEvent('retry_complete', [this.retry_time, this.isLastRetryTime(), jqXHR, textStatus]);
-
-                if (_.App) {
-                    _.App.emitEvent('ajax_retry_complete', [this, this.retry_time, this.isLastRetryTime(), jqXHR, textStatus]);
-                }
-            }
-
-            this._is_retrying = true;
-            if (!this.options.retry_delay) {
-                this.request();
-            } else {
-                this._retry_timeout_id = _.M.async(function () {
-                    self.request();
-                }, [], this.options.retry_delay);
-            }
-
-            return;
-        }
-
-        _at_the_end(this);
-    }
-
-    /**
-     * Get request option, ready for request
-     * @param instance
-     * @param {{}} options
-     * @return {{}|boolean}
-     */
-    function _getRequestOptions(instance, options) {
-        var last_options = _.extend({}, instance.options, _.isObject(options) ? options : {}),
-            before_send_cb;
-
-        if (last_options.hasOwnProperty('success') || last_options.hasOwnProperty('done')) {
-            instance.removeListener('success_listeners_from_options');
-            instance.addListener('done', _.values(_.pick(last_options, ['success', 'done'])), {
-                priority: _.M.PRIORITY_HIGHEST,
-                key: 'success_listeners_from_options'
-            });
-        }
-        if (last_options.hasOwnProperty('error') || last_options.hasOwnProperty('fail')) {
-            instance.removeListener('error_listeners_from_options');
-            instance.addListener('fail', _.values(_.pick(last_options, ['error', 'fail'])), {
-                priority: _.M.PRIORITY_HIGHEST,
-                key: 'error_listeners_from_options'
-            });
-        }
-        if (last_options.hasOwnProperty('complete') || last_options.hasOwnProperty('always')) {
-            instance.removeListener('complete_listeners_from_options');
-            instance.addListener('always', _.values(_.pick(last_options, ['complete', 'always'])), {
-                priority: _.M.PRIORITY_HIGHEST,
-                key: 'complete_listeners_from_options'
-            });
-        }
-        if (last_options.hasOwnProperty('beforeSend')) {
-            before_send_cb = last_options.beforeSend;
-        }
-
-        _.M.removeKeys(last_options, ['success', 'done', 'error', 'fail', 'complete', 'always', 'beforeSend']);
-
-        last_options['done'] = _ajax_done_cb.bind(instance);
-        last_options['fail'] = _ajax_fail_cb.bind(instance);
-        last_options['always'] = _ajax_always_cb.bind(instance);
-        last_options['beforeSend'] = function (jqXHR, settings) {
-            var result = true;
-
-            if (instance.option('auto_abort') && instance.isRequesting()) {
-                instance.abort();
-            }
-            if (_.isFunction(before_send_cb) && !instance.isRetrying()) {
-                result = _.M.callFunc(before_send_cb, [jqXHR, settings], instance);
-            }
-            if (!_.isObject(last_options.data)) {
-                last_options.data = {};
-            }
-
-            if (false !== result) {
-                instance.requested++;
-                instance.error = null;
-                instance._is_response_meaning_failed = false;
-                instance.response = null;
-                instance.responses = null;
-
-                if (instance.isRetrying()) {
-                    instance.retry_time++;
-                    instance.emitEvent('retry');
-                } else {
-                    instance.retry_time = 0;
-                    instance.emitEvent('request');
-                }
-            }
-
-            return result;
-        };
-
-        if (!_.isEmpty(last_options.data_tasks)) {
-            var request_data_result = _.M.Task.apply(_.clone(last_options.data), last_options.data_tasks);
-
-            if (request_data_result.data) {
-                last_options.data = request_data_result.data;
-            } else {
-                this.error = request_data_result.error;
-                return false;
-            }
-        }
-
-        _.M.removeKeys(last_options, ['response_tasks', 'data_tasks', 'auto_abort', 'retry', 'retry_delay', 'is_continue']);
-
-        return last_options;
-    }
-
-    /**
-     * Do Request
-     * @param instance
-     * @param options
-     * @returns {AJAX|*}
-     * @private
-     */
-    function _do_request(instance, options) {
-        var last_options;
-
-        if ((arguments.length == 1 || instance.isRetrying()) && _.isObject(instance._last_options)) {
-            last_options = instance._last_options;
-        } else {
-            last_options = _getRequestOptions(instance, options);
-            if (false !== last_options) {
-                instance._last_options = last_options;
-            } else {
-                instance.emitEvent('fail', [instance.error.message, instance.error.code]);
-                _at_the_end(instance);
-            }
-        }
-
-        if (last_options) {
-            instance.jqXHR = $.ajax(_.omit(last_options, ['done', 'fail', 'always']))
-                .done(last_options['done'])
-                .fail(last_options['fail'])
-                .always(last_options['always']);
-        }
-
-        return instance;
-    }
-
-    AJAX.prototype.request = function (options) {
-        return _do_request(this, options);
-    };
-
-    /**
-     * Abort current request
-     */
-    AJAX.prototype.abort = function () {
-        if (this.isRequesting() && this.jqXHR.abort) {
-            this.jqXHR.abort();
-        } else if (this.isRetrying()) {
-            clearTimeout(this._retry_timeout_id);
-            this.emitEvent('aborted');
-            _at_the_end(this);
-        }
-    };
-
-    function _ajax_restful_shorthand_func(instance, method, url, data, callback, dataType) {
-        var args,
-            options = {
-                url: url,
-                method: (method + '').toUpperCase()
-            };
-
-        args = _.M.optionalArgs(Array.prototype.slice.call(arguments, 3), ['data', 'callback', 'dataType'], {
-            data: ['string', 'Object'],
-            callback: 'Function',
-            dataType: 'string'
-        });
-
-        if (args.data) {
-            options.data = args.data;
-        }
-        if (args.callback) {
-            options.done = args.callback;
-        }
-        if (args.dataType) {
-            options.dataType = args.dataType;
-        }
-
-        return _do_request(instance, options);
-    }
-
-    ['get', 'post', 'put', 'delete'].forEach(function (method) {
-        AJAX.prototype[method] = function (url, data, callback, dataType) {
-            return _ajax_restful_shorthand_func.apply(null, [this, method.toUpperCase()].concat(Array.prototype.slice.call(arguments, 0)));
-        };
-    });
-    ['get', 'post'].forEach(function (method) {
-        AJAX.prototype[method + 'JSON'] = function (url, data, callback) {
-            var args = _.M.optionalArgs(Array.prototype.slice.call(arguments, 0, 3), ['url', 'data', 'callback'], {
-                    url: 'string',
-                    data: ['string', 'Object'],
-                    callback: 'Function'
-                }),
-                options = {
-                    dataType: 'json'
-                };
-
-            if (args.url) {
-                options.url = args.url;
-            }
-            if (args.data) {
-                options.data = args.data;
-            }
-            if (args.callback) {
-                options.done = args.callback;
-            }
-
-            return this.request(options);
-        };
-    });
-
-    ['get', 'post', 'put', 'delete', 'getJSON', 'postJSON'].forEach(function (method) {
-        AJAX[method] = function (url, data, callback, dataType) {
-            var instance = new AJAX();
-
-            instance[method].apply(instance, Array.prototype.slice.call(arguments, 0));
-            return instance;
-        }
-    });
-
-    /**
-     *
-     * @param {string|object} [data]
-     */
-    AJAX.prototype.query = function (data) {
-        var options = {
-            method: 'GET'
-        };
-
-        if (data) {
-            options.data = data;
-        }
-
-        return this.request(options);
-    };
-
-    /**
-     *
-     * @param {string|object} [data]
-     */
-    AJAX.prototype.send = function (data) {
-        var options = {
-            method: 'POST'
-        };
-
-        if (data) {
-            options.data = data;
-        }
-
-        return this.request(options);
-    };
-
-
-    /*
-     |--------------------------------------------------------------------------
-     | AJAX Helpers
-     |--------------------------------------------------------------------------
-     */
-
-    /**
-     * Create AJAX instance with Pre Options
-     * @param {string} pre_options_name
-     * @param {{}} [custom_options={}]
-     * @returns {_.M.AJAX}
-     */
-    AJAX.use = function (pre_options_name, custom_options) {
-        return new AJAX(_.M.PreOptions.get(pre_options_name, custom_options));
-    };
-
-
-    function _load_apply_content(response, target, apply_type) {
-        target = $(target);
-        switch (apply_type) {
-            case 'append':
-                target.append(response);
-                break;
-            case 'prepend':
-                target.prepend(response);
-                break;
-
-            default:
-                target.html(response);
-        }
-    }
-
-    /**
-     * Load content to element
-     * @param {string} url
-     * @param {string|*} target Selector string or jQuery DOM
-     * @param {{}} options Options:
-     * - error_content: null - default error content: "Load content failed: <error message>. Error code: <error code>".
-     * It may be string or function with arguments as: error message, error code
-     * - apply_type: Way to apply response to target: replace, append or prepend. Default is replace
-     */
-    AJAX.load = function (url, target, options) {
-        var instance = new AJAX();
-
-        if (!_.isObject(options)) {
-            options = {};
-        }
-
-        options = _.extend({
-            error_content: '',
-            apply_type: 'replace'
-        }, options, {
-            url: url
-        });
-
-        instance.option(options);
-        instance.done(function (response) {
-            _load_apply_content(response, target, options.apply_type);
-        }).fail(function (error_message, error_code) {
-            var response = '';
-
-            if (options.error_content) {
-                if (_.isFunction(options.error_content)) {
-                    response = options.error_content(instance, error_message, error_code);
-                } else {
-                    response = options.error_content + '';
-                }
-            }
-
-            _load_apply_content(response, target, options.apply_type);
-        });
-
-        instance.request();
-
-        return instance;
-    };
-
-    /**
-     *
-     * @type {_.M.AJAX}
-     */
-    _.M.AJAX = AJAX;
-})(_);
+    return Task;
+}));

@@ -27,33 +27,34 @@ module.exports = function (grunt) {
                     'src/core/modules/waiters.js',
                     'src/core/modules/event_emitter.js',
                     'src/core/modules/cache.js',
-                    'src/core/modules/task.js',
-                    'src/core/modules/app.js',
-                    'src/core/modules/ajax.js'],
+                    'src/core/modules/task.js'
+                    // 'src/core/modules/app.js',
+                    // 'src/core/modules/ajax.js'
+                ],
                 dest: 'dist/madnh.js'
             },
             madnh_with_lodash: {
                 src: ['vendor/lodash/dist/lodash.js', 'dist/madnh.js'],
                 dest: 'dist/lodash_madnh.js'
-            },
-            dialog: {
-                src: ['src/extensions/Dialog/dialog.js',
-                    'src/extensions/Dialog/dialog_button.js',
-                    'src/extensions/Dialog/dialog_helpers.js',
-                    'src/extensions/Dialog/templates/Dialogs/bootstrap.js',
-                    'src/extensions/Dialog/templates/Buttons/bootstrap.js'
-                ],
-                dest: 'dist/extensions/dialog.js'
-            },
-            madnhjs_extensions: {
-                src: [
-                    'src/extensions/app_dom_plugin.js',
-                    'src/extensions/template.js',
-                    'src/extensions/jform.js',
-                    'dist/extensions/dialog.js'
-                ],
-                dest: 'dist/madnh_extensions.js'
             }
+            // dialog: {
+            //     src: ['src/extensions/Dialog/dialog.js',
+            //         'src/extensions/Dialog/dialog_button.js',
+            //         'src/extensions/Dialog/dialog_helpers.js',
+            //         'src/extensions/Dialog/templates/Dialogs/bootstrap.js',
+            //         'src/extensions/Dialog/templates/Buttons/bootstrap.js'
+            //     ],
+            //     dest: 'dist/extensions/dialog.js'
+            // },
+            // madnhjs_extensions: {
+            //     src: [
+            //         'src/extensions/app_dom_plugin.js',
+            //         'src/extensions/template.js',
+            //         'src/extensions/jform.js',
+            //         'dist/extensions/dialog.js'
+            //     ],
+            //     dest: 'dist/madnh_extensions.js'
+            // }
         },
         uglify: {
             options: {
@@ -67,15 +68,15 @@ module.exports = function (grunt) {
             madnh_with_lodash: {
                 src: 'dist/lodash_madnh.js',
                 dest: 'dist/lodash_madnh.min.js'
-            },
-            extensions: {
-                src: 'dist/madnh_extensions.js',
-                dest: 'dist/madnh_extensions.min.js'
-            },
-            dialog_concatenated: {
-                src: 'dist/extensions/dialog.js',
-                dest: 'dist/extensions/dialog.min.js'
             }
+            // extensions: {
+            //     src: 'dist/madnh_extensions.js',
+            //     dest: 'dist/madnh_extensions.min.js'
+            // },
+            // dialog_concatenated: {
+            //     src: 'dist/extensions/dialog.js',
+            //     dest: 'dist/extensions/dialog.min.js'
+            // }
         }
     });
 
