@@ -7,7 +7,7 @@
         // Browser globals
         root.Task = factory(root._, root.M);
     }
-}(this, function () {
+}(this, function (_, M) {
     var tasks = {};
 
     /**
@@ -16,7 +16,7 @@
      * @constructor
      */
     function Task(handler) {
-        this.id = M.nextID('Task');
+        this.id = _.uniqueId('Task_');
 
         /**
          * Task name
@@ -57,7 +57,15 @@
      * @returns {Task}
      */
     Task.prototype.option = function (name, value) {
-        this.options = M.setup.apply(M, [this.options].concat(_.toArray(arguments)));
+        var self = this;
+
+        if (_.isObject(name)) {
+            _.each(name, function (val, path) {
+                _.set(self.options, path, val);
+            });
+        } else {
+            _.set(this.options, name, value);
+        }
 
         return this;
     };
@@ -133,7 +141,7 @@
         } else if (this.handler instanceof Task) {
             _process_handler_as_task(this, this.handler, self._result);
         } else if (_.isArray(this.handler)) {
-            M.loop(this.handler, function (handle) {
+            _.find(this.handler, function (handle) {
                 var task_instance;
 
                 if (_.isString(handle)) {
@@ -144,12 +152,10 @@
 
                 _process_handler_as_task(self, task_instance, self._result);
 
-                if (self.isError()) {
-                    return 'break';
-                }
+                return self.isError();
             });
         } else if (_.isObject(this.handler)) {
-            M.loop(this.handler, function (options, handle) {
+            _.find(this.handler, function (options, handle) {
                 var task_instance = Task.factory(handle);
 
                 if (!_.isEmpty(options)) {
@@ -158,9 +164,7 @@
 
                 _process_handler_as_task(self, task_instance, self._result);
 
-                if (self.isError()) {
-                    return 'break';
-                }
+                return self.isError();
             });
         }
 
@@ -202,24 +206,36 @@
 
     /**
      * Register task
-     * @param {string} name
+     * @example
+     * var task1 = new Task();
+     * var task2 = alert;
+     * var options = {};
+     *
+     * Task.register('task1', task1, options);
+     * Task.register('task2', task2);
+     * Task.register(task1, options);
+     * Task.register(task2);
+     *
+     * @param {string} [name]
      * @param {string|function|object|function[]} handler
      * @param {{}} [options] Task options
      */
     Task.register = function (name, handler, options) {
-        var info = M.optionalArgs(_.toArray(arguments), ['name', 'handler', 'options'], {
-            name: 'string',
-            handler: ['string', 'Function', 'Array', 'Task'],
-            options: 'Object'
-        });
+        if (_.isObject(name)) {
+            options = _.isObject(handler) ? handler : {};
+            handler = name;
 
-        if (info.handler instanceof Task) {
-            info.name = info.handler.name;
+            if (handler instanceof Task) {
+                name = handler.name;
+            } else {
+                throw new Error('Task name is unknown');
+            }
         }
 
-        tasks[info.name] = {
-            handler: info.handler,
-            options: info.options
+
+        tasks[name] = {
+            handler: handler,
+            options: options || {}
         }
     };
 
@@ -260,7 +276,7 @@
                 tasks = _.zipObject(tasks, _.fill(new Array(tasks.length), {}));
             }
 
-            M.loop(tasks, function (options, name) {
+            _.find(tasks, function (options, name) {
                 var task = Task.factory(name, options);
 
                 if (task.process(_.cloneDeep(result['data']))) {
@@ -268,7 +284,8 @@
                 } else {
                     delete result['data'];
                     result['error'] = task.getError();
-                    return 'break';
+
+                    return true;
                 }
             });
         }
