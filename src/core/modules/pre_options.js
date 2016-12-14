@@ -1,13 +1,13 @@
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['lodash', 'madnh'], function (_, M) {
-            return factory(_, M);
+        define(['lodash'], function (_) {
+            return factory(_);
         });
     } else {
         // Browser globals
-        root.PreOptions = factory(root._, root.M);
+        root.PreOptions = factory(root._);
     }
-}(this, function (_, M) {
+}(this, function (_) {
     var _pre_options = {};
 
     /**
@@ -97,7 +97,7 @@
      * @param {{}} [options={}]
      */
     PreOptions.prototype.extend = function (sources, dest_name, options) {
-        _extend(sources, dest_name, options, true);
+        _extend(this, sources, dest_name, options, true);
     };
     /**
      * Create PreOptions, base on runtime-value of other PreOptions
@@ -106,7 +106,7 @@
      * @param {{}} [options={}]
      */
     PreOptions.prototype.baseOn = function (sources, dest_name, options) {
-        _extend(sources, dest_name, options, false);
+        _extend(this, sources, dest_name, options, false);
     };
 
     /**
@@ -126,7 +126,7 @@
         _pre_options = {};
     };
 
-    function _extend(sources, dest_name, options, real_time) {
+    function _extend(instance, sources, dest_name, options, real_time) {
         if (_pre_options.hasOwnProperty(dest_name)) {
             throw new Error('Destination Pre Options is already exists');
         }
@@ -145,7 +145,7 @@
             var base_options = {};
 
             _.each(sources, function (base) {
-                _.extend(base_options, PreOptions.get(base));
+                _.extend(base_options, instance.get(base));
             });
             _.extend(options, base_options);
 
