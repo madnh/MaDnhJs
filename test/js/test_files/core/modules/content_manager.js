@@ -13,7 +13,7 @@ describe('MODULE - ContentManager', function () {
             M.resetID(items.id + '_boolean');
             M.resetID(items.id + '_Array');
         }
-        items = new M.ContentManager();
+        items = new ContentManager();
     }
 
     before(reset_each_descibe);

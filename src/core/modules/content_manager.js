@@ -3,14 +3,15 @@
  */
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['lodash', 'madnh'], function (_, M) {
-            return (root.ContentManager = factory(_, M));
+        define(['lodash'], function (_) {
+            return (root.ContentManager = factory(_));
         });
     } else {
         // Browser globals
-        root.ContentManager = factory(root._, root.M);
+        root.ContentManager = factory(root._);
     }
-}(this, function () {
+}(this, function (_) {
+    var constants;
 
     /**
      * @constructor
@@ -18,18 +19,20 @@
      * @property {string} id
      */
     function ContentManager() {
-        this.id = M.nextID('ContentManager');
+        this.id = _.uniqueId('ContentManager_');
         this._contents = {};
         this._usings = {};
     }
 
-    M.defineConstant(ContentManager, {
+    constants = {
         /**
+         * @memberOf ContentManager
          * @constant {string}
          * @default
          */
         CONTENT_TYPE_STRING: 'string',
         /**
+         * @memberOf ContentManager
          * @constant {string}
          * @default
          */
@@ -41,26 +44,38 @@
          */
         CONTENT_TYPE_BOOLEAN: 'boolean',
         /**
+         * @memberOf ContentManager
          * @constant {string}
          * @default
          */
         CONTENT_TYPE_ARRAY: 'array',
         /**
+         * @memberOf ContentManager
          * @constant {string}
          * @default
          */
         CONTENT_TYPE_FUNCTION: 'function',
         /**
+         * @memberOf ContentManager
          * @constant {string}
          * @default
          */
         CONTENT_TYPE_OBJECT: 'object',
         /**
+         * @memberOf ContentManager
          * @constant {string}
          * @default
          */
         CONTENT_TYPE_MIXED: 'mixed'
-    });
+    };
+    for (var key in constants) {
+        if (constants.hasOwnProperty(key)) {
+            Object.defineProperty(ContentManager, key, {
+                enumerable: true,
+                value: constants[key]
+            });
+        }
+    }
 
     /**
      * Extract key to get content {string} type
@@ -78,6 +93,26 @@
         return false;
     }
 
+    function className(obj, constructor_only) {
+        if (constructor_only) {
+            return obj.constructor.name;
+        }
+        return Object.prototype.toString.call(obj);
+    }
+
+    function contentType(content) {
+        var type = typeof content;
+
+        if (type === 'object') {
+            var class_name = className(content, true);
+
+            if (class_name) {
+                return class_name;
+            }
+        }
+
+        return type;
+    }
 
     /**
      * Check if content type is exists
@@ -162,7 +197,8 @@
      */
     ContentManager.prototype.find = function (callback, types) {
         var found = false,
-            self = this;
+            self = this,
+            type, key, content_types, item;
 
         if (_.isUndefined(types)) {
             types = Object.keys(this._contents);
@@ -170,9 +206,12 @@
             types = _.intersection(_.castArray(types), Object.keys(this._contents));
         }
 
-        _.M.loop(types, function (type) {
-            _.M.loop(Object.keys(self._contents[type]), function (key) {
-                var item = self._contents[type][key];
+        while (!found && (type = types.shift())) {
+            content_types = Object.keys(self._contents[type]);
+
+            while (!found && (key = content_types.shift())) {
+                item = self._contents[type][key];
+
                 if (callback(item.content, item.meta, key, type)) {
                     found = {
                         type: type,
@@ -180,15 +219,9 @@
                         content: item.content,
                         meta: item.meta
                     };
-
-                    return 'break';
                 }
-            });
-
-            if (found) {
-                return 'break';
             }
-        });
+        }
 
         return found;
     };
@@ -270,10 +303,10 @@
      */
     ContentManager.prototype.add = function (content, meta, type) {
         if (!type) {
-            type = M.contentType(content);
+            type = contentType(content);
         }
 
-        var key = M.nextID(this.id + '_' + type);
+        var key = _.uniqueId(this.id + '_' + type + '_');
 
         if (!this._contents.hasOwnProperty(type)) {
             this._contents[type] = {};
@@ -295,7 +328,7 @@
      */
     ContentManager.prototype.addUnique = function (content, meta, type) {
         if (!type) {
-            type = M.contentType(content);
+            type = contentType(content);
         }
 
         var positions = this.contentPositions(content, type);
