@@ -3,17 +3,18 @@
  */
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['lodash', 'madnh'], function (_, M) {
-            return (root.Cache = factory(_, M));
+        define(['lodash'], function (_) {
+            return (root.Cache = factory(_));
         });
     } else {
         // Browser globals
-        root.Cache = factory(root._, root.M);
+        root.Cache = factory(root._);
     }
-}(this, function () {
-    var _cache_data = {};
-    var _clean_interval_time;
-    var _clean_interval;
+}(this, function (_) {
+    var _cache_data = {},
+        _clean_interval_time,
+        _clean_interval,
+        constants;
 
     /**
      * @constructor
@@ -26,7 +27,11 @@
         _clean_interval = setInterval(_clean_cache, _clean_interval_time * 1000);
     }
 
-    M.defineConstant(Cache, {
+    /**
+     * Define constants
+     * @type {{CACHE_MIN: number, CACHE_TINY: number, CACHE_SHORT: number, CACHE_MEDIUM: number, CACHE_LONG: number, CACHE_FOREVER: boolean}}
+     */
+    constants = {
         /**
          * 10 seconds
          * @constant {number}
@@ -63,7 +68,15 @@
          * @default
          */
         CACHE_FOREVER: true
-    });
+    };
+    for (var key in constants) {
+        if (constants.hasOwnProperty(key)) {
+            Object.defineProperty(Cache, key, {
+                enumerable: true,
+                value: constants[key]
+            });
+        }
+    }
 
     _clean_interval_time = Cache.CACHE_MIN;
 
