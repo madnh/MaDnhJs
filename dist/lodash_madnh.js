@@ -19200,32 +19200,105 @@
 }(this, function () {
     var key,
         key_index = 0,
-        constants = {
-            PRIORITY_HIGHEST: 100,
-            PRIORITY_HIGH: 250,
-            PRIORITY_DEFAULT: 500,
-            PRIORITY_LOW: 750,
-            PRIORITY_LOWEST: 1000,
-            PRIORITY_LEVEL_1: 100,
-            PRIORITY_LEVEL_2: 200,
-            PRIORITY_LEVEL_3: 300,
-            PRIORITY_LEVEL_4: 400,
-            PRIORITY_LEVEL_5: 500,
-            PRIORITY_LEVEL_6: 600,
-            PRIORITY_LEVEL_7: 700,
-            PRIORITY_LEVEL_8: 800,
-            PRIORITY_LEVEL_9: 900,
-            PRIORITY_LEVEL_10: 1000
-        };
+        constants;
 
     function Priority() {
         this._priorities = {};
         this._key_mapped = {};
     }
 
-    /**
-     * Define Priority constant
-     */
+    constants = {
+        /**
+         * @memberOf Priority
+         * @constant {number}
+         * @default
+         */
+        PRIORITY_HIGHEST: 100,
+        /**
+         * @memberOf Priority
+         * @constant {number}
+         * @default
+         */
+        PRIORITY_HIGH: 250,
+        /**
+         * @memberOf Priority
+         * @constant {number}
+         * @default
+         */
+        PRIORITY_DEFAULT: 500,
+        /**
+         * @memberOf Priority
+         * @constant {number}
+         * @default
+         */
+        PRIORITY_LOW: 750,
+        /**
+         * @memberOf Priority
+         * @constant {number}
+         * @default
+         */
+        PRIORITY_LOWEST: 1000,
+        /**
+         * @memberOf Priority
+         * @constant {number}
+         * @default
+         */
+        PRIORITY_LEVEL_1: 100,
+        /**
+         * @memberOf Priority
+         * @constant {number}
+         * @default
+         */
+        PRIORITY_LEVEL_2: 200,
+        /**
+         * @memberOf Priority
+         * @constant {number}
+         * @default
+         */
+        PRIORITY_LEVEL_3: 300,
+        /**
+         * @memberOf Priority
+         * @constant {number}
+         * @default
+         */
+        PRIORITY_LEVEL_4: 400,
+        /**
+         * @memberOf Priority
+         * @constant {number}
+         * @default
+         */
+        PRIORITY_LEVEL_5: 500,
+        /**
+         * @memberOf Priority
+         * @constant {number}
+         * @default
+         */
+        PRIORITY_LEVEL_6: 600,
+        /**
+         * @memberOf Priority
+         * @constant {number}
+         * @default
+         */
+        PRIORITY_LEVEL_7: 700,
+        /**
+         * @memberOf Priority
+         * @constant {number}
+         * @default
+         */
+        PRIORITY_LEVEL_8: 800,
+        /**
+         * @memberOf Priority
+         * @constant {number}
+         * @default
+         */
+        PRIORITY_LEVEL_9: 900,
+        /**
+         * @memberOf Priority
+         * @constant {number}
+         * @default
+         */
+        PRIORITY_LEVEL_10: 1000
+    };
     for (key in constants) {
         Object.defineProperty(Priority, key, {
             enumerable: true,
@@ -19283,7 +19356,9 @@
     /**
      * Find keys of content
      * @param {Priority} instance
-     * @param {function} callback
+     * @param {function} callback Callback parameters:
+     * - content
+     * - priority key
      * @param {boolean} [all = false]
      * @return {string|Array|boolean} Priority key(s) or false when not found
      */
@@ -19296,7 +19371,7 @@
             target_priority = instance._priorities[priority];
 
             for (index = 0, len = target_priority.length; index < len; index++) {
-                if (callback(target_priority[index].content)) {
+                if (target_priority[index] && callback(target_priority[index].content, target_priority[index].priority_key)) {
                     if (!all) {
                         return target_priority[index].priority_key;
                     }
@@ -19309,18 +19384,23 @@
         return result.length ? result : false;
     }
 
-    function find_cb_content(find, compare_content) {
-        return find === compare_content;
-    }
-
     /**
      * Find all of keys by content
      * @param {*} content
      * @return {string|Array|boolean} Priority key(s) or false if not found
      */
     Priority.prototype.findAll = function (content) {
-        return do_find(this, _.partial(find_cb_content, content), true);
+        return do_find(this, function (compare) {
+            return content === compare;
+        }, true);
     };
+    /**
+     * Find all of keys by callback
+     * @param {function} callback Callback parameters:
+     * - content
+     * - priority key
+     * @return {string|Array|boolean}
+     */
     Priority.prototype.findAllBy = function (callback) {
         return do_find(this, callback, true);
     };
@@ -19331,12 +19411,42 @@
      * @return {string|Array|boolean} Priority key or false if not found
      */
     Priority.prototype.find = function (content) {
-        return do_find(this, _.partial(find_cb_content, content), false);
+        return do_find(this, function (compare) {
+            return content === compare;
+        }, false);
     };
 
+    /**
+     * Find first key of valid content by callback
+     * @param {function} callback Callback parameters:
+     * - content
+     * - priority key
+     * @return {string|Array|boolean}
+     */
     Priority.prototype.findBy = function (callback) {
         return do_find(this, callback, false);
     };
+
+    /**
+     * Check if a content is added
+     * @param {*} content
+     * @return {boolean}
+     */
+    Priority.prototype.hasContent = function (content) {
+        return false !== this.find(content);
+    };
+
+    /**
+     * Check if a content is added, by callback
+     * @param {function} callback Callback parameters:
+     * - content
+     * - priority key
+     * @return {boolean}
+     */
+    Priority.prototype.hasContentBy = function (callback) {
+        return false !== this.findBy(callback);
+    };
+
 
     /**
      * Add a content if it is not added yet
@@ -19386,7 +19496,7 @@
     /**
      *
      * @param {string|string[]} keys
-     * @return {string[]} Removed keys
+     * @return {Array} Removed keys
      */
     Priority.prototype.remove = function (keys) {
         var removed = [],
@@ -19413,14 +19523,31 @@
         return removed;
     };
 
-    Priority.prototype.removeByContent = function (content) {
-        var keys = this.findAll(content);
+    /**
+     * Remove contents which is valid by a callback
+     * @param {function} callback Callback parameters:
+     * - content
+     * - priority key
+     * @return {Array}
+     */
+    Priority.prototype.removeBy = function (callback) {
+        var keys = this.findAllBy(callback);
 
         if (false === keys) {
             return [];
         }
 
         return this.remove(keys);
+    };
+    /**
+     * Remove contents
+     * @param {*} content
+     * @return {Array}
+     */
+    Priority.prototype.removeByContent = function (content) {
+        return this.removeBy(function (compare) {
+            return content === compare;
+        });
     };
 
     /**
@@ -19466,7 +19593,7 @@
         return isArray(val) ? val : [val];
     }
 
-    return new Priority();
+    return Priority;
 }));
 /**
  * Callback listener system

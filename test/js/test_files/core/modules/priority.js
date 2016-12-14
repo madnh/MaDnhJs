@@ -5,7 +5,7 @@ describe('MODULE - Priority', function () {
     var priority_instance;
 
     beforeEach(function () {
-        priority_instance = new M.Priority();
+        priority_instance = new Priority();
     });
 
     describe('Add', function () {
@@ -19,9 +19,6 @@ describe('MODULE - Priority', function () {
         });
         it('must return true when check exists by content', function () {
             chai_assert.isTrue(priority_instance.hasContent(content));
-        });
-        it('must return true when check exists by ContentManager\'s "has" method', function () {
-            chai_assert.isTrue(priority_instance._super.has.call(priority_instance, key));
         });
         it('Add with special priority value', function () {
             var priority = 999;
@@ -40,15 +37,6 @@ describe('MODULE - Priority', function () {
             chai_assert.sameMembers(priority_instance.remove(key), [key]);
             chai_assert.isFalse(priority_instance.has(key));
         });
-        it('Remove by key and special priority', function () {
-            //
-            var key = priority_instance.add('ABC', 100);
-            chai_assert.isTrue(priority_instance.has(key));
-            chai_assert.equal(priority_instance.remove(key, 200).length, 0);
-            chai_assert.isTrue(priority_instance.has(key));
-            chai_assert.sameMembers(priority_instance.remove(key, [200, 100]), [key]);
-            chai_assert.isFalse(priority_instance.has(key));
-        });
 
         it('Remove by content', function () {
             var content = 'ABC',
@@ -57,7 +45,7 @@ describe('MODULE - Priority', function () {
             chai_assert.isTrue(priority_instance.has(key));
             chai_assert.isTrue(priority_instance.hasContent(content));
             //
-            chai_assert.sameMembers(priority_instance.removeContent(content), [key]);
+            chai_assert.sameMembers(priority_instance.removeByContent(content), [key]);
             //
             chai_assert.isFalse(priority_instance.has(key));
             chai_assert.isFalse(priority_instance.hasContent(content));
@@ -67,18 +55,18 @@ describe('MODULE - Priority', function () {
     describe('Get contents', function () {
         var keys = [];
         beforeEach(function () {
-            keys.push(priority_instance.add('B', 10, {id: '1'}));
-            keys.push(priority_instance.add('A', 100, {id: '2'}));
+            keys.push(priority_instance.add('B', 10));
+            keys.push(priority_instance.add('A', 100));
             keys.push(priority_instance.add('C', 1));
         });
         it('Include meta info', function () {
             var contents = priority_instance.export();
             var expect_obj = [
-                {content: 'C', meta: undefined, key: keys[2]},
-                {content: 'B', meta: {id: '1'}, key: keys[0]},
-                {content: 'A', meta: {id: '2'}, key: keys[1]}
+                {content: 'C', priority_key: keys[2]},
+                {content: 'B', priority_key: keys[0]},
+                {content: 'A', priority_key: keys[1]}
             ];
-
+            console.log('ahihi', contents, expect_obj);
             chai_assert.deepEqual(
                 contents,
                 expect_obj
@@ -87,26 +75,5 @@ describe('MODULE - Priority', function () {
         it('Content only', function () {
             chai_assert.deepEqual(priority_instance.export(true), ['C', 'B', 'A']);
         });
-    });
-    describe('Get status', function () {
-        var status;
-        beforeEach(function () {
-            priority_instance.add('A', 1);
-            priority_instance.add('B', 1);
-            priority_instance.add('A', 2);
-
-            status = priority_instance.status();
-        });
-
-        it('status must be an object with all required properties', function () {
-            chai_assert.isObject(status);
-            chai_assert.sameMembers(Object.keys(status), ['priorities', 'contents']);
-        });
-        it('Status properties is correct', function () {
-            chai_assert.deepEqual(status, {
-                priorities: 2,
-                contents: 3
-            });
-        })
     });
 });
