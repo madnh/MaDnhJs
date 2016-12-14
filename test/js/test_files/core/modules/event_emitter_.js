@@ -17,12 +17,37 @@ describe('MODULE - EventEmitter', function () {
             it('key must be exists', function () {
                 chai_assert.isTrue(ee.has(key));
             });
-            it('Add an added key', function () {
-                chai_assert.equal(ee.addListener('test2', key), key);
+        });
+        describe('Add multiple listeners, one event', function () {
+            var ee, key;
+
+            before(function () {
+                ee = new EventEmitter();
+                key = ee.addListener('test', [M.logArgs, M.logArgs]);
             });
 
+            it('return key as string', function () {
+                chai_assert.isString(key);
+            });
+            it('key must be exists', function () {
+                chai_assert.isTrue(ee.has(key));
+            });
         });
+        describe('Add multiple listeners, multiple events', function () {
+            var ee, key;
 
+            before(function () {
+                ee = new EventEmitter();
+                key = ee.addListener(['test', 'test2'], [M.logArgs, M.logArgs]);
+            });
+
+            it('return key as string', function () {
+                chai_assert.isString(key);
+            });
+            it('key must be exists', function () {
+                chai_assert.isTrue(ee.has(key));
+            });
+        });
         describe('Add multiple listeners, multiple events by object', function () {
             var ee, keys;
 
@@ -31,7 +56,7 @@ describe('MODULE - EventEmitter', function () {
 
                 keys = ee.addListeners({
                     test: [M.logArgs, M.logArgs],
-                    test2: [M.logArgs, [M.logArgs, {priority: 100}]]
+                    test2: [M.logArgs, [M.logArgs, {key: 'yahoo'}]]
                 });
             });
 
@@ -48,7 +73,7 @@ describe('MODULE - EventEmitter', function () {
             });
         });
     });
-    describe('Emit event', function () {
+    describe('Emit', function () {
         describe('Emit an event', function () {
             var ee, data = M.randomString(10);
 
@@ -65,12 +90,15 @@ describe('MODULE - EventEmitter', function () {
 
             it('Run listener success', function (done) {
                 chai_assert.doesNotThrow(function () {
-                    ee.emitEvent('test', done);
+                    ee.emit('test', [done]);
                 });
+            });
+            it('correct event emitted times', function () {
+                chai_assert.strictEqual(ee.emitted('test'), 1);
             });
             it('Listener must return correct result', function (done) {
                 chai_assert.doesNotThrow(function () {
-                    ee.emitEvent('test', done, data);
+                    ee.emit('test', [done, data]);
                 });
             });
             it('Event is emit multiple times', function (done) {
@@ -79,7 +107,7 @@ describe('MODULE - EventEmitter', function () {
 
                 for (var i = 0; i < times; i++) {
                     chai_assert.doesNotThrow(function () {
-                        ee.emitEvent('test', done_cb);
+                        ee.emit('test', [done_cb]);
                     });
                 }
             });
@@ -93,6 +121,7 @@ describe('MODULE - EventEmitter', function () {
                 key = ee.addOnceListener('test', function (done) {
                     done();
                 });
+                console.log(key, ee);
             });
 
             it('Key is string', function () {
@@ -103,7 +132,7 @@ describe('MODULE - EventEmitter', function () {
             });
             it('Emit event success', function (done) {
                 M.debugging('test');
-                ee.emitEvent('test', done);
+                ee.emit('test', [done]);
                 M.debugComplete('test');
             });
             it('Key isn\'t exists after previous emit', function () {
@@ -124,7 +153,7 @@ describe('MODULE - EventEmitter', function () {
                     chai_assert.isTrue(data === data_to_emit);
                     done();
                 });
-                ee.emitEvent(event_to_emit, data_to_emit);
+                ee.emit(event_to_emit, data_to_emit);
             });
             it('event_complete', function (done) {
                 var event_to_emit = 'test', data_to_emit = 123;
@@ -133,11 +162,11 @@ describe('MODULE - EventEmitter', function () {
                     chai_assert.isTrue(data === data_to_emit);
                     done();
                 });
-                ee.emitEvent(event_to_emit, data_to_emit);
+                ee.emit(event_to_emit, data_to_emit);
             });
             it('finally callback', function (done) {
                 chai_assert.doesNotThrow(function () {
-                    ee.emitEventThen('other_event', function () {
+                    ee.emit('other_event', null, function () {
                         done();
                     });
                 });
@@ -184,17 +213,23 @@ describe('MODULE - EventEmitter', function () {
             chai_assert.isTrue(ee.has(key3));
         });
         it('remove by listeners', function () {
+            var removed;
             chai_assert.doesNotThrow(function () {
-                ee.removeListeners([M.logArgs, M.warnArgs]);
+                removed = ee.removeListener([M.logArgs, M.warnArgs]);
             });
 
 
+            chai_assert.deepEqual(removed, {
+                test: [key],
+                test2: [key2],
+                test3: [key3]
+            });
             chai_assert.isFalse(ee.has(key));
             chai_assert.isFalse(ee.has(key2));
             chai_assert.isFalse(ee.has(key3));
         });
     });
-    describe.skip('Listen to other EventEmitter instance (attach)', function () {
+    describe('Listen to other EventEmitter instance (attach)', function () {
         var base_ee, other_ee;
 
         before(function () {
@@ -211,7 +246,7 @@ describe('MODULE - EventEmitter', function () {
             chai_assert.isTrue(base_ee.hasFollower(other_ee));
         });
     });
-    describe.skip('Notice', function () {
+    describe('Notice', function () {
         describe('Notice event', function () {
             var base_ee,
                 other_ee,
@@ -299,7 +334,7 @@ describe('MODULE - EventEmitter', function () {
             });
         });
     });
-    describe.skip('Un-listen to other EventEmitter instance (detach)', function () {
+    describe('Un-listen to other EventEmitter instance (detach)', function () {
         var base_ee, other_ee;
 
         beforeEach(function () {

@@ -59,8 +59,8 @@ describe('MODULE - Priority', function () {
             keys.push(priority_instance.add('A', 100));
             keys.push(priority_instance.add('C', 1));
         });
-        it('Include meta info', function () {
-            var contents = priority_instance.export();
+        it('Include key', function () {
+            var contents = priority_instance.export(true);
             var expect_obj = [
                 {content: 'C', priority_key: keys[2]},
                 {content: 'B', priority_key: keys[0]},
@@ -73,7 +73,7 @@ describe('MODULE - Priority', function () {
             );
         });
         it('Content only', function () {
-            chai_assert.deepEqual(priority_instance.export(true), ['C', 'B', 'A']);
+            chai_assert.deepEqual(priority_instance.export(false), ['C', 'B', 'A']);
         });
     });
 });

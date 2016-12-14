@@ -1,13 +1,13 @@
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['lodash', 'madnh'], function (_, M) {
-            return (root.Task = factory(_, M));
+        define(['lodash'], function (_) {
+            return (root.Task = factory(_));
         });
     } else {
         // Browser globals
-        root.Task = factory(root._, root.M);
+        root.Task = factory(root._);
     }
-}(this, function (_, M) {
+}(this, function (_) {
     var tasks = {};
 
     /**

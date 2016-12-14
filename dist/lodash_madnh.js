@@ -19569,12 +19569,12 @@
             for (index in this._priorities[priority]) {
                 if (this._priorities[priority].hasOwnProperty(index)) {
                     if (with_key) {
-                        result.push(this._priorities[priority][index].content);
-                    } else {
                         result.push({
                             content: this._priorities[priority][index].content,
                             priority_key: this._priorities[priority][index].priority_key
                         });
+                    } else {
+                        result.push(this._priorities[priority][index].content);
                     }
                 }
             }
@@ -19791,306 +19791,263 @@
 }));
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['lodash', 'Priority'], function (_, Priority) {
-            return (root.EventEmitter = factory(_, Priority));
+        define(['lodash'], function (_) {
+            return (root.EventEmitter = factory(_));
         });
     } else {
         // Browser globals
-        root.EventEmitter = factory(root._, root.Priority);
+        root.EventEmitter = factory(root._);
     }
-}(this, function (_, Priority) {
-    function EventEmitter(options) {
-        this.id = _.uniqueId('event_emitter_');
+}(this, function (_) {
+    var unique_ids = {};
 
-        options = _.defaults(options || {}, {
-            'events': {},
-            'event_mimics': [],
-            'event_privates': []
-        });
+    function uniqueID(prefix) {
+        if (!unique_ids.hasOwnProperty(prefix)) {
+            unique_ids[prefix] = 0;
+        }
 
-        /**
-         *
-         * @type {{_.M.Priority}}
-         * @private
-         */
+        return prefix + ++unique_ids[prefix];
+    }
+
+
+    function EventEmitter() {
+        this.id = uniqueID('event_emitter_');
         this._events = {};
-        /**
-         *
-         * @type {{}}
-         * @private
-         */
-        this._event_emitted = {};
-
-
-        /**
-         *
-         * @type {{}}
-         * @private
-         */
-        this._event_followers = {};
-
-        /**
-         *
-         * @type {{}}
-         * @private
-         */
-        this._event_following = {};
-
-        /**
-         * Mimic events when noticed from other EventEmitter
-         * @type {Array}
-         * @private
-         */
-        this._event_mimics = [];
-
-        /**
-         *
-         * @type {Array}
-         * @private
-         */
-        this._event_privates = ['attach', 'attached'];
-
-        if (!_.isObject(options['events'])) {
-            this.addListeners(options['events']);
-        }
-        if (!_.isEmpty(options['event_mimics'])) {
-            this.mimic(_.castArray(options['event_mimics']));
-        }
-        if (!_.isEmpty(options['event_privates'])) {
-            this.private(_.castArray(options['event_privates']));
-        }
-    }
-
-    /**
-     * Reset events
-     * @param {string} [event] Special event to reset, if not, reset all events
-     */
-    EventEmitter.prototype.resetEvents = function (event) {
-        if (event) {
-            if (this._events.hasOwnProperty(event)) {
-                delete this._events[event];
-                delete this._event_emitted[event];
-            }
-        } else {
-            this._events = {};
-            this._event_emitted = {};
-        }
-    };
-    /**
-     * Alias of resetEvents
-     * @see resetEvents
-     */
-    EventEmitter.prototype.reset = function (event) {
-        return this.resetEvents(event);
-    };
-    /**
-     * Get all events name
-     * @param {boolean} count Return events listeners count
-     * @return {Object|Array}
-     */
-    EventEmitter.prototype.events = function (count) {
-        if (count) {
-            var result = {};
-            var self = this;
-
-            Object.keys(this._events).forEach(function (event) {
-                result[event] = self._events[event].priority.status().contents;
-            });
-
-            return result;
-        }
-        return Object.keys(this._events);
-    };
-    /**
-     * Get event emitted count
-     * @param {string} event Event name, if not special then return all of emitted events
-     * @returns {(number|{})}
-     */
-    EventEmitter.prototype.emitted = function (event) {
-        if (!_.isUndefined(event)) {
-            return this._event_emitted.hasOwnProperty(event) ? this._event_emitted[event] : 0;
-        }
-
-        return _.clone(this._event_emitted);
-    };
-
-    /**
-     * Add event listener
-     * @param {string|string[]} events Array of events name
-     * @param {(string|function|Array)} listeners Event listener
-     * @param {object} [option] Option is object with keys:
-     * priority {@see _.M.PRIORITY_DEFAULT},
-     * times (-1 - forever) - call times,
-     * context (this event emitter instance) - context for callback,
-     * key (auto increment of key: event_emitter_key_) - listener key. Useful when remove listener
-     * @returns {string|boolean|null} Listener key or false on fail
-     */
-    EventEmitter.prototype.addListener = function (events, listeners, option) {
-        var self = this;
-
-        listeners = _.castArray(listeners);
-        events = _.uniq(_.castArray(events));
-
-        if (!listeners.length) {
-            return false;
-        }
-
-        add_listener__prepare_events(this, events);
-        option = add_listener__get_option(option);
-
-        _.each(events, function (event) {
-            var event_detail = self._events[event];
-            var keys = add_listener__add_listeners(self, event, listeners, option);
-
-            if (!event_detail.key_mapped.hasOwnProperty(option.key)) {
-                event_detail.key_mapped[option.key] = keys;
-            } else {
-                event_detail.key_mapped[option.key] = _.concat(event_detail.key_mapped[option.key], keys);
-            }
-        });
-
-        return option.key;
-    };
-
-    function add_listener__prepare_events(ee, events) {
-        _.each(events, function (event) {
-            if (!ee._events.hasOwnProperty(event)) {
-                ee._events[event] = {
-                    priority: new Priority(),
-                    key_mapped: {}
-                };
-            }
-        });
+        this._listeners = {};
     }
 
     /**
      *
-     * @param option
-     * @returns {{priority, times, context, key, async}}
+     * @param {Array} [events]
+     * @return {EventEmitter}
      */
-    function add_listener__get_option(option) {
-        if (_.isNumber(option)) {
-            option = {
-                priority: option
+    EventEmitter.prototype.reset = function (events) {
+        if (!arguments.length) {
+            events = _.keys(this._events);
+        } else {
+            events = _.flatten(_.toArray(arguments));
+        }
+
+        var self = this,
+            removed = {};
+
+        _.each(events, function (event) {
+            if (self._events.hasOwnProperty(event)) {
+                _.each(self._events[event], function (event_detail, index_key) {
+                    if (unlinkListenerEvent(self, event_detail.listener_key, event, index_key)) {
+                        _.set(removed, [event_detail.listener_key, event, index_key].join('.'), true);
+                    }
+                });
+
+                delete self._events[event];
+            }
+        });
+
+        _.each(removed, function (removed_events, listener_key) {
+            _.each(removed_events, function (index_keys, removed_event) {
+                self._listeners[listener_key].events[removed_event] = _.omit(self._listeners[listener_key].events[removed_event], _.keys(index_keys));
+
+                if (_.isEmpty(self._listeners[listener_key].events[removed_event])) {
+                    delete self._listeners[listener_key].events[removed_event];
+                }
+            });
+        });
+
+        return this;
+    };
+
+    /**
+     *
+     * @param {EventEmitter} instance
+     * @param {string} listener_key
+     * @param {string} event
+     * @param {string} index_key
+     */
+    function unlinkListenerEvent(instance, listener_key, event, index_key) {
+        if (!instance._listeners.hasOwnProperty(listener_key)) {
+            return false;
+        }
+        if (!instance._listeners[listener_key].events.hasOwnProperty(event)) {
+            return false;
+        }
+
+        delete instance._listeners[listener_key].events[event][index_key];
+
+        return true;
+    }
+
+    /**
+     *
+     * @param {string|Array} events
+     * @param {string|function} listener Listener callback or added listener key
+     * @param {number|{}} [options] Options or priority
+     * - priority: 500,
+     * - times: true, call times, true is unlimited
+     * - context: null, Context of callback. If not special will use event instance itself
+     * - async: false, emit listener as asynchronous
+     *
+     * @return {string} Listener key
+     * @throws
+     * - Listener is not added: When use listener as added listener key and it is not added yet
+     */
+    EventEmitter.prototype.addListener = function (events, listener, options) {
+        var self = this,
+            key;
+
+        events = _.uniq(_.castArray(events));
+        options = getListenerOptions(this, options);
+
+        if (_.isString(listener)) {
+            if (!this._listeners.hasOwnProperty(listener)) {
+                throw new Error('Listener is not added');
+            }
+            key = listener;
+        } else {
+            key = uniqueID(this.id + '_listener_');
+            this._listeners[key] = {
+                listener: listener,
+                events: {}
+            };
+        }
+
+        _.each(events, function (event) {
+            if (!self._events.hasOwnProperty(event)) {
+                self._events[event] = {};
+            }
+
+            var target_events = self._events[event],
+                index_key = '_' + _.keys(target_events).length;
+
+            target_events[index_key] = _.extend({}, options, {listener_key: key});
+
+            if (!self._listeners[key].events.hasOwnProperty(event)) {
+                self._listeners[key].events[event] = {};
+            }
+
+            self._listeners[key].events[event][index_key] = true;
+        });
+
+        return key;
+    };
+
+
+    EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+    /**
+     *
+     * @param {EventEmitter} instance
+     * @param {{}} options
+     * @return {*}
+     */
+    function getListenerOptions(instance, options) {
+        if (_.isNumber(options)) {
+            options = {
+                priority: options
             }
         }
 
-        option = _.defaults(option || {}, {
-            priority: Priority.PRIORITY_DEFAULT,
+        options = _.defaults(options || {}, {
+            priority: 500,
             times: true,
             context: null,
             key: '',
             async: false
         });
 
-        if (option.key === null) {
-            option.key = _.uniqueId('event_emitter_listener_');
-        }
-
-        return option;
+        return options;
     }
 
     /**
-     *
-     * @param {EventEmitter} ee
-     * @param {string} event
-     * @param {callback|callback[]} listeners
-     * @param {{}} option
-     * @return {string[]}
-     */
-    function add_listener__add_listeners(ee, event, listeners, option) {
-        var keys = [],
-            event_detail = ee._events[event];
-
-        _.each(_.castArray(listeners), function (listener) {
-            var key = event_detail.priority.add({
-                listener: listener,
-                listener_key: option.key,
-                async: option.async,
-                times: option.times,
-                event: event
-            }, option.priority);
-
-            keys.push(key);
-        });
-
-        return keys;
-    }
-
-    /**
-     * Check if a key is exists
-     * @param {string} key
-     * @param {string|string[]} [events]
+     * Check if a listener key is exists
+     * @param {string} listener_key
+     * @param {boolean} [listening=true] Listener key must is using in any events
      * @return {boolean}
      */
-    EventEmitter.prototype.has = function (key, events) {
-        events = _get_valid_events(this, events);
+    EventEmitter.prototype.has = function (listener_key, listening) {
+        listening = listening || _.isUndefined(listening);
 
-        if (_.isEmpty(events)) {
-            return false;
-        }
-
-        var index, found = false, self = this;
-
-        for (index in events) {
-            if (events.hasOwnProperty(index) && self._events[events[index]].key_mapped.hasOwnProperty(key)) {
-                found = true;
-                break;
-            }
-        }
-
-        return found;
+        return this._listeners.hasOwnProperty(listener_key) && (!listening || !_.isEmpty(this._listeners[listener_key].events));
     };
+
     /**
-     *
-     * @param instance
-     * @param {Array} [events]
-     * @return {Array}
-     * @private
+     * Remove listener
+     * @param {string|function} listener Listener itself or listener key
+     * @param {string|Array} [events] Remove on special events, default is all of events
      */
-    function _get_valid_events(instance, events) {
-        if (!events) {
-            return _.keys(instance._events);
+    EventEmitter.prototype.removeListener = function (listener, events) {
+        var self = this,
+            listener_keys = !_.isString(listener) ? getAllListenerKeys(this, listener) : [listener],
+            listener_key,
+            listener_events,
+            target_events;
+
+        if (!listener_keys.length) {
+            return;
         }
 
-        return _.intersection(_.castArray(events), _.keys(instance._events));
+        while (listener_key = listener_keys.shift()) {
+            listener_events = _.keys(this._listeners[listener_key].events);
+            target_events = _.isUndefined(events) ? listener_events : _.intersection(_.castArray(events), listener_events);
+
+            _.each(target_events, function (event) {
+                if (self._events.hasOwnProperty(event)) {
+                    self._events[event] = _.omit(self._events[event], _.keys(self._listeners[listener_key].events[event]));
+                    delete self._listeners[listener_key].events[event];
+                }
+            });
+        }
+    };
+    EventEmitter.prototype.removeListeners = function (listeners, events) {
+        var self = this;
+
+        _.each(listeners, function (listener) {
+            self.removeListener(listener, events);
+        });
+    };
+
+    /**
+     * Get listener key by content
+     * @param {EventEmitter} instance
+     * @param {function} listener
+     * @return {string|Array|boolean|boolean|{}}
+     */
+    function getListenerKey(instance, listener) {
+        return _.findKey(instance._listeners, function (detail) {
+            return detail.listener === listener;
+        });
     }
 
+    function getAllListenerKeys(instance, listener) {
+        var result = [];
+
+        _.each(instance._listeners, function (detail, listener_key) {
+            if (detail.listener === listener) {
+                result.push(listener_key);
+            }
+        });
+
+        return result;
+    }
 
     /**
-     * @see addListener
+     * Add once time listener to event
+     * @param {string|Array} events
+     * @param {string|function} listener
+     * @param {number|{}} options
+     * @return {string|string|boolean|null} Listener key
      */
-    EventEmitter.prototype.on = function (event, listener, option) {
-        return this.addListener.apply(this, _.toArray(arguments));
-    };
-    /**
-     * Add once time listener
-     * @param events
-     * @param listeners
-     * @param option
-     * @returns {string}
-     */
-    EventEmitter.prototype.addOnceListener = function (events, listeners, option) {
-        if (_.isNumber(option)) {
-            option = {
-                priority: option,
-                times: 1
+    EventEmitter.prototype.addOnceListener = function (events, listener, options) {
+        if (_.isNumber(options)) {
+            options = {
+                priority: options
             }
-        } else if (!_.isObject(option)) {
-            option = {
-                times: 1
-            };
+        } else if (!_.isObject(options)) {
+            options = {};
         }
 
+        options.times = 1;
 
-        return this.addListener(events, listeners, option);
-    };
-
-    /**
-     * @see addOnceListener
-     */
-    EventEmitter.prototype.once = function (events, listener, option) {
-        return this.addOnceListener.apply(this, _.toArray(arguments));
+        return this.addListener(events, listener, options);
     };
 
     /**
@@ -20099,7 +20056,9 @@
      * @return {string[]} Listener keys
      */
     EventEmitter.prototype.addListeners = function (events) {
-        var events_arr = [], self = this, keys = [];
+        var events_arr = [],
+            self = this,
+            keys = [];
 
         if (_.isObject(events)) {
             _.each(events, function (event_cbs, event_name) {
@@ -20123,101 +20082,96 @@
         return keys;
     };
 
+    /**
+     * Emit event
+     * @param {string} event Event name
+     * @param {*} [data...] Event data
+     */
+    EventEmitter.prototype.emitEvent = function (event, data) {
+        data = Array.prototype.slice.call(arguments, 1);
+
+        if (this._events.hasOwnProperty(event)) {
+            _emit_event(this, event, data);
+        }
+
+        //@TODO: notice events here
+
+        if (event !== 'event_emitted') {
+            _emit_event(this, 'event_emitted', [event].concat(data));
+        }
+        _emit_event(this, event + '_complete', data);
+    };
 
     /**
-     * Emit event. Each event emitted will emit a event called 'event_emitted', with event emitted and it's data
-     * @param {string|string[]} events Array of events
-     * @param {*} [data]
-     * @param {Function} [final_cb]
+     * Similar to method emitEvent but do a callback after event is emitted
+     * @param {string} event Event name
+     * @param {function} final_cb Callback will receive parameter is data assigned to this method
+     * @param {*} [data...]
      */
-    EventEmitter.prototype.emitEvent = function (events, data, final_cb) {
-        var self = this;
+    EventEmitter.prototype.emitEventThen = function (event, final_cb, data) {
+        data = Array.prototype.slice.call(arguments, 2);
+        this.emitEvent.apply(this, [event].concat(data));
 
-        _.each(_.castArray(events), function (event) {
-            if (self._events.hasOwnProperty(event)) {
-                _emit_event(self, event, _.clone(data));
-            }
-            if (event !== 'event_emitted') {
-                _emit_event(self, 'event_emitted', [event, _.clone(data)]);
-            }
-            if (_is_need_to_notice(self, event)) {
-                _notice_event(self, event, _.clone(data));
-            }
-
-            _emit_event(self, event + '_complete', _.clone(data));
-        });
-
-        if (final_cb) {
-            final_cb.call(this);
-        }
+        final_cb.apply(this, data);
     };
 
     function _emit_event(instance, event_name, data) {
-        var emitted = false,
-            listeners;
+        var listeners;
 
-        if (instance._events.hasOwnProperty(event_name)) {
-            listeners = instance._events[event_name].priority.export(true);
-
-            if (listeners.length) {
-                emitted = true;
-                _.each(listeners, function (listener_detail) {
-                    if (listener_detail.times === true || listener_detail.times > 0) {
-                        (listener_detail.async ? async_callback : do_callback)(listener_detail.listener, data, listener_detail.context || instance);
-
-                        if (listener_detail.times === true) {
-                            return;
-                        }
-
-                        listener_detail.times--;
-
-                        if (listener_detail.times > 0) {
-                            instance._events[event_name].priority.update(listener_detail.priority_key, listener_detail);
-
-                            return;
-                        }
-                    }
-
-                    _remove_listener(instance, event_name, listener_detail.listener_key, listener_detail.priority_key);
-                });
-            }
-        }
-        if (!instance._event_emitted.hasOwnProperty(event_name)) {
-            instance._event_emitted[event_name] = 1;
-        } else {
-            instance._event_emitted[event_name] += 1;
+        if (!instance._events.hasOwnProperty(event_name)) {
+            return
         }
 
-        return emitted;
-    }
+        listeners = getListeners(instance, event_name);
 
-    function _remove_listener(instance, event, listener_key, priority_key) {
-        if (!instance._events.hasOwnProperty(event) || !instance._events[event].key_mapped.hasOwnProperty(listener_key)) {
+        if (!listeners.length) {
             return;
         }
 
-        instance._events[event].priority.remove(priority_key);
-        instance._events[event].key_mapped[listener_key] = _.without(instance._events[event].key_mapped[listener_key], priority_key);
+        _.each(listeners, function (listener_detail) {
+            if (listener_detail.times === true || listener_detail.times > 0) {
+                (listener_detail.async ? async_callback : do_callback)(listener_detail.listener, data, listener_detail.context || instance);
 
-        if (!instance._events[event].key_mapped[listener_key].length) {
-            delete instance._events[event].key_mapped[listener_key];
-        }
-    }
+                if (listener_detail.times === true) {
+                    return;
+                }
 
-    function _is_need_to_notice(instance, event_name) {
-        return 'event_emitted' !== event_name
-            && -1 == instance._event_privates.indexOf(event_name)
-            && !_.isEmpty(instance._event_followers);
-    }
+                listener_detail.times--;
 
-    function _notice_event(instance, event_name, data) {
-        _.each(instance._event_followers, function (follower) {
-            (follower.async ? async_callback : do_callback)(_.partial(_notice_event_cb, follower), [instance.id, event_name, data], instance);
+                if (listener_detail.times > 0) {
+                    instance._events[event_name][listener_detail.event_index_key].times = listener_detail.times;
+
+                    return;
+                }
+            }
+
+            instance.removeListener(listener_detail.listener_key, event_name);
         });
     }
 
-    function _notice_event_cb(follower, source_id, source_event, source_data) {
-        follower.target.notice(source_id, source_event, source_data);
+    /**
+     *
+     * @param {EventEmitter} instance
+     * @param {string} event
+     * @return {Array}
+     */
+    function getListeners(instance, event) {
+        if (!instance._events.hasOwnProperty(event)) {
+            return [];
+        }
+
+        var listeners = [];
+
+        _.each(instance._events[event], function (event_detail, index_key) {
+            if (instance._listeners.hasOwnProperty(event_detail.listener_key)) {
+                event_detail.listener = instance._listeners[event_detail.listener_key].listener;
+                event_detail.event_index_key = index_key;
+
+                listeners.push(_.cloneDeep(event_detail));
+            }
+        });
+
+        return _.sortBy(listeners, 'priority');
     }
 
     function do_callback(callback, args, context) {
@@ -20254,386 +20208,6 @@
             do_callback(callback, args, context || null);
         }, Math.max(1, delay));
     }
-
-    /**
-     * Alias of 'emitEvent'
-     * @see emitEvent
-     */
-    EventEmitter.prototype.emit = function () {
-        this.emitEvent.apply(this, _.toArray(arguments));
-    };
-
-    /**
-     * Remove listener by key
-     * @param {string|Function|Array} removes Listener / listener key or array of them
-     * @param {string[]} [events]
-     * @param {number} [priority]
-     */
-    EventEmitter.prototype.removeListener = function (removes, events, priority) {
-        var self = this, removed = {}, removes_by_keys, remove_by_listeners;
-
-        removes = _.castArray(removes);
-        events = _get_valid_events(self, events);
-
-        removes_by_keys = _.filter(removes, _.isString);
-        remove_by_listeners = _.filter(removes, _.isFunction);
-
-        if (removes_by_keys.length) {
-            removed = _remove_listener_by_keys(self, removes_by_keys, events, priority);
-        }
-        if (remove_by_listeners.length) {
-            _merge_object_item(removed, _remove_listener_by_listeners(self, remove_by_listeners, events, priority));
-        }
-
-        _.each(events, function (event) {
-            if (_.isEmpty(self._events[event].key_mapped)) {
-                delete self._events[event];
-            }
-        });
-
-        return removed;
-    };
-
-
-    /**
-     *
-     * @param instance
-     * @param keys
-     * @param {Array} events Valid events
-     * @return {{}}
-     * @private
-     */
-    function _group_keys_by_event(instance, keys, events) {
-        var grouped = {},
-            event,
-            found,
-            events_cloned = _.clone(events);
-
-        while (keys.length && (event = events_cloned.shift())) {
-            found = _.intersection(keys, _.keys(instance._events[event].key_mapped));
-
-            if (found.length) {
-                grouped[event] = found;
-                keys = _.difference(keys, found);
-            }
-        }
-
-        return grouped;
-    }
-
-    function _remove_listener_by_keys(instance, keys, events) {
-        var keys_grouped_by_event = _group_keys_by_event(instance, keys, events),
-            event_detail;
-
-        _.each(keys_grouped_by_event, function (keys, event) {
-            event_detail = instance._events[event];
-            event_detail.priority.remove(_.flatten(_.values(_.pick(event_detail.key_mapped, keys))));
-
-            event_detail.key_mapped = _.omit(event_detail.key_mapped, keys);
-            instance._events[event] = event_detail;
-        });
-
-        return keys_grouped_by_event;
-    }
-
-    function _find_keys_by_listener(listener, compare_content) {
-        return listener === compare_content.listener;
-    }
-
-    function _remove_listener_by_listeners(instance, listeners, events) {
-        var removed = {},
-            priority_keys_removed;
-
-        _.each(listeners, function (listener) {
-            var callback = _.partial(_find_keys_by_listener, listener);
-
-            _.each(events, function (event) {
-                var keys = instance._events[event].priority.findAllBy(callback);
-
-                if (false == keys) {
-                    return;
-                }
-
-                priority_keys_removed = instance._events[event].priority.remove(keys);
-
-                if (priority_keys_removed.length) {
-                    var removed_grouped_by_listener_key = _remove_key_mapped_by_priority_keys(instance._events[event].key_mapped, priority_keys_removed);
-                    var tmp_obj = {};
-
-                    tmp_obj[event] = Object.keys(removed_grouped_by_listener_key);
-                    _merge_object_item(removed, tmp_obj);
-                }
-            });
-        });
-
-        return removed;
-    }
-
-
-    /**
-     *
-     * @param key_mapped
-     * @param priority_keys
-     * @return {{}} Object, Event key => priority keys
-     * @private
-     */
-    function _remove_key_mapped_by_priority_keys(key_mapped, priority_keys) {
-        var found, keys = Object.keys(key_mapped), key, removed = {};
-
-        while (priority_keys.length && (key = keys.shift())) {
-            found = _.intersection(priority_keys, key_mapped[key]);
-
-            if (found.length) {
-                key_mapped[key] = _.difference(key_mapped[key], found);
-
-                if (!key_mapped[key].length) {
-                    delete key_mapped[key];
-                }
-
-                priority_keys = _.difference(priority_keys, found);
-                removed[key] = found;
-            }
-        }
-
-        return removed;
-    }
-
-    /**
-     * Merge each item of an object with item of other object
-     * @param {{}} target
-     * @param {{}} object
-     */
-    function _merge_object_item(target, object) {
-        _.each(object, function (value, key) {
-            value = _.castArray(value);
-
-            if (!target.hasOwnProperty(key)) {
-                target[key] = value;
-            } else {
-                target[key] = _.concat(target[key], value);
-            }
-        });
-    }
-
-    /**
-     * Alias of `removeListener`
-     * @see removeListener
-     */
-    EventEmitter.prototype.off = function () {
-        return this.removeListener.apply(this, _.toArray(arguments));
-    };
-
-    /**
-     * Set events is private
-     */
-    EventEmitter.prototype.private = function () {
-        this._event_mimics = _.concat(this._event_privates, _.flatten(_.toArray(arguments)));
-    };
-
-    /**
-     * Set events is mimic
-     */
-    EventEmitter.prototype.mimic = function () {
-        this._event_mimics = _.concat(this._event_mimics, _.flatten(_.toArray(arguments)));
-    };
-
-    /**
-     * Attach other event emitter to this. Notice async
-     * @param {EventEmitter} eventEmitter
-     * @param {Array} [only]
-     * @param {Array} [excepts]
-     * @param {boolean} [async=true] notice target EventEmitter async. Default is true
-     * @returns {boolean}
-     */
-    EventEmitter.prototype.attach = function (eventEmitter, only, excepts, async) {
-        if (!EventEmitter.isEventEmitter(eventEmitter)) {
-            throw new Error('Invalid EventEmitter instance');
-        }
-        if (!this._event_followers.hasOwnProperty(eventEmitter.id)) {
-            this._event_followers[eventEmitter.id] = {
-                target: eventEmitter,
-                async: _.isUndefined(async) || Boolean(async)
-            };
-            this.emitEvent('attach', [eventEmitter, only, excepts]);
-            eventEmitter.attachTo(this, only, excepts);
-            return true;
-        }
-
-        return false;
-    };
-
-    /**
-     * Check if has an EE instance is attached to this
-     * @param {EventEmitter} eventEmitter
-     * @return {boolean}
-     */
-    EventEmitter.prototype.hasFollower = function (eventEmitter) {
-        return EventEmitter.isEventEmitter(eventEmitter) && this._event_followers.hasOwnProperty(eventEmitter.id);
-    };
-
-    /**
-     * Attach other event emitter to this. Notice sync
-     * @param {EventEmitter} eventEmitter
-     * @param only
-     * @param excepts
-     * @return boolean
-     */
-    EventEmitter.prototype.attachHard = function (eventEmitter, only, excepts) {
-        return this.attach(eventEmitter, only, excepts, false);
-    };
-    /**
-     * Attach this to other event emitter instance. Notice async
-     * @param {EventEmitter} eventEmitter
-     * @param {Array} [only]
-     * @param {Array} [excepts]
-     * @param {boolean} [hard=false] Hard attach to other, other notice will call immediate. Default is false
-     * @returns {boolean}
-     */
-    EventEmitter.prototype.attachTo = function (eventEmitter, only, excepts, hard) {
-        if (!EventEmitter.isEventEmitter(eventEmitter)) {
-            throw new Error('Invalid EventEmitter instance');
-        }
-        if (!this._event_following.hasOwnProperty(eventEmitter.id)) {
-            this._event_following[eventEmitter.id] = {
-                id: eventEmitter.id,
-                type: eventEmitter.constructor.name,
-                only: _.castArray(only || []),
-                excepts: _.castArray(excepts || [])
-            };
-            this.emitEvent('attached', [eventEmitter, only, excepts]);
-
-            if (hard) {
-                return eventEmitter.attachHard(this);
-            }
-
-            return eventEmitter.attach(this);
-
-        }
-
-        return true;
-    };
-
-    /**
-     * Check if this one is following another EE instance
-     * @param {EventEmitter} eventEmitter
-     * @return {boolean}
-     */
-    EventEmitter.prototype.isFollowing = function (eventEmitter) {
-        return EventEmitter.isEventEmitter(eventEmitter) && this._event_following.hasOwnProperty(eventEmitter.id);
-    };
-
-    /**
-     * Hard Attach this to other event emitter instance. Notice sync
-     * @param {EventEmitter} eventEmitter
-     * @param {Array} [only]
-     * @param {Array} [excepts]
-     * @returns {boolean}
-     */
-    EventEmitter.prototype.attachHardTo = function (eventEmitter, only, excepts) {
-        return this.attachTo(eventEmitter, only, excepts, true);
-    };
-
-    /**
-     * Notice following event emitter emitted. If noticed event is a mimic event then do not emit any notice events.
-     * Emit events:
-     * - <source id>.<event name>
-     * - <source type>.<event name>,
-     * - noticed.<source id>.<event name>
-     * - noticed.<source id>
-     * - noticed.<source type>.<event name>
-     * - noticed.<source type>
-     * - noticed
-     *
-     * Each notice event emit with data as object:
-     * - id: source id
-     * - type: source type
-     * - event: source event name
-     * - data: source event data
-     *
-     * @param {string} sourceID Following event emitter id
-     * @param {string} eventName Event emitted
-     * @param {*} data
-     */
-    EventEmitter.prototype.notice = function (sourceID, eventName, data) {
-        if (this._event_following.hasOwnProperty(sourceID)) {
-            var following_info = this._event_following[sourceID],
-                self = this;
-
-            if ((_.isEmpty(following_info.only) || -1 !== following_info.only.indexOf(eventName))
-                && (_.isEmpty(following_info.excepts) || -1 === following_info.excepts.indexOf(eventName))) {
-
-                var mimic_events = [
-                    eventName,
-                    following_info.type + '.*',
-                    following_info.type + '.' + eventName
-                ];
-
-                if (!_.isEmpty(_.intersection(mimic_events, self._event_mimics))) {
-                    self.emitEvent(eventName, data);
-
-                    return;
-                }
-
-                var notice_data = {
-                        id: following_info.id,
-                        type: following_info.type,
-                        event: eventName,
-                        data: data
-                    },
-                    notice_events = [
-                        following_info.id + '.' + eventName,
-                        following_info.type + '.' + eventName,
-                        'noticed.' + following_info.id + '.' + eventName,
-                        'noticed.' + following_info.id,
-                        'noticed.' + following_info.type + '.' + eventName,
-                        'noticed.' + following_info.type,
-                        'noticed'
-                    ];
-
-                this.emitEvent(notice_events, notice_data);
-            }
-        }
-    };
-
-    /**
-     * Detach a followed event emitter
-     * @param {EventEmitter} eventEmitter
-     * @returns {boolean}
-     */
-    EventEmitter.prototype.detach = function (eventEmitter) {
-        if (!EventEmitter.isEventEmitter(eventEmitter)) {
-            throw new Error('Invalid EventEmitter instance');
-        }
-        if (this._event_followers.hasOwnProperty(eventEmitter.id)) {
-            this.emitEvent('detach', [eventEmitter]);
-            delete this._event_followers[eventEmitter.id];
-            eventEmitter.detachFrom(this);
-
-            return true;
-        }
-
-        return false;
-
-    };
-
-    /**
-     * Detach a following event emitter
-     * @param {EventEmitter} eventEmitter
-     * @returns {boolean}
-     */
-    EventEmitter.prototype.detachFrom = function (eventEmitter) {
-        if (!EventEmitter.isEventEmitter(eventEmitter)) {
-            throw new Error('Invalid EventEmitter instance');
-        }
-        if (this._event_following.hasOwnProperty(eventEmitter.id)) {
-            this.emitEvent('detached', [eventEmitter]);
-            delete this._event_following[eventEmitter.id];
-            eventEmitter.detach(this);
-
-            return true;
-        }
-        return false;
-    };
 
     EventEmitter.isEventEmitter = function (object) {
         return object instanceof EventEmitter;
@@ -21029,14 +20603,14 @@
 }));
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['lodash', 'madnh'], function (_, M) {
-            return (root.Task = factory(_, M));
+        define(['lodash'], function (_) {
+            return (root.Task = factory(_));
         });
     } else {
         // Browser globals
-        root.Task = factory(root._, root.M);
+        root.Task = factory(root._);
     }
-}(this, function (_, M) {
+}(this, function (_) {
     var tasks = {};
 
     /**

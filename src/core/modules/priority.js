@@ -382,12 +382,12 @@
             for (index in this._priorities[priority]) {
                 if (this._priorities[priority].hasOwnProperty(index)) {
                     if (with_key) {
-                        result.push(this._priorities[priority][index].content);
-                    } else {
                         result.push({
                             content: this._priorities[priority][index].content,
                             priority_key: this._priorities[priority][index].priority_key
                         });
+                    } else {
+                        result.push(this._priorities[priority][index].content);
                     }
                 }
             }
