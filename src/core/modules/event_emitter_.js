@@ -666,8 +666,10 @@
                 target: eventEmitter,
                 async: _.isUndefined(async) || Boolean(async)
             };
+
             this.emitEvent('attach', [eventEmitter, only, excepts]);
             eventEmitter.attachTo(this, only, excepts);
+
             return true;
         }
 
