@@ -31,8 +31,10 @@
          *  + context: object|null, listener context, use event emitter instance if this value is not special
          *  + key: string, use to index listener (if need)
          *  + async: call listener in asynchronous mode
+         *  + delay: async delay milliseconds, default is 1
          *  + listener_key: added listener key
          *
+         * @property
          * @type {{}}
          * @private
          */
@@ -47,6 +49,7 @@
          *     + key: event index, _{number}
          *     + value: true
          *
+         * @property
          * @type {{}}
          */
         this._listeners = {};
@@ -55,10 +58,11 @@
          * Listening instances
          * - key: instance id
          * - value: listen detail
+         *  + target: listening object
          *  + name: instance name
          *  + listener_key: listener key of added event (on target instance), ready to remove listening
-         *  + only: true|string[], only accept events, if is true then accept all of events
-         *  + except: [], except events
+         *  + only: true|{}, only accept events, if is true then accept all of events, if is object -> keys are events name
+         *  + except: {}, keys are except events
          *  + async: boolean, listen in asynchronous mode, default is true
          *  + add_method: string|function, method name to call when establish connect to listen instance, default is addListener. If this value is a function, then callback will receive parameters:
          *      + event emitter instance
@@ -73,13 +77,12 @@
          *      Result of this function will use as listener key
          *
          *  + remove_method: string, method name to call when remove added listen to other instance, default is removeListener. If this value is a function, then callback will receive parameters:
-         *      + event emitter instance
-         *      + target event emitter
          *      + listener key
-         *      + listen detail
+         *
          *  + event: string, event to add to, default is 'notify'
          *  + mimics: true|array, list of events that will emit as event of this event emitter. True will mimic all of events. Default is empty array
          *
+         * @property
          * @type {{}}
          */
         this._listening = {};
@@ -89,9 +92,16 @@
          * - key: event name
          * - value: true
          *
+         * @property
          * @type {boolean|{}}
          */
         this._mimics = {};
+
+        /**
+         * @property
+         * @type {{}|boolean}
+         */
+        this._private_events = {};
     }
 
     /**
@@ -208,7 +218,6 @@
         return key;
     };
 
-
     EventEmitter.prototype.on = EventEmitter.prototype.addListener;
 
     /**
@@ -229,7 +238,8 @@
             times: true,
             context: null,
             key: '',
-            async: false
+            async: false,
+            delay: 1
         });
 
         return options;
@@ -349,6 +359,97 @@
     };
 
     /**
+     * Mimic events
+     * - no parameters: set instance's mimic status is true
+     * - (boolean): set instance's mimic status is true|false
+     * - (listen_object_or_id): listening object or id
+     * - (boolean, listen_object_or_id): set mimic status of listening object is true|false
+     * - (events, listen_object_or_id): set mimic events of listening object
+     *
+     * @param {string|string[]|boolean|EventEmitter} [events]
+     * @param {EventEmitter|null|string} [target] Target instance, ID or name
+     */
+    EventEmitter.prototype.mimic = function (events, target) {
+        if (!arguments.length) {
+            this._mimics = true;
+            return;
+        }
+        if (arguments.length == 1) {
+            if (_.isBoolean(events)) {
+                this._mimics = events;
+            } else if (_.isObject(events) && !_.isArray(events) && this.isListening(events)) {
+                this._listening[get_listen_id(this, events.id || events)].mimics = true;
+            } else {
+                events = _.filter(_.flatten(_.castArray(events)), _.isString);
+                events = arrayToObject(events);
+
+                if (!_.isObject(this._mimics)) {
+                    this._mimics = events;
+                } else {
+                    _.extend(this._mimics, events);
+                }
+            }
+
+            return;
+        }
+
+        target = get_listen_id(this, _.isObject(target) ? target.id : target);
+
+        if (!target) {
+            throw new Error('Invalid target');
+        }
+
+        if (_.isBoolean(events)) {
+            if (!this.isListening(target)) {
+                throw new Error('The target is not listening');
+            }
+
+            this._listening[target].mimics = events;
+
+            return;
+        }
+
+        var self = this;
+
+        events = _.castArray(events);
+        _.each(events, function (event) {
+            if (!_.isObject(self._listening[target].mimics)) {
+                self._listening[target].mimics = {};
+            }
+
+            self._listening[target].mimics[event] = true;
+        });
+    };
+
+    /**
+     * Check if an event is a mimic event
+     * @param {string} event
+     * @param {EventEmitter} [target]
+     * @return {boolean}
+     */
+    EventEmitter.prototype.isMimic = function (event, target) {
+        return is_mimic(this, event, target);
+    };
+
+    /**
+     * Set or add private events
+     * @param {boolean|string|Array} events
+     */
+    EventEmitter.prototype.private = function (events) {
+        if (_.isBoolean(events)) {
+            this._private_events = events ? true : {};
+        } else {
+            events = _.filter(_.toArray(arguments), _.isString);
+
+            if (!_.isObject(this._private_events)) {
+                this._private_events = {};
+            }
+
+            _.extend(this._private_events, arrayToObject(events));
+        }
+    };
+
+    /**
      * Emit event
      * @param {string} event Event name
      * @param {*} [data...] Event data
@@ -360,13 +461,18 @@
             _emit_event(this, event, data);
         }
 
-        //@TODO: notice events here
+        if (this._events.hasOwnProperty('notify') && !is_private_event(this, event)) {
+            _emit_event(this, 'notify', [event].concat(data));
+        }
+
+        _emit_event(this, event + '_complete', data);
 
         if (event !== 'event_emitted') {
             _emit_event(this, 'event_emitted', [event].concat(data));
         }
-        _emit_event(this, event + '_complete', data);
+
     };
+    EventEmitter.prototype.emit = EventEmitter.prototype.emitEvent;
 
     /**
      * Similar to method emitEvent but do a callback after event is emitted
@@ -380,6 +486,124 @@
 
         final_cb.apply(this, data);
     };
+    EventEmitter.prototype.emitThen = EventEmitter.prototype.emitEventThen;
+    EventEmitter.prototype.isListening = function (target, event) {
+        var id = _.isObject(target) ? target.id : target;
+
+        if (!(_.isString(id) || _.isNumber(id) && _.isFinite(id) && !_.isNaN(id))) {
+            return false;
+        }
+
+        if (this._listening.hasOwnProperty(id) && (!_.isObject(target) || this._listening[id].target === target)) {
+            if (event) {
+                return is_valid_listening_event(event, this._listening[id].only, this._listening[id].except);
+            }
+
+            return true;
+        }
+
+        id = get_listen_id(this, id);
+
+        return !_.isUndefined(id);
+    };
+
+    /**
+     *
+     * @param {EventEmitter} target
+     * @param name
+     * @param options
+     * @return {string|boolean}
+     */
+    EventEmitter.prototype.listen = function (target, name, options) {
+        if (!_.isObject(target)) {
+            throw new Error('Listen target must be an object');
+        }
+        if (this.isListening(target)) {
+            return true;
+        }
+        if (!_.isString(name)) {
+            options = name;
+            name = target.id;
+        }
+        if (_.isArrayLike(options)) {
+            options = {
+                only: arrayToObject(options)
+            }
+        }
+
+        options = _.defaults(options || {}, {
+            target: target,
+            name: name,
+            only: true,
+            except: {},
+            async: true,
+            add_method: 'addListener',
+            remove_method: 'removeListener',
+            event: 'notify',
+            mimics: {}
+        });
+
+        if (!_.isBoolean(options.mimics)) {
+            options.mimics = arrayToObject(options.mimics);
+        }
+        if (!_.isBoolean(options.only)) {
+            options.only = arrayToObject(options.only);
+        }
+
+        options.except = arrayToObject(options.except);
+
+        var self = this,
+            callback = function () {
+                notify_listen_callback.apply(this, [self, name].concat(Array.prototype.slice.call(arguments)));
+            };
+
+        var listen_options = {
+            async: options.async
+        };
+
+        if (_.isString(options.add_method)) {
+            options.listener_key = target[options.add_method](options.event, callback, listen_options);
+        } else {
+            options.listener_key = options.add_method(this, target, options, callback, listen_options);
+        }
+
+        if (_.isUndefined(options.listener_key) || _.isNull(options.listener_key)) {
+            throw new Error('Added listener key received by add method is invalid');
+        }
+
+        this._listening[target.id] = _.omit(options, ['async', 'add_method', 'event']);
+
+        return options.listener_key;
+    };
+
+    /**
+     *
+     * @param {string|EventEmitter} target
+     */
+    EventEmitter.prototype.unlisten = function (target) {
+        if (!arguments.length) {
+            _.map(_.keys(this._listening), _.partial(un_listen, this));
+
+            this._listening = {};
+        } else {
+            target = _.isObject(target) ? target.id : target;
+
+            if (this.isListening(target)) {
+                un_listen(this, target);
+            }
+        }
+    };
+
+    /**
+     * Get object from array, object key is array values
+     * @param {*} array
+     * @return {{}}
+     */
+    function arrayToObject(array) {
+        array = _.castArray(array);
+
+        return _.zipObject(array, _.fill(new Array(array.length), true));
+    }
 
     function _emit_event(instance, event_name, data) {
         var listeners;
@@ -396,7 +620,11 @@
 
         _.each(listeners, function (listener_detail) {
             if (listener_detail.times === true || listener_detail.times > 0) {
-                (listener_detail.async ? async_callback : do_callback)(listener_detail.listener, data, listener_detail.context || instance);
+                if (listener_detail.async) {
+                    async_callback(listener_detail.listener, data, listener_detail.context || instance, listener_detail.delay);
+                } else {
+                    do_callback(listener_detail.listener, data, listener_detail.context || instance);
+                }
 
                 if (listener_detail.times === true) {
                     return;
@@ -413,6 +641,46 @@
 
             instance.removeListener(listener_detail.listener_key, event_name);
         });
+    }
+
+    /**
+     *
+     * @param {EventEmitter} instance
+     * @param {string} event
+     * @return {boolean}
+     */
+    function is_private_event(instance, event) {
+        return true === instance._private_events || _.isObject(instance._private_events) && instance._private_events.hasOwnProperty(event);
+    }
+
+    /**
+     * Check if an event is mimic
+     * @param {EventEmitter} instance
+     * @param {string} event
+     * @param {EventEmitter|string} target Object which has ID field or listen instance ID or listen instance name
+     * @return {boolean}
+     */
+    function is_mimic(instance, event, target) {
+        if (_.isBoolean(instance._mimics)) {
+            return instance._mimics;
+        }
+        if (_.isObject(instance._mimics) && instance._mimics.hasOwnProperty(event)) {
+            return true;
+        }
+        if (!target) {
+            return instance._mimics.hasOwnProperty(event);
+        } else {
+            target = get_listen_id(instance, _.isObject(target) ? target.id : target);
+
+            if (target) {
+                if (true === instance._listening[target].mimics
+                    || (_.isObject(instance._listening[target].mimics) && instance._listening[target].mimics.hasOwnProperty(event))) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -464,7 +732,7 @@
         return undefined;
     }
 
-    function async_callback(callback, args, delay, context) {
+    function async_callback(callback, args, context, delay) {
         delay = parseInt(delay);
         if (_.isNaN(delay) || !_.isFinite(delay)) {
             delay = 1;
@@ -474,22 +742,6 @@
             do_callback(callback, args, context || null);
         }, Math.max(1, delay));
     }
-
-    EventEmitter.prototype.isListening = function (target) {
-        var id = target.id || target;
-
-        if (_.isEmpty(id) && id !== 0) {
-            throw new Error('Check listening object with invalid ID');
-        }
-
-        if (this._listening.hasOwnProperty(id) && (!_.isObject(target) || this._listening[id].target === target)) {
-            return true;
-        }
-
-        id = get_listen_id(this, id);
-
-        return !_.isUndefined(id);
-    };
 
     /**
      * Get listening ID from name
@@ -505,68 +757,13 @@
     }
 
     /**
-     *
-     * @param {EventEmitter} target
-     * @param name
-     * @param options
-     * @return {string|boolean}
-     */
-    EventEmitter.prototype.listen = function (target, name, options) {
-        if (!EventEmitter.isEventEmitter(target)) {
-            throw new Error('Listen target must be an instance of EventEmitter');
-        }
-        if (this.isListening(target)) {
-            return true;
-        }
-        if (!_.isString(name)) {
-            options = name;
-            name = target.id;
-        }
-        if (_.isArrayLike(options)) {
-            options = {
-                only: _.castArray(options)
-            }
-        }
-
-        options = _.default(options || {}, {
-            name: name,
-            only: true,
-            except: [],
-            async: true,
-            add_method: 'addListener',
-            remove_method: 'removeListener',
-            event: 'notify',
-            mimics: []
-        });
-
-        var callback = _.partial(listen_callback, this, name);
-        var listen_options = {
-            async: options.async
-        };
-
-        if (_.isString(options.add_method)) {
-            options.listener_key = target[options.add_method](options.event, callback, listen_options);
-        } else {
-            options.listener_key = options.add_method(this, target, options, callback, listen_options);
-        }
-
-        if (_.isUndefined(options.listener_key) || _.isNull(options.listener_key)) {
-            throw new Error('Added listener key received by add method is invalid');
-        }
-
-        this._listening[target.id] = options;
-
-        return options.listener_key;
-    };
-
-    /**
-     * Emit event
+     * Callback use to add to base object of listening
      * @param {EventEmitter} host
      * @param {string} name Instance named
      * @param {string} event Event name
      * @param {*} [data...] Event data
      */
-    function listen_callback(host, name, event, data) {
+    function notify_listen_callback(host, name, event, data) {
         var source = this;
 
         if (!host.isListening(source)) {
@@ -574,53 +771,29 @@
         }
         var listen_detail = host._listening[source.id];
 
-        if (!is_valid_event(event, listen_detail.only, listen_detail.except)) {
+        if (!is_valid_listening_event(event, listen_detail.only, listen_detail.except)) {
             return;
         }
 
-        var event_data = Array.prototype.slice.call(arguments, 3);
-        var events = [
-            name + '.' + event,
-            source.id + '.' + event
-        ];
+        var event_data = Array.prototype.slice.call(arguments, 3),
+            events = {};
 
-        if (host.isMimic(event, source.id)) {
-            events.push(event);
+        events[source.id + '.' + event] = true;
+        events[name + '.' + event] = true;
+
+        if (is_mimic(host, event, source.id)) {
+            events[event] = true;
         }
 
-        _.each(events, function (target_event) {
+        _.each(_.keys(events), function (target_event) {
             host.emitEvent.apply(host, [target_event].concat(event_data));
         });
+        host.emitEvent.apply(host, ['notified', event].concat(event_data));
     }
 
-    function is_valid_event(event, only, except) {
-        if (-1 !== event.indexOf(_.castArray(except))) {
-            return false;
-        }
-
-        return true === only || -1 !== only.indexOf(event);
+    function is_valid_listening_event(event, only, except) {
+        return !except.hasOwnProperty(event) && (true === only || only.hasOwnProperty(event));
     }
-
-    EventEmitter.prototype.unlisten = function (target, events) {
-        if (!arguments.length) {
-            _.map(_.keys(this._listening), _.partial(un_listen, this));
-
-            this._listeners = {};
-            return;
-        }
-        if (!this.isListening(target)) {
-            return;
-        }
-
-        var id = target.id || target,
-            detail = this._listening[id];
-
-        if (_.isUndefined(events)) {
-            un_listen(this, id);
-        } else {
-            detail.except = detail.except.concat(_.flatten(Array.prototype.slice.call(arguments, 1)));
-        }
-    };
 
     function un_listen(instance, listen_id) {
         var detail = instance._listening[listen_id];
@@ -631,105 +804,12 @@
         if (_.isString(detail.remove_method)) {
             detail.target[detail.remove_method](detail.listener_key);
         } else {
-            detail.remove_method(instance, detail.target, detail.listener_key, detail);
+            detail.remove_method(detail.listener_key);
         }
 
 
         delete instance._listening[listen_id];
     }
-
-    /**
-     * Check if an event is call as mimic
-     * @param {string} event
-     * @param {object|string} target Object which has ID field or listen instance ID or listen instance name
-     * @return {boolean}
-     */
-    EventEmitter.prototype.isMimic = function (event, target) {
-        if (_.isBoolean(this._mimics)) {
-            return this._mimics;
-        }
-        if (target) {
-            target = target.id || target;
-        }
-        if ((_.isUndefined(target) && this._mimics.hasOwnProperty(event))
-            || this._mimics.hasOwnProperty(target)
-            || this._mimics.hasOwnProperty(target + '.*')
-            || this._mimics.hasOwnProperty(target + '.' + event)) {
-
-            return true;
-        }
-        if (target) {
-            target = get_listen_id(this, target);
-
-            if (true === this._listening[target].mimics
-                || (_.isArray(this._listening[target].mimics) && -1 !== this._listening[target].mimics.indexOf(event))) {
-                return true;
-            }
-        }
-
-        return false;
-    };
-
-    /**
-     * Mimic events
-     * - no parameters: set instance's mimic status is true
-     * - (boolean): set instance's mimic status is true|false
-     * - (listen_object_or_id): listening object or id
-     * - (boolean, listen_object_or_id): set mimic status of listening object is true|false
-     * - (events, listen_object_or_id): add events to mimic list of listening object
-     * @param [events]
-     * @param [target]
-     * @return {boolean}
-     */
-    EventEmitter.prototype.mimic = function (events, target) {
-        if (!arguments.length) {
-            this._mimics = true;
-
-            return true;
-        }
-        var id;
-
-        if (1 === arguments.length) {
-            if (_.isBoolean(arguments[0])) {
-                this._mimics = arguments[0];
-            } else if (!_.isArray(arguments[0])) {
-                id = arguments[0].id || get_listen_id(this, arguments[0]) || arguments[0];
-
-                if (!this.isListening(id)) {
-                    return false;
-                }
-
-                this._listening[id].mimics = true;
-            } else {
-                if (!_.isArray(this._mimics)) {
-                    this._mimics = [];
-                }
-
-                this._mimics = this._mimics.concat(_.castArray(events));
-            }
-
-            return true;
-        }
-
-        id = target.id || get_listen_id(this, target) || target;
-
-        if (this.isListening(id)) {
-            if (_.isBoolean(events)) {
-                this._listening[id].mimics = events;
-            } else {
-                if (!_.isArray(this._listening[id].mimics)) {
-                    this._listening[id].mimics = [];
-                }
-
-                this._listening[id].mimics = this._listening[id].mimics.concat(_.castArray(events));
-            }
-
-            return true;
-        }
-
-        return false;
-    };
-
 
     EventEmitter.isEventEmitter = function (object) {
         return object instanceof EventEmitter;

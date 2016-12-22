@@ -877,9 +877,9 @@
     };
 
     function createConsoleCB(name, description) {
-        return (function (default_description) {
-            console[name].apply(console, (default_description ? [default_description] : []).concat(slice.apply(arguments)));
-        })(description);
+        return function () {
+            console[name].apply(console, (description ? [description] : []).concat(slice.apply(arguments)));
+        }
     }
 
     /**
