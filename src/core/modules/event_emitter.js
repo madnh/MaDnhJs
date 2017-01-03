@@ -191,7 +191,12 @@
             }
             key = listener;
         } else {
-            key = uniqueID(this.id + '_listener_');
+            if (!options.key) {
+                key = uniqueID(this.id + '_listener_');
+            } else {
+                key = options.key;
+            }
+
             this._listeners[key] = {
                 listener: listener,
                 events: {}
@@ -274,6 +279,10 @@
         }
 
         while (listener_key = listener_keys.shift()) {
+            if (!this._listeners.hasOwnProperty(listener_key)) {
+                continue;
+            }
+
             listener_events = _.keys(this._listeners[listener_key].events);
             target_events = _.isUndefined(events) ? listener_events : _.intersection(_.castArray(events), listener_events);
 

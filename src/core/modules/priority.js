@@ -113,6 +113,10 @@
         PRIORITY_LEVEL_10: 1000
     };
     for (key in constants) {
+        if (!constants.hasOwnProperty(key)) {
+            continue;
+        }
+
         Object.defineProperty(Priority, key, {
             enumerable: true,
             value: constants[key]

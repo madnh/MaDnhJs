@@ -791,10 +791,10 @@
      *
      * @example
      * function MyEE(){
-     *  _.M.EventEmitter.call(this);
+     *  M.EventEmitter.call(this);
      * }
      *
-     * _.M.inherit(MyEE, _.M.EventEmitter);
+     * M.inherit(MyEE, M.EventEmitter);
      */
     M.inherit = function (subclass_constructor, base_class_constructor, addSuper) {
         var proto = subclass_constructor.prototype = Object.create(base_class_constructor.prototype);
