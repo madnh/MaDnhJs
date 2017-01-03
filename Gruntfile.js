@@ -29,7 +29,8 @@ module.exports = function (grunt) {
                     'src/core/modules/cache.js',
                     'src/core/modules/task.js',
                     'src/core/modules/app.js',
-                    'src/core/modules/ajax.js'
+                    'src/core/modules/ajax.js',
+                    'src/core/modules/template.js'
                 ],
                 dest: 'dist/madnh.js'
             },

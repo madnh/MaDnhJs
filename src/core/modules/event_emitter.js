@@ -482,6 +482,7 @@
 
     };
     EventEmitter.prototype.emit = EventEmitter.prototype.emitEvent;
+    EventEmitter.prototype.trigger = EventEmitter.prototype.emitEvent;
 
     /**
      * Similar to method emitEvent but do a callback after event is emitted
@@ -496,6 +497,7 @@
         final_cb.apply(this, data);
     };
     EventEmitter.prototype.emitThen = EventEmitter.prototype.emitEventThen;
+    EventEmitter.prototype.triggerThen = EventEmitter.prototype.emitEventThen;
     EventEmitter.prototype.isListening = function (target, event) {
         var id = _.isObject(target) ? target.id : target;
 
