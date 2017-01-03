@@ -28,7 +28,7 @@ module.exports = function (grunt) {
                     'src/core/modules/event_emitter.js',
                     'src/core/modules/cache.js',
                     'src/core/modules/task.js',
-                    // 'src/core/modules/app.js',
+                    'src/core/modules/app.js',
                     'src/core/modules/ajax.js'
                 ],
                 dest: 'dist/madnh.js'
@@ -80,7 +80,7 @@ module.exports = function (grunt) {
         }
     });
 
-    
+
     grunt.registerTask('build', ['clean:main', 'copy:main', 'concat', 'uglify']);
     grunt.registerTask('default', ['build']);
 };
