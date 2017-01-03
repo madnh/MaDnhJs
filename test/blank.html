@@ -28,6 +28,13 @@
 
             return new App();
         })();
+
+        App.onInit(function(){
+            console.log('A');
+        });
+        App.onInit(function(){
+            console.log('B');
+        })
     </script>
 </head>
 <body>

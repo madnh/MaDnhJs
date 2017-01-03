@@ -9,6 +9,10 @@
     }
 }(this, function (_, M, EventEmitter) {
     var root = this;
+    /**
+     * Support App from https://gist.github.com/madnh/53a16ae3842e16815c0fd36283843a9b
+     * @type {*}
+     */
     var old_app = root.App || null;
 
     function App() {
@@ -77,6 +81,15 @@
     var instance = new App();
 
     if (old_app) {
+        if(_.isArray(old_app.init_callbacks) && old_app.init_callbacks.length){
+            _.each(old_app.init_callbacks, function (cb) {
+                instance.onInit(cb);
+            });
+
+            old_app.init_callbacks = [];
+            delete old_app.init_callbacks;
+        }
+
         instance = _.defaults(instance, old_app);
     }
 
