@@ -4,6 +4,31 @@
     <title>Mocha Tests</title>
     <link href="/vendor/mocha/mocha.css" rel="stylesheet"/>
     <link rel="shortcut icon" type="image/x-icon" href="imgs/favicon.png">
+    <script>
+        /**
+         * Method:
+         * - onInit: add callback
+         * - init: call this method when ready
+         */
+        var App = (function () {
+            function App() {
+                this.init_callbacks = [];
+            }
+
+            App.prototype.onInit = function (callback) {
+                this.init_callbacks.push(callback);
+            };
+            App.prototype.init = function () {
+                _.each(this.init_callbacks, function (callback) {
+                    callback();
+                });
+
+                this.init_callbacks = [];
+            };
+
+            return new App();
+        })();
+    </script>
 </head>
 <body>
 

@@ -5,9 +5,12 @@
         });
     } else {
         // Browser globals
-        root.App = factory(root._, root.M, root.EventEmitter);
+        root.App = factory.bind(root)(root._, root.M, root.EventEmitter);
     }
 }(this, function (_, M, EventEmitter) {
+    var root = this;
+    var old_app = root.App || null;
+
     function App() {
         EventEmitter.call(this);
 
@@ -71,5 +74,11 @@
         this.reset('init');
     };
 
-    return new App();
+    var instance = new App();
+
+    if (old_app) {
+        instance = _.defaults(instance, old_app);
+    }
+
+    return instance;
 }));
