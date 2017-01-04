@@ -396,7 +396,7 @@
             this.error = result.error;
 
             if (!this.isRetryable()) {
-                this.emitEvent('fail', [result.error.message, result.error.code]);
+                this.emitEvent('fail', result.error.message, result.error.code);
             }
 
             return;
@@ -404,7 +404,7 @@
 
         this.response = result.data;
 
-        this.emitEvent('done', [_.clone(result.data)]);
+        this.emitEvent('done', _.clone(result.data));
     }
 
     function _ajax_fail_cb(jqXHR, textStatus, errorThrown) {
@@ -413,14 +413,14 @@
         this.error = err_result;
 
         if (!this.isRetryable() && !this.isAborted()) {
-            this.emitEvent('fail', [err_result.message, err_result.code]);
+            this.emitEvent('fail', err_result.message, err_result.code);
         }
     }
 
     function _at_the_end(ajax_instance) {
         ajax_instance._last_options = null;
         ajax_instance._is_retrying = false;
-        ajax_instance.emitEvent('always', [ajax_instance.error, ajax_instance.response]);
+        ajax_instance.emitEvent('always', ajax_instance.error, ajax_instance.response);
     }
 
     function _ajax_always_cb(jqXHR, textStatus) {
@@ -430,7 +430,7 @@
             this.emitEvent('aborted');
         } else if (this.isRetryable()) {
             if (this.isRetrying()) {
-                this.emitEvent('retry_complete', [this.retry_time, this.isLastRetryTime(), jqXHR, textStatus]);
+                this.emitEvent('retry_complete', this.retry_time, this.isLastRetryTime(), jqXHR, textStatus);
             }
 
             this._is_retrying = true;
@@ -551,7 +551,7 @@
             if (false !== last_options) {
                 instance._last_options = last_options;
             } else {
-                instance.emitEvent('fail', [instance.error.message, instance.error.code]);
+                instance.emitEvent('fail', instance.error.message, instance.error.code);
                 _at_the_end(instance);
             }
         }
