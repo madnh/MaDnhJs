@@ -5,15 +5,31 @@
         });
     } else {
         // Browser globals
-        root.App = factory.bind(root)(root._, root.M, root.EventEmitter);
+        var App = factory(root._, root.M, root.EventEmitter);
+
+        /**
+         * Support App from https://gist.github.com/madnh/53a16ae3842e16815c0fd36283843a9b
+         * @type {*}
+         */
+        var old_app = root.App || null;
+
+        if (old_app) {
+            if (_.isArray(old_app.init_callbacks) && old_app.init_callbacks.length) {
+                _.each(old_app.init_callbacks, function (cb) {
+                    App.onInit(cb);
+                });
+
+                old_app.init_callbacks = [];
+                delete old_app.init_callbacks;
+            }
+
+            App = _.defaults(App, _.omit(old_app, 'init_callbacks'));
+        }
+
+        root.App = App;
     }
 }(this, function (_, M, EventEmitter) {
     var root = this;
-    /**
-     * Support App from https://gist.github.com/madnh/53a16ae3842e16815c0fd36283843a9b
-     * @type {*}
-     */
-    var old_app = root.App || null;
 
     function App() {
         EventEmitter.call(this);
@@ -78,20 +94,5 @@
         this.reset('init');
     };
 
-    var instance = new App();
-
-    if (old_app) {
-        if(_.isArray(old_app.init_callbacks) && old_app.init_callbacks.length){
-            _.each(old_app.init_callbacks, function (cb) {
-                instance.onInit(cb);
-            });
-
-            old_app.init_callbacks = [];
-            delete old_app.init_callbacks;
-        }
-
-        instance = _.defaults(instance, old_app);
-    }
-
-    return instance;
+    return new App();
 }));
