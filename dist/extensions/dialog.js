@@ -1109,6 +1109,12 @@
     Dialog.dynamicContent = function (options) {
         var content = null;
 
+        if (_.isString(options)) {
+            options = {
+                url: options
+            }
+        }
+
         options = PreOptions.get(Dialog.DYNAMIC_CONTENT_PRE_OPTIONS_NAME, options);
 
         return function (update_content_cb, dialog) {
