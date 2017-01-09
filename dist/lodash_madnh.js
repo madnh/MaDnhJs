@@ -20367,6 +20367,8 @@
             async: options.async
         };
 
+        this.emitEvent('before_listen', target, options);
+
         if (_.isString(options.add_method)) {
             options.listener_key = target[options.add_method](options.event, callback, listen_options);
         } else {
@@ -20377,6 +20379,7 @@
             throw new Error('Added listener key received by add method is invalid');
         }
 
+        this.emitEvent('listen', target, options);
         this._listening[target.id] = _.omit(options, ['async', 'add_method', 'event']);
 
         return options.listener_key;
@@ -20607,12 +20610,16 @@
         if (!detail) {
             return;
         }
+
+        this.emitEvent('before_unlisten', detail.target, detail);
+
         if (_.isString(detail.remove_method)) {
             detail.target[detail.remove_method](detail.listener_key);
         } else {
             detail.remove_method(detail.listener_key);
         }
 
+        this.emitEvent('unlisten', detail.target, detail);
 
         delete instance._listening[listen_id];
     }

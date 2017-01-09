@@ -1,11 +1,17 @@
-;(function (_) {
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(['lodash', 'madnhjs', 'madnhjs_preoptions', 'madnhjs_waiter', 'madnhjs_ajax', 'madnhjs_template', 'madnhjs_dialog', 'madnhjs_dialog_button'], factory);
+    } else {
+        factory(root._, root.M, root.PreOptions, root.Waiter, root.Ajax, root.Template, root.Dialog, root.DialogButton);
+    }
+}(this, function (_, M, PreOptions, Waiter, Ajax, Template, Dialog, DialogButton) {
     var version = '1.0.0';
 
-    _.M.defineConstant({
-        DIALOG_BUTTON_TEMPLATE_BOOTSTRAP_PRE_OPTIONS_NAME: '_.M.DialogButton.Template.Bootstrap'
+    M.defineConstant(DialogButton, {
+        TEMPLATE_BOOTSTRAP_PRE_OPTIONS_NAME: 'M.DialogButton.Template.Bootstrap'
     });
 
-    _.M.PreOptions.define(_.M.DIALOG_BUTTON_TEMPLATE_BOOTSTRAP_PRE_OPTIONS_NAME, {
+    PreOptions.define(DialogButton.TEMPLATE_BOOTSTRAP_PRE_OPTIONS_NAME, {
         icon_class: 'dialog_button_icon',
         label_class: 'dialog_button_label'
     });
@@ -45,21 +51,21 @@
 
     function Bootstrap() {
         this.type_prefix = 'template_dialog_button_bootstrap';
-        _.M.Template.call(this);
+        Template.call(this);
 
         var self = this;
 
-        this.options = _.M.PreOptions.get(_.M.DIALOG_BUTTON_TEMPLATE_BOOTSTRAP_PRE_OPTIONS_NAME);
+        this.options = PreOptions.get(DialogButton.TEMPLATE_BOOTSTRAP_PRE_OPTIONS_NAME);
 
         this.setLayout(_layout);
         this.setSection('ICON', _section_icon.bind(this));
         this.setSection('LABEL', '<span class="<%= option.label_class %>"><%= data_source.options.label %></span>');
 
-        this.click_key = _.M.WAITER.createFunc(function () {
+        this.click_key = Waiter.createFunc(function () {
             self.getButton().click();
         });
 
-        this.mimic('toggle', 'toggle_enable');
+        this.mimic(['toggle', 'toggle_enable']);
 
         this.on('toggle', function (noticed_data) {
             this.getDOM().toggle(noticed_data.data);
@@ -76,15 +82,12 @@
 
     }
 
-    _.M.inherit(Bootstrap, _.M.Template);
-
-    Object.defineProperty(Bootstrap, 'version', {
-        value: version
-    });
+    M.inherit(Bootstrap, Template);
+    M.defineConstant(Bootstrap, 'version', version);
 
     /**
      *
-     * @returns {null|*|Object|_.M.EventEmitter|_.M.Dialog}
+     * @returns {null|*|Object|EventEmitter|Dialog}
      */
     Bootstrap.prototype.getButton = function () {
         return this.dataSource;
@@ -100,5 +103,5 @@
     };
 
 
-    _.M.Template.register(_.M.DIALOG_BUTTON_TEMPLATE_TYPE, 'Bootstrap', Bootstrap);
-})(_);
+    Template.register(DialogButton.TEMPLATE_TYPE, 'Bootstrap', Bootstrap);
+}));

@@ -1,13 +1,20 @@
-;(function (_) {
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(['lodash', 'madnhjs', 'madnhjs_preoptions', 'madnhjs_waiter', 'madnhjs_ajax', 'madnhjs_template', 'madnhjs_dialog', 'madnhjs_dialog_button'], factory);
+    } else {
+        factory(root._, root.M, root.PreOptions, root.Waiter, root.Ajax, root.Template, root.Dialog, root.DialogButton);
+    }
+}(this, function (_, M, PreOptions, Waiter, Ajax, Template, Dialog, DialogButton) {
     var version = '1.0.0';
-    _.M.defineConstant({
-        DIALOG_TEMPLATE_BOOTSTRAP_PRE_OPTIONS_NAME: '_.M.Dialog.Template.Bootstrap'
+    M.defineConstant(DialogButton, {
+        TEMPLATE_BOOTSTRAP_PRE_OPTIONS_NAME: 'M.Dialog.Template.Bootstrap'
     });
-    _.M.PreOptions.define(_.M.DIALOG_TEMPLATE_BOOTSTRAP_PRE_OPTIONS_NAME, {
+    PreOptions.define(DialogButton.TEMPLATE_BOOTSTRAP_PRE_OPTIONS_NAME, {
         has_header: true,
         has_footer: true,
         close_manual: true,
         padding: true,
+        classes: '',
         overflow: 'hidden',
         buttons_align: 'right',
         pending_info: ''
@@ -62,7 +69,7 @@
             size = 'modal-' + size_class_map[this.options.size];
         }
 
-        layout.push('<div class="modal-dialog ', size, '">', '<div class="modal-content">');
+        layout.push('<div class="modal-dialog ', this.options.classes, ' ', size, '">', '<div class="modal-content">');
 
         if (this.options.has_header) {
             layout.push('@HEADER@');
@@ -92,7 +99,7 @@
             data = {},
             template;
 
-        data['close_func'] = _.M.WAITER.createFunc(function () {
+        data['close_func'] = Waiter.createFunc(function () {
             this.getDialog().close();
         }.bind(this), true, 'Modal: ' + dialog.id + ' >>> Header close button');
 
@@ -150,8 +157,8 @@
         }
 
         this.type_prefix = 'template_dialog_bootstrap';
-        _.M.Template.call(this);
-        this.options = _.M.PreOptions.get(_.M.DIALOG_TEMPLATE_BOOTSTRAP_PRE_OPTIONS_NAME);
+        Template.call(this);
+        this.options = PreOptions.get(DialogButton.TEMPLATE_BOOTSTRAP_PRE_OPTIONS_NAME);
 
         this.waiter_keys = [];
         this.setLayout(_layout);
@@ -159,12 +166,12 @@
         this.setSection('BODY', _section_body.bind(this));
         this.setSection('FOOTER', _section_footer.bind(this));
 
-        this.mimic('open', 'toggle_enable', 'close', 'hide', 'show', 'update_content');
+        this.mimic(['open', 'toggle_enable', 'close', 'hide', 'show', 'update_content']);
 
         this.on('open', _open_dialog.bind(this));
         this.on('toggle_enable', update_dialog_close_status.bind(this));
         this.on('close', function () {
-            _.M.WAITER.remove(this.waiter_keys);
+            Waiter.remove(this.waiter_keys);
             this.waiter_keys = [];
             this.getDOM().modal('hide');
             this.getDOM().remove();
@@ -194,14 +201,12 @@
 
     }
 
-    _.M.inherit(Bootstrap, _.M.Template);
-    Object.defineProperty(Bootstrap, 'version', {
-        value: version
-    });
+    M.inherit(Bootstrap, Template);
+    M.defineConstant(Bootstrap, 'version', version);
 
     /**
      *
-     * @returns {null|*|Object|_.M.EventEmitter|_.M.Dialog}
+     * @returns {null|*|Object|EventEmitter|Dialog}
      */
     Bootstrap.prototype.getDialog = function () {
         return this.dataSource;
@@ -220,5 +225,5 @@
     };
 
 
-    _.M.Template.register(_.M.DIALOG_TEMPLATE_TYPE, 'Bootstrap', Bootstrap);
-})(_);
+    Template.register(Dialog.TEMPLATE_TYPE, 'Bootstrap', Bootstrap);
+}));

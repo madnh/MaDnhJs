@@ -1,36 +1,41 @@
-;(function (_) {
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(['lodash', 'madnhjs', 'madnhjs_preoptions', 'madnhjs_event_emitter', 'madnhjs_template', 'madnhjs_dialog'], function(_, M, PreOptions, EventEmitter, Template, Dialog){
+            return (root.DialogButton = factory(_, M, PreOptions, EventEmitter, Template, Dialog));
+        });
+    } else {
+        // Browser globals
+        root.DialogButton = factory(root._, root.M, root.PreOptions, root.EventEmitter, root.Template, root.Dialog);
+    }
+}(this, function (_, M, PreOptions, EventEmitter, Template, Dialog) {
     var version = '1.0.0';
+    var constant = {
+        PRE_OPTIONS_NAME: 'M.DialogButton',
+        TEMPLATE_TYPE: 'DialogButton',
+        TYPE_INFO: 'info',
+        TYPE_PRIMARY: 'primary',
+        TYPE_SUCCESS: 'success',
+        TYPE_WARNING: 'warning',
+        TYPE_DANGER: 'danger',
 
-    _.M.defineConstant({
-        DIALOG_BUTTON_PRE_OPTIONS_NAME: '_.M.DialogButton',
-        DIALOG_BUTTON_TEMPLATE_TYPE: 'DialogButton',
-        BUTTON_INFO: 'info',
-        BUTTON_PRIMARY: 'primary',
-        BUTTON_SUCCESS: 'success',
-        BUTTON_WARNING: 'warning',
-        BUTTON_DANGER: 'danger'
-    });
-    _.M.defineConstant({
-        BUTTON_OK: 'ok',
-        BUTTON_CANCEL: 'cancel',
-        BUTTON_YES: 'yes',
-        BUTTON_NO: 'no',
-        BUTTON_RETRY: 'retry',
+        OK: 'ok',
+        CANCEL: 'cancel',
+        YES: 'yes',
+        NO: 'no',
+        RETRY: 'retry',
 
-        DIALOG_BUTTON_OK_ONLY: ['ok'],
-        DIALOG_BUTTON_OK_CANCEL: ['ok', 'cancel'],
-        DIALOG_BUTTON_YES_NO: ['yes', 'no'],
-        DIALOG_BUTTON_YES_NO_CANCEL: ['yes', 'no', 'cancel'],
-        DIALOG_BUTTON_RETRY_CANCEL: ['retry', 'cancel']
-    });
-
-
+        BUTTONS_OK_ONLY: ['ok'],
+        BUTTONS_OK_CANCEL: ['ok', 'cancel'],
+        BUTTONS_YES_NO: ['yes', 'no'],
+        BUTTONS_YES_NO_CANCEL: ['yes', 'no', 'cancel'],
+        BUTTONS_RETRY_CANCEL: ['retry', 'cancel']
+    };
     var _buttons = {};
 
-    _.M.PreOptions.define(_.M.DIALOG_BUTTON_PRE_OPTIONS_NAME, {
+    PreOptions.define(constant.PRE_OPTIONS_NAME, {
         label: 'Untitled',
         icon: '',
-        type: _.M.BUTTON_INFO,
+        type: constant.TYPE_INFO,
         size: 1,
         handler: null,
         disable_on_pending: true,
@@ -42,11 +47,44 @@
         return button.isVisible() && button.isEnable() && button.getDialog().isClickable();
     }
 
+    function _init_btn(instance) {
+        instance.on('listen', _btn_event_attached);
+        instance.on('unlisten', _btn_event_detached);
+        instance.on('dialog.toggle_enable', _btn_event_dialog_toggle_enable);
+        instance.on('dialog.toggle_pending', _btn_event_dialog_toggle_pending);
+    }
+    function _btn_event_attached(dialog) {
+        if (dialog instanceof Dialog) {
+            _buttons[this.id].dialog = dialog;
+        }
+    }
+
+    function _btn_event_detached(dialog) {
+        if (dialog instanceof Dialog) {
+            _buttons[this.id].dialog = null;
+        }
+    }
+
+    function _btn_event_dialog_toggle_enable(notice_data) {
+        this.toggleEnable(notice_data.data);
+    }
+
+    function _btn_event_dialog_toggle_pending(notice_data) {
+        if (notice_data.data) {
+            if (this.options.disable_on_pending) {
+                this.toggleEnable(false);
+            }
+        } else {
+            this.toggleEnable(true);
+        }
+
+    }
+
     function DialogButton(option) {
         this.type_prefix = 'dialog_button';
-        _.M.EventEmitter.call(this);
+        EventEmitter.call(this);
 
-        this.options = _.M.PreOptions.get(_.M.DIALOG_BUTTON_PRE_OPTIONS_NAME, {
+        this.options = PreOptions.get(constant.PRE_OPTIONS_NAME, {
             name: this.id
         });
 
@@ -70,56 +108,20 @@
 
         _init_btn(this);
     }
-
-    function _init_btn(instance) {
-        instance.on('attached', _btn_event_attached);
-        instance.on('detached', _btn_event_detached);
-        instance.on('dialog.toggle_enable', _btn_event_dialog_toggle_enable);
-        instance.on('dialog.toggle_pending', _btn_event_dialog_toggle_pending);
-    }
-
-    function _btn_event_attached(dialog) {
-        if (dialog instanceof _.M.Dialog) {
-            _buttons[this.id].dialog = dialog;
-        }
-    }
-
-    function _btn_event_detached(dialog) {
-        if (dialog instanceof _.M.Dialog) {
-            _buttons[this.id].dialog = null;
-        }
-    }
-
-    function _btn_event_dialog_toggle_enable(notice_data) {
-        this.toggleEnable(notice_data.data);
-    }
-
-    function _btn_event_dialog_toggle_pending(notice_data) {
-        if (notice_data.data) {
-            if (this.options.disable_on_pending) {
-                this.toggleEnable(false);
-            }
-        } else {
-            this.toggleEnable(true);
-        }
-
-    }
-
-    _.M.inherit(DialogButton, _.M.EventEmitter);
-    Object.defineProperty(DialogButton, 'version', {
-        value: version
-    });
+    M.inherit(DialogButton, EventEmitter);
+    M.defineConstant(DialogButton, 'version', version);
+    M.defineConstant(DialogButton, constant);
 
     /**
      *
      * @param {{}} options
      */
     DialogButton.globalOption = function (options) {
-        _.M.PreOptions.update(_.M.DIALOG_BUTTON_PRE_OPTIONS_NAME, options);
+        PreOptions.update(DialogButton.PRE_OPTIONS_NAME, options);
     };
 
     DialogButton.prototype.setTemplate = function (template_instance) {
-        if (!_.M.isTemplateInstance(template_instance)) {
+        if (!(template_instance instanceof Template)) {
             throw new Error('Invalid Template instance');
         }
 
@@ -127,11 +129,11 @@
             _buttons[this.id].template_instance.disconnect();
             _buttons[this.id].template_instance = null;
         }
+        
         template_instance.option(this.options.template);
         _buttons[this.id].template_instance = template_instance;
         template_instance.connect(this);
     };
-
     /**
      * Get template instance
      * @returns {null|*}
@@ -139,16 +141,16 @@
     DialogButton.prototype.getTemplate = function () {
         if (!_buttons[this.id].template_instance) {
             if (!this.options.template_name) {
-                var default_options = _.M.PreOptions.get(_.M.DIALOG_BUTTON_PRE_OPTIONS_NAME);
+                var default_options = PreOptions.get(DialogButton.PRE_OPTIONS_NAME);
 
-                if (default_options.template_name && _.M.Template.hasTemplate(_.M.DIALOG_BUTTON_TEMPLATE_TYPE, default_options.template_name)) {
+                if (default_options.template_name && Template.hasTemplate(DialogButton.TEMPLATE_TYPE, default_options.template_name)) {
                     this.options.template_name = default_options.template_name;
                 } else {
-                    var default_template = _.M.Template.defaultTemplate(_.M.DIALOG_BUTTON_TEMPLATE_TYPE);
+                    var default_template = Template.defaultTemplate(DialogButton.TEMPLATE_TYPE);
 
                     if (false !== default_template) {
                         this.options.template_name = default_template;
-                        _.M.PreOptions.update(_.M.DIALOG_BUTTON_PRE_OPTIONS_NAME, {
+                        PreOptions.update(DialogButton.PRE_OPTIONS_NAME, {
                             template_name: default_template
                         });
                     } else {
@@ -158,17 +160,16 @@
             }
 
 
-            this.setTemplate(_.M.Template.templateInstance(_.M.DIALOG_BUTTON_TEMPLATE_TYPE, this.options.template_name));
+            this.setTemplate(Template.templateInstance(DialogButton.TEMPLATE_TYPE, this.options.template_name));
         }
 
         return _buttons[this.id].template_instance;
     };
-
     DialogButton.prototype.option = function (name, value) {
-        var option = _.M.beObject.apply(_.M, _.toArray(arguments));
+        var option = M.beObject.apply(M, _.toArray(arguments));
 
         if (option.template_name) {
-            this.setTemplate(_.M.Template.templateInstance(_.M.DIALOG_BUTTON_TEMPLATE_TYPE, option.template_name));
+            this.setTemplate(Template.templateInstance(DialogButton.TEMPLATE_TYPE, option.template_name));
         }
         if (option.template) {
             this.getTemplate().option(option.template);
@@ -185,7 +186,7 @@
 
     /**
      * Get dialog instance
-     * @returns {(_.M.Dialog|boolean)} False if not attach to dialog yet
+     * @returns {(Dialog|boolean)} False if not attach to dialog yet
      */
     DialogButton.prototype.getDialog = function () {
         if (_buttons[this.id].dialog) {
@@ -222,7 +223,7 @@
         if (this.isClickable()) {
             this.emitEvent('click');
             if (this.options.handler) {
-                _.M.callFunc(this.options.handler, this, this);
+                M.callFunc(this.options.handler, this, this);
             }
             this.emitEvent('clicked');
 
@@ -231,7 +232,6 @@
 
         return false;
     };
-
     /**
      * Show or hide button
      * Emit events:
@@ -293,6 +293,7 @@
         return this.getTemplate().render();
     };
 
+
     /**
      * Refresh button DOM
      * @returns {boolean}
@@ -310,17 +311,16 @@
      * @returns {boolean}
      */
     DialogButton.prototype.getDOM = function () {
-        if (_buttons[this.id].template_instance && _.M.isTemplateInstance(_buttons[this.id].template_instance)) {
+        if (_buttons[this.id].template_instance && (_buttons[this.id].template_instance instanceof Template)) {
             return _buttons[this.id].template_instance.getDOM();
         }
 
         return false;
     };
-
     /**
      *
      * @param name
-     * @returns {_.M.DialogButton|null|*|Object|_.M.EventEmitter|_.M.Dialog}
+     * @returns {DialogButton|null|*|Object|EventEmitter|Dialog}
      */
     DialogButton.prototype.getOtherButton = function (name) {
         return this.getDialog().getButton(name);
@@ -334,6 +334,7 @@
         return this.options.name;
     };
 
+
     /**
      * Close dialog
      * @param force
@@ -344,6 +345,7 @@
 
         if (dialog) {
             dialog.close(force, this.getCloseKey());
+
             return true;
         }
 
@@ -363,7 +365,6 @@
 
         return false;
     };
-
 
     /*
      |--------------------------------------------------------------------------
@@ -397,6 +398,7 @@
 
         return false;
     };
+
 
     DialogButton.factory = function (types, all_button_options, button_options) {
         if (!_.isObject(all_button_options)) {
@@ -432,17 +434,6 @@
 
     DialogButton.defaultClickable = _default_clickable_cb;
 
-    _.M.DialogButton = DialogButton;
-
-    /**
-     * Check if object is DialogButton instance
-     * @param button
-     * @returns {boolean}
-     */
-    _.M.isDialogButton = function (button) {
-        return button instanceof DialogButton;
-    };
-
     /*
      |--------------------------------------------------------------------------
      | Predefine button types
@@ -464,9 +455,8 @@
         disable_on_pending: false
     });
 
-
-    (function (_) {
-        _.M.defineConstant({
+    (function () {
+        M.defineConstant(DialogButton, {
             BUTTON_CLOSE: 'close'
         });
 
@@ -478,12 +468,15 @@
             }
         }
 
-        DialogButton.define(_.M.BUTTON_CLOSE, {
+        DialogButton.define(DialogButton.BUTTON_CLOSE, {
             label: 'Close',
-            type: _.M.BUTTON_INFO,
+            type: DialogButton.TYPE_INFO,
             force: false
         }, {
             handler: _close_dialog_handler
         });
-    })(_);
-})(_);
+    })();
+
+
+    return DialogButton;
+}));
