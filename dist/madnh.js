@@ -4261,6 +4261,28 @@
         return result;
     };
 
+    Task.register('DataSource', function (response, success_cb, error_cb) {
+        var path = this.options.path;
+
+        if(!(_.isString(path) || _.isNumber(path))){
+            throw new Error('Path must be string or number');
+        }
+        if(_.isString(path) && _.empty(path)){
+            throw new Error('Path is empty');
+        }
+        if (_.isObject(response)) {
+            if (_.has(response, path)) {
+                return success_cb(_.get(response, path));
+            }
+
+            return error_cb('Ajax result path not found');
+        }
+
+        return error_cb('Response must be an object');
+    }, {
+        path: ''
+    });
+
     return Task;
 }));
 (function (root, factory) {
@@ -5120,21 +5142,6 @@
 
         return instance;
     };
-
-    Task.register('AjaxDataSource', function (response, success_cb, error_cb) {
-        if (_.isObject(response)) {
-            if (_.has(response, path)) {
-                return success_cb(_.get(response, path));
-            }
-
-            return error_cb('Ajax result path not found');
-        }
-
-        return error_cb('Response must be an object');
-    }, {
-        path: ''
-    });
-
 
     return Ajax;
 }));

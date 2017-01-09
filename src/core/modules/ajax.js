@@ -758,20 +758,5 @@
         return instance;
     };
 
-    Task.register('AjaxDataSource', function (response, success_cb, error_cb) {
-        if (_.isObject(response)) {
-            if (_.has(response, path)) {
-                return success_cb(_.get(response, path));
-            }
-
-            return error_cb('Ajax result path not found');
-        }
-
-        return error_cb('Response must be an object');
-    }, {
-        path: ''
-    });
-
-
     return Ajax;
 }));
