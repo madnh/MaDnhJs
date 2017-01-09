@@ -5105,6 +5105,26 @@
         return instance;
     };
 
+
+    Ajax.dataSource = function (path) {
+        var task = new Task();
+
+        task.name = 'dataSource';
+        task.handler = function (response, success_cb, error_cb) {
+            if(_.isObject(response)){
+                if(_.has(response, path)){
+                    return success_cb(_.get(response, path));
+                }
+
+                return error_cb('Ajax result path not found');
+            }
+
+            return error_cb('Response must be an object');
+        };
+
+        return task;
+    };
+
     return Ajax;
 }));
 (function (root, factory) {
