@@ -457,7 +457,7 @@
 
     (function () {
         M.defineConstant(DialogButton, {
-            BUTTON_CLOSE: 'close'
+            CLOSE: 'close'
         });
 
         function _close_dialog_handler(button) {
@@ -468,7 +468,7 @@
             }
         }
 
-        DialogButton.define(DialogButton.BUTTON_CLOSE, {
+        DialogButton.define(DialogButton.CLOSE, {
             label: 'Close',
             type: DialogButton.TYPE_INFO,
             force: false

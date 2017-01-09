@@ -125,7 +125,7 @@
 
         var dialog = new Dialog(_.omit(options, 'close_button_options'));
 
-        dialog.attachButton(M.DialogButton.factory('close', options.close_button_options));
+        dialog.attachButton(DialogButton.factory(DialogButton.CLOSE, options.close_button_options));
 
         dialog.open();
 
