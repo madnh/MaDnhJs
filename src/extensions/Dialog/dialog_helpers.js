@@ -52,6 +52,7 @@
             if (!_.isNull(content)) {
                 return content;
             }
+
             var aw = new Ajax(_.omit(options, 'loading'));
 
             aw.done(function (response) {
@@ -74,6 +75,10 @@
             aw.always(function () {
                 dialog.emitEvent('load_content_complete');
                 dialog.resolved();
+            });
+
+            dialog.on('close', function(){
+                aw.abort();
             });
 
             aw.request();

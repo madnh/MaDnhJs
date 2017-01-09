@@ -509,11 +509,11 @@
     Dialog.prototype.close = function (force, by) {
         if (!this.isClosed() && (force || this.isCloseable())) {
             by = by || '';
-            this.emitEvent('close', [force, by]);
+            this.emitEvent('close', force, by);
             resetDialog(this.id);
             _dialogs[this.id].status = Dialog.STATUS_CLOSED;
             this.closed_by = by;
-            this.emitEvent('closed', [force, by]);
+            this.emitEvent('closed', force, by);
             this.reset();
 
             return true;
