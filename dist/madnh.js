@@ -3545,7 +3545,7 @@
             return;
         }
 
-        this.emitEvent('before_unlisten', detail.target, detail);
+        instance.emitEvent('before_unlisten', detail.target, detail);
 
         if (_.isString(detail.remove_method)) {
             detail.target[detail.remove_method](detail.listener_key);
@@ -3553,7 +3553,7 @@
             detail.remove_method(detail.listener_key);
         }
 
-        this.emitEvent('unlisten', detail.target, detail);
+        instance.emitEvent('unlisten', detail.target, detail);
 
         delete instance._listening[listen_id];
     }
@@ -4221,16 +4221,32 @@
         };
 
         if (tasks) {
-            if (_.isString(tasks)) {
-                tasks = [tasks];
-            }
-            if (_.isArray(tasks)) {
-                tasks = _.zipObject(tasks, _.fill(new Array(tasks.length), {}));
-            }
+            tasks = _.castArray(tasks);
+            var do_tasks = [];
 
-            _.find(tasks, function (options, name) {
-                var task = Task.factory(name, options);
+            _.each(tasks, function (task) {
+                if (_.isString(task)) {
+                    task = Task.factory(task);
+                } else if (_.isObject(task) && !(task instanceof Task)) {
+                    task = _.extend({
+                        task: '',
+                        options: {}
+                    });
+                    if (_.isString(task.task)) {
+                        task.task = Task.factory(task.task, task.options);
+                    } else if (task.task instanceof Task) {
+                        _.each(options, function (value, name) {
+                            task.task.option(name, value);
+                        });
+                    }
 
+                    task = task.task;
+                }
+
+                do_tasks.push(task);
+            });
+
+            _.find(do_tasks, function (task) {
                 if (task.process(_.cloneDeep(result['data']))) {
                     result['data'] = task.getResult();
                 } else {
@@ -5105,25 +5121,20 @@
         return instance;
     };
 
-
-    Ajax.dataSource = function (path) {
-        var task = new Task();
-
-        task.name = 'dataSource';
-        task.handler = function (response, success_cb, error_cb) {
-            if(_.isObject(response)){
-                if(_.has(response, path)){
-                    return success_cb(_.get(response, path));
-                }
-
-                return error_cb('Ajax result path not found');
+    Task.register('AjaxDataSource', function (response, success_cb, error_cb) {
+        if (_.isObject(response)) {
+            if (_.has(response, path)) {
+                return success_cb(_.get(response, path));
             }
 
-            return error_cb('Response must be an object');
-        };
+            return error_cb('Ajax result path not found');
+        }
 
-        return task;
-    };
+        return error_cb('Response must be an object');
+    }, {
+        path: ''
+    });
+
 
     return Ajax;
 }));

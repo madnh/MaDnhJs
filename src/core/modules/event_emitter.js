@@ -816,7 +816,7 @@
             return;
         }
 
-        this.emitEvent('before_unlisten', detail.target, detail);
+        instance.emitEvent('before_unlisten', detail.target, detail);
 
         if (_.isString(detail.remove_method)) {
             detail.target[detail.remove_method](detail.listener_key);
@@ -824,7 +824,7 @@
             detail.remove_method(detail.listener_key);
         }
 
-        this.emitEvent('unlisten', detail.target, detail);
+        instance.emitEvent('unlisten', detail.target, detail);
 
         delete instance._listening[listen_id];
     }
