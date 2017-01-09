@@ -1109,7 +1109,7 @@
     Dialog.dynamicContent = function (options) {
         var content = null;
 
-        options = PreOptions.get(Dialog.DIALOG_DYNAMIC_CONTENT_PRE_OPTIONS_NAME, options);
+        options = PreOptions.get(Dialog.DYNAMIC_CONTENT_PRE_OPTIONS_NAME, options);
 
         return function (update_content_cb, dialog) {
             if (!_.isNull(content)) {
