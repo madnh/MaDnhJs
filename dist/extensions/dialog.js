@@ -1146,7 +1146,7 @@
                 dialog.resolved();
             });
 
-            dialog.on('close', function(){
+            dialog.on('close', function () {
                 aw.abort();
             });
 
@@ -1156,6 +1156,43 @@
         }
     };
 
+    /*
+    |--------------------------------------------------------------------------
+    | Dialog Box
+    |--------------------------------------------------------------------------
+    |
+    | Show only dialog body, no header, no footer
+    |
+    |
+    */
+
+    Dialog.box = function (content, options) {
+        options = options || {};
+
+        if (_.isString(options)) {
+            options = {
+                title: options + ''
+            }
+        }
+
+        options.content = content;
+
+        if(!options.template){
+            options.template = {};
+        }
+
+        options.template = _.defaults(options.template, {
+            has_footer: false,
+            has_header: false,
+            close_manual: false
+        });
+
+        var dialog = new Dialog(options);
+
+        dialog.open();
+
+        return dialog;
+    };
 
     /*
      |--------------------------------------------------------------------------
@@ -1175,6 +1212,7 @@
         close_button_options: {}
     });
 
+
     /**
      *
      * @param {string} message
@@ -1182,13 +1220,15 @@
      * @returns {*|Dialog}
      */
     Dialog.alert = function (message, options) {
-        if (!_.isObject(options)) {
+        if (_.isString(options)) {
             options = {
                 title: options + ''
             }
         }
 
-        options = _.extend(PreOptions.get(Dialog.DIALOG_ALERT_PRE_OPTIONS_NAME, options), {
+        options = _.extend({
+            title: 'Alert'
+        }, PreOptions.get(Dialog.DIALOG_ALERT_PRE_OPTIONS_NAME, options), {
             content: message
         });
 
