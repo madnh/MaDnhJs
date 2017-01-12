@@ -4220,7 +4220,7 @@
             data: _.cloneDeep(data)
         };
 
-        if (tasks) {
+        if (!_.isEmpty(tasks)) {
             tasks = _.castArray(tasks);
             var do_tasks = [];
 
@@ -4264,10 +4264,10 @@
     Task.register('DataSource', function (response, success_cb, error_cb) {
         var path = this.options.path;
 
-        if(!(_.isString(path) || _.isNumber(path))){
+        if (!(_.isString(path) || _.isNumber(path))) {
             throw new Error('Path must be string or number');
         }
-        if(_.isString(path) && _.isEmpty(path)){
+        if (_.isString(path) && _.isEmpty(path)) {
             throw new Error('Path is empty');
         }
         if (_.isObject(response)) {
@@ -4545,7 +4545,7 @@
      * boolean value
      */
     PreOptions.define(constants.AJAX_PRE_OPTIONS_NAME, {
-        response_tasks: {},
+        response_tasks: [],
         data_tasks: {},
         auto_abort: true,
         retry: 0,

@@ -160,7 +160,7 @@
      * boolean value
      */
     PreOptions.define(constants.AJAX_PRE_OPTIONS_NAME, {
-        response_tasks: {},
+        response_tasks: [],
         data_tasks: {},
         auto_abort: true,
         retry: 0,
