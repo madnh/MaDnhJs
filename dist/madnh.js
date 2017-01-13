@@ -2654,18 +2654,29 @@
     /**
      * Run the waiter
      * @param {string} waiter_key
-     * @param {Array} args
-     * @param {Object} this_arg
+     * @param {Array} [args...]
      * @returns {*}
      */
-    Waiter.prototype.run = function (waiter_key, args, this_arg) {
+    Waiter.prototype.run = function (waiter_key, args) {
+        return this.runInContext.apply(this, [waiter_key, null].concat(Array.prototype.slice.call(arguments, 1)));
+    };
+
+    /**
+     *
+     * @param {string} waiter_key
+     * @param {*} context
+     * @param {Array} [args...]
+     * @return {*}
+     */
+    Waiter.prototype.runInContext = function (waiter_key, context, args) {
         var result;
 
         if (!this.has(waiter_key)) {
             throw new Error('Waiter key is non-exists: ' + waiter_key);
         }
 
-        result = _waiters[waiter_key].callback.apply(this_arg || null, asArray(args));
+        args = Array.prototype.slice.call(arguments, 2);
+        result = _waiters[waiter_key].callback.apply(context || null, args);
 
         if (this.has(waiter_key) && (typeof _waiters[waiter_key].times == 'number') && --_waiters[waiter_key].times < 1) {
             this.remove(waiter_key);
