@@ -442,7 +442,9 @@
                 validate_result = options.validator(form, dialog_instance);
             }
             if (true !== validate_result) {
-                updateFormMessage(dialog_instance, validate_result);
+                if(_.isString(validate_result)){
+                    updateFormMessage(dialog_instance, validate_result);
+                }
 
                 return;
             }
